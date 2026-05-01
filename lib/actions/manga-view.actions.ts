@@ -3,6 +3,12 @@
 import { connectToDatabase } from "@/database/mongoose";
 import { MangaViewModel } from "@/database/models/manga-view.model";
 import { MangaViewStatModel } from "@/database/models/manga-view-stat.model";
+import {
+  DEFAULT_MANGA_ROUTE_BASE,
+  normalizeMangaRouteBase,
+  resolveMangaRouteBases,
+  type MangaRouteBase,
+} from "@/lib/server/manga-route";
 import type { OTruyenComic } from "@/types/otruyen-types";
 
 type TrackMangaChapterViewInput = {
@@ -13,6 +19,7 @@ type TrackMangaChapterViewInput = {
   comicUpdatedAt?: string;
   chapterName: string;
   latestChapterName?: string;
+  routeBase?: MangaRouteBase;
 };
 
 type TrackMangaChapterViewResult = {
@@ -71,6 +78,7 @@ const toRankingItem = (
     _id: doc.comicId || comicSlug,
     name: doc.comicName || comicSlug,
     slug: comicSlug,
+    routeBase: normalizeMangaRouteBase(doc.routeBase) || DEFAULT_MANGA_ROUTE_BASE,
     origin_name: [],
     status: "ongoing",
     thumb_url: doc.thumbUrl || "",
@@ -182,6 +190,18 @@ const buildPeriodRanking = (
     })
     .filter((item): item is MangaRankingItem => Boolean(item));
 
+const applyResolvedRouteBases = (
+  items: MangaRankingItem[],
+  routeMap: Map<string, MangaRouteBase>,
+): MangaRankingItem[] => {
+  if (!items.length) return items;
+
+  return items.map((item) => ({
+    ...item,
+    routeBase: routeMap.get(item.slug) || DEFAULT_MANGA_ROUTE_BASE,
+  }));
+};
+
 export const trackMangaChapterView = async (
   input: TrackMangaChapterViewInput,
 ): Promise<TrackMangaChapterViewResult> => {
@@ -200,6 +220,7 @@ export const trackMangaChapterView = async (
     const metadata = {
       comicId: input.comicId || "",
       comicSlug,
+      routeBase: normalizeMangaRouteBase(input.routeBase) || DEFAULT_MANGA_ROUTE_BASE,
       comicName: input.comicName || "",
       thumbUrl: input.thumbUrl || "",
       comicUpdatedAt: input.comicUpdatedAt || "",
@@ -321,13 +342,29 @@ export const getMangaRankings = async (
       statDocs.map((doc: any) => [String(doc.comicSlug), doc]),
     );
 
-    return {
-      daily: buildPeriodRanking(dailyRows, statMap),
-      weekly: buildPeriodRanking(weeklyRows, statMap),
-      monthly: buildPeriodRanking(monthlyRows, statMap),
-      allTime: allTimeRows.map((row: any) =>
-        toRankingItem(row, Number(row.totalViews || 0)),
+    const daily = buildPeriodRanking(dailyRows, statMap);
+    const weekly = buildPeriodRanking(weeklyRows, statMap);
+    const monthly = buildPeriodRanking(monthlyRows, statMap);
+    const allTime = allTimeRows.map((row: any) =>
+      toRankingItem(row, Number(row.totalViews || 0)),
+    );
+
+    const routeMap = await resolveMangaRouteBases(
+      [...daily, ...weekly, ...monthly, ...allTime].map((item) =>
+        String(item.slug || ""),
       ),
+    );
+
+    const resolvedDaily = applyResolvedRouteBases(daily, routeMap);
+    const resolvedWeekly = applyResolvedRouteBases(weekly, routeMap);
+    const resolvedMonthly = applyResolvedRouteBases(monthly, routeMap);
+    const resolvedAllTime = applyResolvedRouteBases(allTime, routeMap);
+
+    return {
+      daily: resolvedDaily,
+      weekly: resolvedWeekly,
+      monthly: resolvedMonthly,
+      allTime: resolvedAllTime,
     };
   } catch (error) {
     console.error("Failed to load manga rankings:", error);

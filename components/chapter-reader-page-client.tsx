@@ -115,6 +115,7 @@ export function ChapterReaderPageClient({
         comicUpdatedAt: comic.updatedAt,
         chapterName: chapter,
         latestChapterName: latestChapter?.chapter_name,
+        routeBase: routeBase === "/18+" ? "/18+" : "/manga",
       });
 
       if (!result.success) {
@@ -183,6 +184,7 @@ export function ChapterReaderPageClient({
       const result = await toggleMangaBookmark({
         comicId: comic._id,
         slug: comic.slug,
+        routeBase: routeBase === "/18+" ? "/18+" : "/manga",
         name: comic.name,
         thumbUrl: comic.thumb_url,
         status: comic.status,

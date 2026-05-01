@@ -134,7 +134,7 @@ export function RankingSidebarApi({
           rankedComics.map((comic, index) => (
             <Link
               key={`${activeTab}-${comic._id}`}
-              href={`/manga/${comic.slug}`}
+              href={`${comic.routeBase || "/manga"}/${comic.slug}`}
               className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary transition-colors group"
             >
               <div

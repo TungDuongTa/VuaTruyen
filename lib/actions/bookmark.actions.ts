@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 import { BookmarkModel } from "@/database/models/bookmark.model";
 import { connectToDatabase } from "@/database/mongoose";
 import { normalizePageAndSize } from "@/lib/pagination";
+import {
+  DEFAULT_MANGA_ROUTE_BASE,
+  normalizeMangaRouteBase,
+  resolveMangaRouteBases,
+  type MangaRouteBase,
+} from "@/lib/server/manga-route";
 import { getCurrentUserId } from "@/lib/server-session";
 import type { Category, OTruyenComic } from "@/types/otruyen-types";
 
@@ -16,6 +22,7 @@ type ToggleBookmarkInput = {
   comicUpdatedAt: string;
   categories: Category[];
   latestChapterName?: string;
+  routeBase?: MangaRouteBase;
 };
 
 type BookmarkActionResult = {
@@ -40,10 +47,14 @@ export type PaginatedBookmarksResult = {
 const DEFAULT_BOOKMARKS_PAGE_SIZE = 24;
 const MAX_BOOKMARKS_PAGE_SIZE = 60;
 
-const toBookmarkedComic = (doc: any): BookmarkedComic => ({
+const toBookmarkedComic = (
+  doc: any,
+  routeBase: MangaRouteBase,
+): BookmarkedComic => ({
   _id: doc.comicId || doc.slug,
   name: doc.name,
   slug: doc.slug,
+  routeBase,
   origin_name: [],
   status: doc.status || "ongoing",
   thumb_url: doc.thumbUrl,
@@ -106,9 +117,17 @@ export const getCurrentUserBookmarksPage = async ({
     .skip(skip)
     .limit(normalized.pageSize)
     .lean();
+  const bookmarkSlugs = bookmarks.map((bookmark: any) => String(bookmark.slug || ""));
+  const inferredRouteMap = await resolveMangaRouteBases(bookmarkSlugs);
 
   return {
-    items: bookmarks.map(toBookmarkedComic),
+    items: bookmarks.map((bookmark: any) => {
+      const slug = String(bookmark.slug || "").trim();
+      const explicitRoute = normalizeMangaRouteBase(bookmark.routeBase);
+      const inferredRoute =
+        inferredRouteMap.get(slug) || DEFAULT_MANGA_ROUTE_BASE;
+      return toBookmarkedComic(bookmark, explicitRoute || inferredRoute);
+    }),
     page: safePage,
     pageSize: normalized.pageSize,
     totalItems,
@@ -145,12 +164,14 @@ export const toggleMangaBookmark = async (
   const existing = await BookmarkModel.findOne({
     userId,
     slug: input.slug,
-  }).select("_id");
+  }).select("_id routeBase");
+  const routeBase = normalizeMangaRouteBase(input.routeBase) || DEFAULT_MANGA_ROUTE_BASE;
 
   if (existing) {
     await BookmarkModel.deleteOne({ _id: existing._id });
     revalidatePath("/bookmarks");
     revalidatePath(`/manga/${input.slug}`);
+    revalidatePath(`/18+/${input.slug}`);
 
     return {
       success: true,
@@ -164,6 +185,7 @@ export const toggleMangaBookmark = async (
       userId,
       comicId: input.comicId,
       slug: input.slug,
+      routeBase,
       name: input.name,
       thumbUrl: input.thumbUrl,
       status: input.status,
@@ -178,6 +200,7 @@ export const toggleMangaBookmark = async (
 
     revalidatePath("/bookmarks");
     revalidatePath(`/manga/${input.slug}`);
+    revalidatePath(`/18+/${input.slug}`);
 
     return {
       success: true,
@@ -212,4 +235,5 @@ export const removeMangaBookmark = async (slug: string): Promise<void> => {
   await BookmarkModel.deleteOne({ userId, slug });
   revalidatePath("/bookmarks");
   revalidatePath(`/manga/${slug}`);
+  revalidatePath(`/18+/${slug}`);
 };

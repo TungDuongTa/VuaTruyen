@@ -15,6 +15,9 @@ export const compareChapterNames = (a: string, b: string): number => {
   const bNum = parseChapterNumber(b);
 
   if (aNum !== null && bNum !== null) {
+    if (aNum === bNum) {
+      return chapterLabelCollator.compare(a, b);
+    }
     return aNum - bNum;
   }
 
