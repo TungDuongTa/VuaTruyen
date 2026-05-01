@@ -14,6 +14,7 @@ const bookmarkSchema = new Schema(
     userId: { type: String, required: true, index: true },
     comicId: { type: String, required: true },
     slug: { type: String, required: true },
+    routeBase: { type: String, default: "/manga" },
     name: { type: String, required: true },
     thumbUrl: { type: String, required: true },
     status: { type: String, default: "" },

@@ -80,6 +80,7 @@ export function MangaDetailPageClient({
       const result = await toggleMangaBookmark({
         comicId: comic._id,
         slug: comic.slug,
+        routeBase: routeBase === "/18+" ? "/18+" : "/manga",
         name: comic.name,
         thumbUrl: comic.thumb_url,
         status: comic.status,

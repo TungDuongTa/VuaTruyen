@@ -106,6 +106,9 @@ const toIsoDateString = (...values: DateLike[]): string => {
 const stripTrailingZeroes = (value: string): string =>
   value.replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
 
+const isStrictNumericChapterName = (value: string): boolean =>
+  /^[0-9]+(?:\.[0-9]+)?$/.test(value);
+
 const parseChapterNumber = (value: unknown): number | null => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   const normalized = cleanString(value)
@@ -117,21 +120,24 @@ const parseChapterNumber = (value: unknown): number | null => {
 };
 
 const normalizeChapterName = (value: unknown): string => {
-  const chapterNumber = parseChapterNumber(value);
-  if (chapterNumber !== null) {
-    return stripTrailingZeroes(String(chapterNumber));
-  }
-
-  return cleanString(value)
+  const normalized = cleanString(value)
     .replace(/^chapter[\s\-_]*/i, "")
     .trim();
+
+  if (!normalized) return "";
+  if (!isStrictNumericChapterName(normalized)) return normalized;
+
+  const chapterNumber = Number.parseFloat(normalized);
+  if (!Number.isFinite(chapterNumber)) return normalized;
+
+  return stripTrailingZeroes(String(chapterNumber));
 };
 
 const extractChapterFromUrl = (url: string): string => {
   const normalizedUrl = cleanString(url);
   if (!normalizedUrl) return "";
 
-  const chapterMatch = normalizedUrl.match(/chapter[\s\-_]*([0-9]+(?:\.[0-9]+)?)/i);
+  const chapterMatch = normalizedUrl.match(/chapter[\s\-_]*([^/?#]+)/i);
   if (chapterMatch?.[1]) {
     return normalizeChapterName(chapterMatch[1]);
   }
@@ -238,7 +244,9 @@ const compareChapterCandidates = (a: ChapterCandidate, b: ChapterCandidate) => {
 const toChapterCandidatesFromDocs = (chapterDocs: Chapter18Doc[]): ChapterCandidate[] => {
   return chapterDocs
     .map((doc) => {
-      const chapterName = normalizeChapterName(doc.chapterNumber);
+      const chapterName =
+        extractChapterFromUrl(cleanString(doc.sourceUrl)) ||
+        normalizeChapterName(doc.chapterNumber);
       if (!chapterName) return null;
 
       return {
@@ -308,6 +316,18 @@ const mergeChapterCandidates = (
     }));
 };
 
+const buildFallbackChapterCandidates = (
+  chapterCandidatesFromDocs: ChapterCandidate[],
+  chapterCandidatesFromUrls: ChapterCandidate[],
+  totalChaptersValue: unknown,
+): ChapterCandidate[] => {
+  if (chapterCandidatesFromDocs.length > 0 || chapterCandidatesFromUrls.length > 0) {
+    return chapterCandidatesFromUrls;
+  }
+
+  return toChapterCandidatesFromTotal(totalChaptersValue);
+};
+
 const toMangaCardItem = (doc: Manga18Doc): OTruyenComic => {
   const slug = cleanString(doc.slug);
   const chapterUrls = normalizeStringArray(doc.chapterUrls);
@@ -341,11 +361,11 @@ const toMangaCardItem = (doc: Manga18Doc): OTruyenComic => {
 };
 
 const getChapterNameFromChapterDoc = (doc: Chapter18Doc): string => {
-  const fromNumber = normalizeChapterName(doc.chapterNumber);
-  if (fromNumber) return fromNumber;
-
   const fromSource = extractChapterFromUrl(cleanString(doc.sourceUrl));
-  return fromSource;
+  if (fromSource) return fromSource;
+
+  const fromNumber = normalizeChapterName(doc.chapterNumber);
+  return fromNumber;
 };
 
 const getDatabase = async () => {
@@ -436,12 +456,14 @@ export const getManga18Detail = async (
     const chapterUrls = normalizeStringArray(mangaDoc.chapterUrls);
     const chapterCandidatesFromDocs = toChapterCandidatesFromDocs(chapterDocs);
     const chapterCandidatesFromUrls = toChapterCandidatesFromUrls(chapterUrls);
-    const chapterCandidatesFromTotal = toChapterCandidatesFromTotal(
+    const fallbackChapterCandidates = buildFallbackChapterCandidates(
+      chapterCandidatesFromDocs,
+      chapterCandidatesFromUrls,
       mangaDoc.totalChapters,
     );
     const serverData = mergeChapterCandidates(
       chapterCandidatesFromDocs,
-      [...chapterCandidatesFromTotal, ...chapterCandidatesFromUrls],
+      fallbackChapterCandidates,
     );
 
     return {

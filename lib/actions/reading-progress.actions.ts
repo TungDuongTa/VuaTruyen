@@ -13,6 +13,12 @@ import {
 import { getCurrentUserId } from "@/lib/server-session";
 import type { ReadingExpStats } from "@/lib/user-level";
 import type { OTruyenComic } from "@/types/otruyen-types";
+import {
+  DEFAULT_MANGA_ROUTE_BASE,
+  normalizeMangaRouteBase,
+  resolveMangaRouteBases,
+  type MangaRouteBase,
+} from "@/lib/server/manga-route";
 
 type MarkChapterAsReadProgressInput = {
   comicId?: string;
@@ -33,6 +39,7 @@ type RecordChapterVisitInput = {
   comicUpdatedAt?: string;
   chapterName: string;
   latestChapterName?: string;
+  routeBase?: MangaRouteBase;
 };
 
 type RecordChapterVisitResult = {
@@ -68,6 +75,7 @@ type ReadingProgressDoc = {
 type MangaViewStatDoc = {
   comicId?: string;
   comicSlug?: string;
+  routeBase?: string;
   comicName?: string;
   thumbUrl?: string;
   comicUpdatedAt?: string;
@@ -106,9 +114,11 @@ const resolveHistoryMetadata = (
   const name = normalizeString(viewStat?.comicName) || comicSlug;
   const thumbUrl = normalizeString(viewStat?.thumbUrl);
   const comicUpdatedAt = normalizeString(viewStat?.comicUpdatedAt);
+  const routeBase = normalizeMangaRouteBase(viewStat?.routeBase);
 
   return {
     comicId,
+    routeBase,
     name,
     thumbUrl,
     comicUpdatedAt,
@@ -118,6 +128,7 @@ const resolveHistoryMetadata = (
 const toReadingHistoryComic = (
   doc: ReadingProgressDoc,
   viewStat?: MangaViewStatDoc,
+  routeBase: MangaRouteBase = DEFAULT_MANGA_ROUTE_BASE,
 ): ReadingHistoryComic | null => {
   const comicSlug = normalizeString(doc.comicSlug);
   if (!comicSlug) return null;
@@ -136,6 +147,7 @@ const toReadingHistoryComic = (
     _id: metadata.comicId || normalizeString(doc.comicId) || comicSlug,
     name: metadata.name,
     slug: comicSlug,
+    routeBase: metadata.routeBase || routeBase,
     origin_name: [],
     status: "ongoing",
     thumb_url: metadata.thumbUrl,
@@ -268,8 +280,9 @@ export const getCurrentUserReadingHistoryPage = async ({
     const viewStatRows = await MangaViewStatModel.find({
       comicSlug: { $in: slugs },
     })
-      .select("comicId comicSlug comicName thumbUrl comicUpdatedAt")
+      .select("comicId comicSlug routeBase comicName thumbUrl comicUpdatedAt")
       .lean();
+    const inferredRouteMap = await resolveMangaRouteBases(slugs);
 
     const viewStatMap = new Map<string, MangaViewStatDoc>(
       viewStatRows.map((row: any) => [normalizeString(row.comicSlug), row]),
@@ -278,7 +291,12 @@ export const getCurrentUserReadingHistoryPage = async ({
     const items = rows
       .map((row) => {
         const slug = normalizeString(row.comicSlug);
-        return toReadingHistoryComic(row, viewStatMap.get(slug));
+        const viewStat = viewStatMap.get(slug);
+        const routeBase =
+          normalizeMangaRouteBase(viewStat?.routeBase) ||
+          inferredRouteMap.get(slug) ||
+          DEFAULT_MANGA_ROUTE_BASE;
+        return toReadingHistoryComic(row, viewStat, routeBase);
       })
       .filter((item): item is ReadingHistoryComic => Boolean(item));
 
@@ -375,6 +393,7 @@ export const recordChapterVisit = async (
       comicUpdatedAt: input.comicUpdatedAt,
       chapterName: input.chapterName,
       latestChapterName: input.latestChapterName,
+      routeBase: input.routeBase,
     }),
     markChapterAsReadProgress({
       comicId: input.comicId,

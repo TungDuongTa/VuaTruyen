@@ -30,7 +30,8 @@ export function MangaCardApi({
   const latestChapterName = String(
     comic.chaptersLatest?.[0]?.chapter_name || "",
   ).trim();
-  const comicHref = `${routeBase}/${comic.slug}`;
+  const resolvedRouteBase = comic.routeBase || routeBase;
+  const comicHref = `${resolvedRouteBase}/${comic.slug}`;
 
   if (variant === "horizontal") {
     return (

@@ -53,6 +53,7 @@ export interface OTruyenComic {
   _id: string;
   name: string;
   slug: string;
+  routeBase?: "/manga" | "/18+";
   origin_name: string[];
   status: string;
   thumb_url: string;
