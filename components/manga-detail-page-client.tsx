@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import {
   ArrowUpDown,
   BookOpen,
@@ -17,12 +16,11 @@ import {
   Share2,
   User,
 } from "lucide-react";
-import { toast } from "sonner";
 import { MangaCommentsSection } from "@/components/manga-comments-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toggleMangaBookmark } from "@/lib/actions/bookmark.actions";
+import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
 import { formatViewCount } from "@/lib/view-utils";
 import {
   type ComicDetailItem,
@@ -38,7 +36,6 @@ type MangaDetailPageClientProps = {
   initialReadChapterNames: string[];
   initialTotalViews: number;
   routeBase?: string;
-  showComments?: boolean;
 };
 
 export function MangaDetailPageClient({
@@ -48,13 +45,9 @@ export function MangaDetailPageClient({
   initialReadChapterNames,
   initialTotalViews,
   routeBase = "/manga",
-  showComments = true,
 }: MangaDetailPageClientProps) {
-  const router = useRouter();
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [chaptersOrder, setChaptersOrder] = useState<"desc" | "asc">("desc");
-  const [isBookmarked, setIsBookmarked] = useState(initialBookmarked);
-  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
 
   const chapters = comic.chapters?.[0]?.server_data || [];
   const sortedChapters = [...chapters].sort((a, b) => {
@@ -71,41 +64,19 @@ export function MangaDetailPageClient({
     [initialReadChapterNames],
   );
   const comicHref = `${routeBase}/${comic.slug}`;
-
-  const handleBookmarkToggle = async () => {
-    if (!comic || isBookmarkLoading) return;
-
-    setIsBookmarkLoading(true);
-    try {
-      const result = await toggleMangaBookmark({
-        comicId: comic._id,
-        slug: comic.slug,
-        routeBase: routeBase === "/18+" ? "/18+" : "/manga",
-        name: comic.name,
-        thumbUrl: comic.thumb_url,
-        status: comic.status,
-        comicUpdatedAt: comic.updatedAt,
-        categories: comic.category || [],
-        latestChapterName: latestChapter?.chapter_name,
-      });
-
-      if (!result.success) {
-        toast.error(result.message);
-        if (result.requiresSignIn) {
-          router.push("/sign-in");
-        }
-        return;
-      }
-
-      setIsBookmarked(result.bookmarked);
-      toast.success(result.message);
-    } catch (error) {
-      console.error("Failed to bookmark manga:", error);
-      toast.error("Could not update bookmark. Please try again.");
-    } finally {
-      setIsBookmarkLoading(false);
-    }
-  };
+  const { isBookmarked, isBookmarkLoading, handleBookmarkToggle } =
+    useBookmarkToggle({
+      initialBookmarked,
+      comicId: comic._id,
+      slug: comic.slug,
+      name: comic.name,
+      thumbUrl: comic.thumb_url,
+      status: comic.status,
+      comicUpdatedAt: comic.updatedAt,
+      categories: comic.category || [],
+      latestChapterName: latestChapter?.chapter_name,
+      routeBase,
+    });
 
   return (
     <div className="min-h-screen">
@@ -338,14 +309,12 @@ export function MangaDetailPageClient({
             </Tabs>
           </div>
 
-          {showComments && (
-            <section className="mt-8">
-              <MangaCommentsSection
-                comicSlug={comic.slug || id}
-                comicName={comic.name || ""}
-              />
-            </section>
-          )}
+          <section className="mt-8">
+            <MangaCommentsSection
+              comicSlug={comic.slug || id}
+              comicName={comic.name || ""}
+            />
+          </section>
         </div>
       </main>
     </div>

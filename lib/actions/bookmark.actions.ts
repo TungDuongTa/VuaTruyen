@@ -113,7 +113,7 @@ export const getCurrentUserBookmarksPage = async ({
   const skip = (safePage - 1) * normalized.pageSize;
 
   const bookmarks = await BookmarkModel.find({ userId })
-    .sort({ createdAt: -1 })
+    .sort({ comicUpdatedAt: -1, createdAt: -1 })
     .skip(skip)
     .limit(normalized.pageSize)
     .lean();

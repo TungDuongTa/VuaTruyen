@@ -52,8 +52,6 @@ export default async function Manga18DetailPage({
       initialReadChapterNames={initialReadChapterNames}
       initialTotalViews={initialTotalViews}
       routeBase="/18+"
-      showComments={false}
     />
   );
 }
-
