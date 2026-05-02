@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { MangaCardApi } from "@/components/manga-card-api";
 import { Button } from "@/components/ui/button";
@@ -43,23 +43,32 @@ const normalizeStatus = (value: string | null) => {
   return "all";
 };
 
-const areSameStringArrays = (a: string[], b: string[]) =>
-  a.length === b.length && a.every((value, index) => value === b[index]);
+type SearchParamsLike = {
+  get: (key: string) => string | null;
+};
+
+const getSingleGenreFromParams = (params: SearchParamsLike) =>
+  params.get("genres")?.split(",").filter(Boolean)?.[0] || "";
+
+type BrowseUrlState = {
+  query: string;
+  genre: string;
+  status: string;
+  page: number;
+};
 
 export default function BrowsePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
 
   const initialQuery = searchParams.get("q") || "";
-  const initialGenres =
-    searchParams.get("genres")?.split(",").filter(Boolean) || [];
+  const initialGenre = getSingleGenreFromParams(searchParams);
   const initialStatus = normalizeStatus(searchParams.get("status"));
   const initialPage = toPositiveInt(searchParams.get("page"), 1);
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
-  const [selectedStatus, setSelectedStatus] = useState(initialStatus);
+  const [selectedGenre, setSelectedGenre] = useState(initialGenre);
+  const [selectedStatus, setSelectedStatus] = useState<string>(initialStatus);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
@@ -72,16 +81,13 @@ export default function BrowsePage() {
 
   useEffect(() => {
     const nextQuery = searchParams.get("q") || "";
-    const nextGenres =
-      searchParams.get("genres")?.split(",").filter(Boolean) || [];
+    const nextGenre = getSingleGenreFromParams(searchParams);
     const nextStatus = normalizeStatus(searchParams.get("status"));
     const nextPage = toPositiveInt(searchParams.get("page"), 1);
 
     setSearchQuery((prev) => (prev === nextQuery ? prev : nextQuery));
     setSelectedStatus((prev) => (prev === nextStatus ? prev : nextStatus));
-    setSelectedGenres((prev) =>
-      areSameStringArrays(prev, nextGenres) ? prev : nextGenres,
-    );
+    setSelectedGenre((prev) => (prev === nextGenre ? prev : nextGenre));
     setCurrentPage((prev) => (prev === nextPage ? prev : nextPage));
   }, [searchParams]);
   // Fetch categories on mount
@@ -101,20 +107,10 @@ export default function BrowsePage() {
             setComics(data.items);
             setPagination(data.params.pagination);
           }
-        } else if (selectedGenres.length > 0) {
-          // Use the first selected genre for API (API supports one at a time),
-          // remaining genres are visual - filter client-side
-          const data = await getByCategory(selectedGenres[0], currentPage);
+        } else if (selectedGenre) {
+          const data = await getByCategory(selectedGenre, currentPage);
           if (data) {
-            const filtered =
-              selectedGenres.length > 1
-                ? data.items.filter((comic) =>
-                    selectedGenres.every((slug) =>
-                      comic.category?.some((cat) => cat.slug === slug),
-                    ),
-                  )
-                : data.items;
-            setComics(filtered);
+            setComics(data.items);
             setPagination(data.params.pagination);
           }
         } else {
@@ -135,59 +131,64 @@ export default function BrowsePage() {
       }
     };
 
-    startTransition(() => {
-      fetchComics();
-    });
-  }, [debouncedQuery, selectedGenres, selectedStatus, currentPage]);
+    void fetchComics();
+  }, [debouncedQuery, selectedGenre, selectedStatus, currentPage]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
-    updateUrl();
+    updateUrl({ page: 1, query: searchQuery });
   };
 
-  const updateUrl = () => {
+  const updateUrl = (nextState: Partial<BrowseUrlState> = {}) => {
+    const query = nextState.query ?? searchQuery;
+    const genre = nextState.genre ?? selectedGenre;
+    const status = nextState.status ?? selectedStatus;
+    const page = nextState.page ?? currentPage;
     const params = new URLSearchParams();
-    if (searchQuery) params.set("q", searchQuery);
-    if (selectedGenres.length > 0)
-      params.set("genres", selectedGenres.join(","));
-    if (selectedStatus !== "all") params.set("status", selectedStatus);
-    if (currentPage > 1) params.set("page", currentPage.toString());
-    router.push(`/browse?${params.toString()}`);
+    if (query) params.set("q", query);
+    if (genre) params.set("genres", genre);
+    if (status !== "all") params.set("status", status);
+    if (page > 1) params.set("page", page.toString());
+    const queryString = params.toString();
+    router.push(queryString ? `/browse?${queryString}` : "/browse");
   };
 
   const clearFilters = () => {
     setSearchQuery("");
-    setSelectedGenres([]);
+    setSelectedGenre("");
     setSelectedStatus("all");
     setCurrentPage(1);
-    router.push("/browse");
+    updateUrl({ query: "", genre: "", status: "all", page: 1 });
   };
 
   const handleGenreToggle = (slug: string) => {
-    setSelectedGenres((prev) =>
-      prev.includes(slug) ? prev.filter((g) => g !== slug) : [...prev, slug],
-    );
+    const nextGenre = selectedGenre === slug ? "" : slug;
+    setSelectedGenre(nextGenre);
     setCurrentPage(1);
+    updateUrl({ genre: nextGenre, page: 1 });
   };
 
-  const removeGenre = (slug: string) => {
-    setSelectedGenres((prev) => prev.filter((g) => g !== slug));
+  const removeGenre = () => {
+    setSelectedGenre("");
     setCurrentPage(1);
+    updateUrl({ genre: "", page: 1 });
   };
 
   const handleStatusChange = (status: string) => {
     setSelectedStatus(status);
     setCurrentPage(1);
+    updateUrl({ status, page: 1 });
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    updateUrl({ page });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const hasActiveFilters =
-    selectedGenres.length > 0 || selectedStatus !== "all" || debouncedQuery;
+    Boolean(selectedGenre) || selectedStatus !== "all" || debouncedQuery;
   const totalPages = pagination
     ? Math.ceil(pagination.totalItems / pagination.totalItemsPerPage)
     : 1;
@@ -226,13 +227,7 @@ export default function BrowsePage() {
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" disabled={isPending}>
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Search"
-              )}
-            </Button>
+            <Button type="submit">Search</Button>
 
             <Button
               type="button"
@@ -242,9 +237,9 @@ export default function BrowsePage() {
             >
               <Filter className="h-4 w-4" />
               Filters
-              {selectedGenres.length > 0 && (
+              {selectedGenre && (
                 <span className="ml-1 bg-primary-foreground text-primary rounded-full text-xs w-5 h-5 flex items-center justify-center font-bold">
-                  {selectedGenres.length}
+                  1
                 </span>
               )}
             </Button>
@@ -315,15 +310,15 @@ export default function BrowsePage() {
             <div>
               <label className="text-sm font-medium text-foreground mb-3 block">
                 Genres
-                {selectedGenres.length > 0 && (
+                {selectedGenre && (
                   <span className="ml-2 text-muted-foreground font-normal">
-                    ({selectedGenres.length} selected)
+                    (1 selected)
                   </span>
                 )}
               </label>
               <div className="flex flex-wrap gap-2">
                 {categories.map((category, index) => {
-                  const isActive = selectedGenres.includes(category.slug);
+                  const isActive = selectedGenre === category.slug;
                   return (
                     <Badge
                       key={category.id || index}
@@ -357,6 +352,7 @@ export default function BrowsePage() {
                 onClick={() => {
                   setSearchQuery("");
                   setCurrentPage(1);
+                  updateUrl({ query: "", page: 1 });
                 }}
               >
                 Search: {debouncedQuery}
@@ -367,23 +363,27 @@ export default function BrowsePage() {
               <Badge
                 variant="secondary"
                 className="gap-1 cursor-pointer hover:bg-destructive/20"
-                onClick={() => setSelectedStatus("all")}
+                onClick={() => {
+                  setSelectedStatus("all");
+                  setCurrentPage(1);
+                  updateUrl({ status: "all", page: 1 });
+                }}
               >
                 {selectedStatus}
                 <X className="h-3 w-3" />
               </Badge>
             )}
-            {selectedGenres.map((slug) => (
+            {selectedGenre && (
               <Badge
-                key={slug}
                 variant="secondary"
                 className="gap-1 cursor-pointer hover:bg-destructive/20"
-                onClick={() => removeGenre(slug)}
+                onClick={removeGenre}
               >
-                {categories.find((c) => c.slug === slug)?.name || slug}
+                {categories.find((c) => c.slug === selectedGenre)?.name ||
+                  selectedGenre}
                 <X className="h-3 w-3" />
               </Badge>
-            ))}
+            )}
           </div>
         )}
 
