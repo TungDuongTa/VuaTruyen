@@ -54,8 +54,6 @@ export default async function Manga18ChapterReaderPage({
       initialBookmarked={initialBookmarked}
       initialReadChapterNames={initialReadChapterNames}
       routeBase="/18+"
-      showComments={false}
     />
   );
 }
-

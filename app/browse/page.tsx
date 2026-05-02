@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
 import { MangaCardApi } from "@/components/manga-card-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,8 +29,22 @@ import {
   getByCategory,
   getCategories,
 } from "@/lib/actions/otruyen-actions";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { getVisiblePages } from "@/lib/pagination";
 import { OTruyenComic, Category, Pagination } from "@/types/otruyen-types";
+
+const toPositiveInt = (value: string | null, fallback = 1) => {
+  const parsed = Number.parseInt(value || "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const normalizeStatus = (value: string | null) => {
+  if (value === "ongoing" || value === "completed") return value;
+  return "all";
+};
+
+const areSameStringArrays = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((value, index) => value === b[index]);
 
 export default function BrowsePage() {
   const searchParams = useSearchParams();
@@ -42,11 +54,10 @@ export default function BrowsePage() {
   const initialQuery = searchParams.get("q") || "";
   const initialGenres =
     searchParams.get("genres")?.split(",").filter(Boolean) || [];
-  const initialStatus = searchParams.get("status") || "all";
-  const initialPage = parseInt(searchParams.get("page") || "1");
+  const initialStatus = normalizeStatus(searchParams.get("status"));
+  const initialPage = toPositiveInt(searchParams.get("page"), 1);
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
   const [selectedStatus, setSelectedStatus] = useState(initialStatus);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -57,16 +68,22 @@ export default function BrowsePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const debouncedQuery = useDebouncedValue(searchQuery, 300);
 
-  // Debounce search query — update debouncedQuery 300ms after user stops typing
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-      setCurrentPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    const nextQuery = searchParams.get("q") || "";
+    const nextGenres =
+      searchParams.get("genres")?.split(",").filter(Boolean) || [];
+    const nextStatus = normalizeStatus(searchParams.get("status"));
+    const nextPage = toPositiveInt(searchParams.get("page"), 1);
 
+    setSearchQuery((prev) => (prev === nextQuery ? prev : nextQuery));
+    setSelectedStatus((prev) => (prev === nextStatus ? prev : nextStatus));
+    setSelectedGenres((prev) =>
+      areSameStringArrays(prev, nextGenres) ? prev : nextGenres,
+    );
+    setCurrentPage((prev) => (prev === nextPage ? prev : nextPage));
+  }, [searchParams]);
   // Fetch categories on mount
   useEffect(() => {
     getCategories().then(setCategories);
@@ -86,7 +103,7 @@ export default function BrowsePage() {
           }
         } else if (selectedGenres.length > 0) {
           // Use the first selected genre for API (API supports one at a time),
-          // remaining genres are visual — filter client-side
+          // remaining genres are visual - filter client-side
           const data = await getByCategory(selectedGenres[0], currentPage);
           if (data) {
             const filtered =
@@ -141,7 +158,6 @@ export default function BrowsePage() {
 
   const clearFilters = () => {
     setSearchQuery("");
-    setDebouncedQuery("");
     setSelectedGenres([]);
     setSelectedStatus("all");
     setCurrentPage(1);
@@ -201,7 +217,10 @@ export default function BrowsePage() {
               type="search"
               placeholder="Search by title..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full pl-10 bg-card border-border"
             />
           </div>
@@ -292,7 +311,7 @@ export default function BrowsePage() {
               </div>
             </div>
 
-            {/* Genre Tags — multi-select */}
+            {/* Genre Tags - multi-select */}
             <div>
               <label className="text-sm font-medium text-foreground mb-3 block">
                 Genres
@@ -337,7 +356,7 @@ export default function BrowsePage() {
                 className="gap-1 cursor-pointer hover:bg-destructive/20"
                 onClick={() => {
                   setSearchQuery("");
-                  setDebouncedQuery("");
+                  setCurrentPage(1);
                 }}
               >
                 Search: {debouncedQuery}

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { searchComicsQuick } from "@/lib/actions/otruyen-actions";
 import {
   OTruyenComic,
@@ -27,28 +28,25 @@ interface SearchCommandProps {
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 300);
   const [results, setResults] = useState<OTruyenComic[]>([]);
   const [isPending, startTransition] = useTransition();
   const [hasSearched, setHasSearched] = useState(false);
 
   // Debounced search
   useEffect(() => {
-    if (query.trim().length < 2) {
+    if (debouncedQuery.trim().length < 2) {
       setResults([]);
       setHasSearched(false);
       return;
     }
 
-    const timer = setTimeout(() => {
-      setHasSearched(true);
-      startTransition(async () => {
-        const data = await searchComicsQuick(query);
-        setResults(data);
-      });
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query]);
+    setHasSearched(true);
+    startTransition(async () => {
+      const data = await searchComicsQuick(debouncedQuery);
+      setResults(data);
+    });
+  }, [debouncedQuery]);
 
   // Reset on close
   useEffect(() => {
