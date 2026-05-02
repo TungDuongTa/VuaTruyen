@@ -22,9 +22,7 @@ It combines public manga data from OTruyen API with local user features:
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
 - [Database Collections](#database-collections)
-- [Scripts](#scripts)
-- [Operational Notes](#operational-notes)
-- [Deployment Notes](#deployment-notes)
+
 
 ## Overview
 
@@ -213,51 +211,4 @@ Better Auth also creates its own auth-related collections (users, sessions, acco
 
 `/18+` routes depend on these collections. Without data, the UI will render empty-state messages.
 
-## Scripts
 
-| Command           | Description                 |
-| ----------------- | --------------------------- |
-| `npm run dev`     | Start local dev server      |
-| `npm run build`   | Production build            |
-| `npm run start`   | Start production server     |
-| `npm run lint`    | ESLint check                |
-| `npm run test:db` | Mongo connection smoke test |
-
-## Operational Notes
-
-- Bookmark ordering:
-  - Bookmarks are sorted by `comicUpdatedAt` desc, then `createdAt` desc.
-- Route inference:
-  - Bookmarks/history can auto-resolve whether slug belongs to `/manga` or `/18+`.
-- Chapter visit dedupe:
-  - Reader avoids duplicate visit writes in a short client-side window.
-- Comments:
-  - Manga detail and chapter pages support threaded comments.
-  - 18+ pages intentionally disable comments.
-
-### Current configuration trade-offs
-
-- `next.config.mjs` currently sets `typescript.ignoreBuildErrors: true`.
-  - This is convenient during rapid iteration but risky for production quality gates.
-- `images.remotePatterns` allows all HTTPS domains.
-  - Useful for mixed external image hosts, but broader than strict allow-listing.
-
-## Deployment Notes
-
-1. Set all required environment variables in your hosting platform.
-2. Ensure MongoDB network access and credentials are valid for deployed origin.
-3. Set `BETTER_AUTH_URL` and `NEXT_PUBLIC_BASE_URL` to your production domain.
-4. Add production Google OAuth callback:
-   - `https://your-domain.com/api/auth/callback/google`
-5. Consider tightening `next.config.mjs`:
-   - Disable `ignoreBuildErrors`
-   - Restrict image host patterns
-
----
-
-If you are extending the platform, good next additions are:
-
-- automated tests for server actions,
-- moderation/reporting tools for comments,
-- caching strategy for high-traffic list pages,
-- and stricter CI quality checks.
