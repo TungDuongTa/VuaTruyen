@@ -140,7 +140,13 @@ export function ChapterReaderPageClient({
     };
 
     void recordVisit();
-  }, [chapter, comic._id, comic.slug, currentChapterInfo, latestChapter?.chapter_name]);
+  }, [
+    chapter,
+    comic._id,
+    comic.slug,
+    currentChapterInfo,
+    latestChapter?.chapter_name,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -224,7 +230,9 @@ export function ChapterReaderPageClient({
 
               <div className="flex shrink-0 flex-wrap items-center justify-center gap-2">
                 {prevChapter ? (
-                  <Link href={`${comicHref}/chapter/${prevChapter.chapter_name}`}>
+                  <Link
+                    href={`${comicHref}/chapter/${prevChapter.chapter_name}`}
+                  >
                     <Button variant="outline" className="gap-2">
                       <ChevronLeft className="h-4 w-4" />
                       Previous
@@ -238,7 +246,9 @@ export function ChapterReaderPageClient({
                 )}
 
                 {nextChapter ? (
-                  <Link href={`${comicHref}/chapter/${nextChapter.chapter_name}`}>
+                  <Link
+                    href={`${comicHref}/chapter/${nextChapter.chapter_name}`}
+                  >
                     <Button variant="outline" className="gap-2">
                       Next
                       <ChevronRight className="h-4 w-4" />
