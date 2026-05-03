@@ -12,6 +12,7 @@ import { signInWithEmail } from "@/lib/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import SocialButton from "@/components/social-button";
+import Image from "next/image";
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
@@ -51,12 +52,13 @@ const SignIn = () => {
     <div className="min-h-screen">
       <main className="mx-auto max-w-md px-4 py-16">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="h-10 w-10 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            Welcome to VuaTruyen
-          </h1>
+          <Image
+            src="/vuatruyentext.png"
+            alt="VuaTruyen"
+            width={1415}
+            height={485}
+            className="w-full h-full object-contain"
+          />
           <p className="text-muted-foreground">
             Sign in to track your reading progress and bookmarks
           </p>
