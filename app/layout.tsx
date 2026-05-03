@@ -33,6 +33,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   keywords: ["manga", "manhwa", "manhua", "read manga", "webtoon", "comics"],
+  verification: {
+    google: "qfbcsA3mxPig7Cj39s4qhgBfPq1O-0RGXdiBiI-wC0A",
+  },
   robots: {
     index: true,
     follow: true,
