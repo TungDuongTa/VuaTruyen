@@ -34,18 +34,27 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   // Fetch data in parallel
-  const [homeData, latestData, completedData, recentComments, rankings] =
-    await Promise.all([
-      getHomeData(),
-      getListByType("truyen-moi", 1),
-      getListByType("hoan-thanh", 1),
-      getRecentTopLevelComments(10),
-      getMangaRankings(10),
-    ]);
+  const [
+    homeData,
+    latestData,
+    completedData,
+    ongoingData,
+    recentComments,
+    rankings,
+  ] = await Promise.all([
+    getHomeData(),
+    getListByType("truyen-moi", 1),
+    getListByType("hoan-thanh", 1),
+    getListByType("dang-phat-hanh", 1),
+    getRecentTopLevelComments(10),
+    getMangaRankings(10),
+  ]);
 
   const featuredComics = homeData?.items || [];
   const latestComics = latestData?.items || [];
   const completedComics = completedData?.items || [];
+  const ongoingComics = ongoingData?.items || [];
+
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -95,7 +104,7 @@ export default async function HomePage() {
         </section>
 
         {/* Popular This Week Grid Section */}
-        <section className="mb-12">
+        {/* <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-foreground">
               Popular This Week
@@ -112,7 +121,7 @@ export default async function HomePage() {
               <MangaCardApi key={comic._id} comic={comic} />
             ))}
           </div>
-        </section>
+        </section> */}
 
         {/* Main Content with Sidebar Section */}
         <section className="grid lg:grid-cols-3 gap-8 mb-12">
@@ -121,8 +130,8 @@ export default async function HomePage() {
             <h2 className="text-2xl font-bold text-foreground mb-6">
               Recommended For You
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {latestComics.slice(0, 8).map((comic) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4  gap-4 md:gap-6">
+              {ongoingComics.slice(0, 24).map((comic) => (
                 <MangaCardApi key={comic._id} comic={comic} />
               ))}
             </div>
@@ -162,4 +171,3 @@ export default async function HomePage() {
     </div>
   );
 }
-

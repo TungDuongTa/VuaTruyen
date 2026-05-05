@@ -53,8 +53,14 @@ export default async function LatestPage({ searchParams }: PageProps) {
   const { page } = await searchParams;
   const currentPage = toSafePageNumber(page);
 
-  const data = await getListByType("truyen-moi", currentPage);
+  const [data, firstPageData] = await Promise.all([
+    getListByType("truyen-moi", currentPage),
+    currentPage === 1 ? Promise.resolve(null) : getListByType("truyen-moi", 1),
+  ]);
   const comics = data?.items || [];
+  const firstPageComics =
+    currentPage === 1 ? comics : (firstPageData?.items || comics);
+  const recentActivityComics = firstPageComics.slice(0, 10);
   const pagination = data?.params.pagination;
   const totalPages = pagination
     ? Math.ceil(pagination.totalItems / pagination.totalItemsPerPage)
@@ -156,7 +162,7 @@ export default async function LatestPage({ searchParams }: PageProps) {
             Recent Activity
           </h2>
           <div className="space-y-3">
-            {comics.slice(0, 10).map((comic) => (
+            {recentActivityComics.map((comic) => (
               <MangaCardApi
                 key={comic._id}
                 comic={comic}
