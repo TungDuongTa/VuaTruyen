@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import Script from "next/script";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import ProgressBar from "@/components/ProgressBar";
@@ -20,6 +21,7 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || "G-Z65549N1TX";
 
 export const metadata: Metadata = {
   metadataBase: getBaseUrl(),
@@ -115,6 +117,22 @@ export default async function RootLayout({
           </main>
         </ThemeProvider>
         <Analytics />
+        {GA_MEASUREMENT_ID ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_MEASUREMENT_ID}');
+              `}
+            </Script>
+          </>
+        ) : null}
       </body>
     </html>
   );
