@@ -43,4 +43,4 @@ node_modules
 next-env.d.ts
 
 .agents/
-.skills-locks.json
+skills-lock.json
