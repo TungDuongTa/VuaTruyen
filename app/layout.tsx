@@ -23,6 +23,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: getBaseUrl(),
+  manifest: "/manifest.webmanifest",
   title: {
     default: withSiteSuffix("Read Manga, Manhwa & Manhua Online"),
     template: `%s | ${SITE_NAME}`,
@@ -35,6 +36,16 @@ export const metadata: Metadata = {
   keywords: ["manga", "manhwa", "manhua", "read manga", "webtoon", "comics"],
   verification: {
     google: "qfbcsA3mxPig7Cj39s4qhgBfPq1O-0RGXdiBiI-wC0A",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/favicon.ico"],
   },
   robots: {
     index: true,

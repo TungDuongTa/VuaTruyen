@@ -75,8 +75,7 @@ export default async function Manga18Page({ searchParams }: PageProps) {
             <h1 className="text-3xl font-bold text-foreground">18+ Library</h1>
           </div>
           <p className="text-muted-foreground">
-            Mature manga collection powered by your `mangas18` and `chapters18`
-            collections.
+            Mature manga collections for your reading pleasure.
           </p>
         </div>
 
@@ -92,11 +91,7 @@ export default async function Manga18Page({ searchParams }: PageProps) {
         {comics.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-5 xl:grid-cols-6">
             {comics.map((comic) => (
-              <MangaCardApi
-                key={comic._id}
-                comic={comic}
-                routeBase="/18+"
-              />
+              <MangaCardApi key={comic._id} comic={comic} routeBase="/18+" />
             ))}
           </div>
         ) : (
@@ -128,7 +123,9 @@ export default async function Manga18Page({ searchParams }: PageProps) {
               {visiblePages.map((pageNum) => (
                 <Link key={pageNum} href={`/18+?page=${pageNum}`}>
                   <Button
-                    variant={pageNum === safeCurrentPage ? "default" : "outline"}
+                    variant={
+                      pageNum === safeCurrentPage ? "default" : "outline"
+                    }
                     size="icon"
                   >
                     {pageNum}
