@@ -86,7 +86,7 @@ export function MangaDetailPageClient({
     const shareUrl = window.location.href;
     const shareData = {
       title: comic.name,
-      text: `\u0110\u1ECDc ${comic.name} tr\u00EAn VuaTruyen`,
+      text: `Đọc truyện tranh ${comic.name} tại VuaTruyen`,
       url: shareUrl,
     };
 
@@ -106,13 +106,13 @@ export function MangaDetailPageClient({
 
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl);
-        toast.success("\u0110\u00E3 sao ch\u00E9p li\u00EAn k\u1EBFt truy\u1EC7n.");
+        toast.success("Đã sao chép liên kết truyện");
         return;
       }
 
-      toast.error("Kh\u00F4ng th\u1EC3 chia s\u1EBB l\u00FAc n\u00E0y.");
+      toast.error("Không thể chia sẽ truyện lúc này.");
     } catch {
-      toast.error("Kh\u00F4ng th\u1EC3 chia s\u1EBB l\u00FAc n\u00E0y.");
+      toast.error("Không thể chia sẽ truyện lúc này.");
     } finally {
       setIsSharing(false);
     }
