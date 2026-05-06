@@ -9,8 +9,8 @@ import { ProfilePageClient } from "@/components/profile/profile-page-client";
 import { withSiteSuffix } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Profile",
-  description: "Manage your profile, avatar, and reader level.",
+  title: "Hồ sơ",
+  description: "Quản lí hồ sơ, ảnh đại diện và cấp độ của đọc giả.",
   alternates: {
     canonical: "/profile",
   },
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
     follow: false,
   },
   openGraph: {
-    title: withSiteSuffix("Profile"),
-    description: "Manage your profile, avatar, and reader level.",
+    title: withSiteSuffix("Hồ sơ"),
+    description: "Quản lí hồ sơ, ảnh đại diện và cấp độ của đọc giả.",
     url: "/profile",
   },
 };
@@ -37,13 +37,13 @@ export default async function ProfilePage() {
           <div className="rounded-2xl border border-border bg-card px-6 py-14 text-center shadow-sm">
             <UserRound className="mx-auto mb-4 h-14 w-14 text-muted-foreground" />
             <h1 className="mb-2 text-2xl font-semibold text-foreground">
-              Sign In Required
+              Vui lòng đăng nhập
             </h1>
             <p className="mb-6 text-muted-foreground">
-              Please sign in to manage your profile, avatar, and reading level.
+              Vui lòng đăng nhập để quản lí hồ sơ, avatar và cấp độ của bạn
             </p>
             <Link href="/sign-in">
-              <Button>Go to Sign In</Button>
+              <Button>Đăng nhập</Button>
             </Link>
           </div>
         </main>
@@ -68,4 +68,3 @@ export default async function ProfilePage() {
     </div>
   );
 }
-

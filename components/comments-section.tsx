@@ -5,7 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeTime } from "@/lib/date-time";
 import { cn } from "@/lib/utils";
-import { getLevelBadgeTier, getLevelUsernameEffect } from "@/lib/level-badge-tiers";
+import {
+  getLevelBadgeTier,
+  getLevelUsernameEffect,
+} from "@/lib/level-badge-tiers";
 
 interface CommentsSectionProps {
   comments: HomeRecentCommentItem[];
@@ -29,12 +32,14 @@ export function CommentsSection({ comments }: CommentsSectionProps) {
     <section className="rounded-xl border border-border bg-card p-4">
       <header className="mb-4 flex items-center gap-2">
         <MessageCircle className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-bold text-foreground">Recent Comments</h3>
+        <h3 className="text-lg font-bold text-foreground">
+          Bình luận mới nhất
+        </h3>
       </header>
 
       {comments.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border bg-secondary/40 px-3 py-6 text-center text-sm text-muted-foreground">
-          No recent comments yet.
+          Chưa có bình luận nào
         </p>
       ) : (
         <div className="max-h-[34rem] space-y-3 overflow-y-auto pr-1">

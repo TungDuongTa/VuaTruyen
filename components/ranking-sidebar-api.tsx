@@ -39,10 +39,10 @@ const periodTabs: Array<{
   label: string;
   Icon: typeof Flame;
 }> = [
-  { key: "daily", label: "Daily", Icon: Flame },
-  { key: "weekly", label: "Weekly", Icon: TrendingUp },
-  { key: "monthly", label: "Monthly", Icon: Clock },
-  { key: "allTime", label: "All Time", Icon: Trophy },
+  { key: "daily", label: "Ngày", Icon: Flame },
+  { key: "weekly", label: "Tháng", Icon: TrendingUp },
+  { key: "monthly", label: "Năm", Icon: Clock },
+  { key: "allTime", label: "Tất cả", Icon: Trophy },
 ];
 
 const formatLatestChapter = (chapterName?: string | null) => {
@@ -101,7 +101,9 @@ export function RankingSidebarApi({
     <div className="bg-card border border-border rounded-xl p-4">
       <div className="flex items-center gap-2 mb-4">
         <Trophy className="h-5 w-5 text-chart-3" />
-        <h3 className="text-lg font-semibold text-foreground">Rankings</h3>
+        <h3 className="text-lg font-semibold text-foreground">
+          Top truyện đề cử
+        </h3>
       </div>
 
       <div className="grid grid-cols-2 gap-1 mb-4 bg-secondary/50 p-1 rounded-lg">
@@ -128,7 +130,7 @@ export function RankingSidebarApi({
           </div>
         ) : rankedComics.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
-            No view data yet.
+            Chưa có dữ liệu lượt xem.
           </div>
         ) : (
           rankedComics.map((comic, index) => (
@@ -165,7 +167,8 @@ export function RankingSidebarApi({
                 <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
                   <span className="truncate">
                     {formatLatestChapter(
-                      comic.latestChapterName || comic.chaptersLatest?.[0]?.chapter_name,
+                      comic.latestChapterName ||
+                        comic.chaptersLatest?.[0]?.chapter_name,
                     )}
                   </span>
                   <span className="inline-flex shrink-0 items-center gap-1">

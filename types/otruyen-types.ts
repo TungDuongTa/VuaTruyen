@@ -183,27 +183,12 @@ export function getChapterImageUrl(
 export function formatStatus(status: string): string {
   switch (status) {
     case "ongoing":
-      return "Ongoing";
+      return "Đang cập nhật";
     case "completed":
-      return "Completed";
+      return "Hoàn thành";
     case "coming_soon":
-      return "Coming soon";
+      return "Sắp ra mắt";
     default:
       return status;
   }
-}
-
-// Helper to format date
-export function formatUpdatedAt(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 60) return `${diffMins} minutes ago`;
-  if (diffHours < 24) return `${diffHours} hours ago`;
-  if (diffDays < 7) return `${diffDays} days ago`;
-  return date.toLocaleDateString();
 }

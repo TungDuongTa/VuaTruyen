@@ -27,7 +27,9 @@ export const metadata: Metadata = {
   metadataBase: getBaseUrl(),
   manifest: "/manifest.webmanifest",
   title: {
-    default: withSiteSuffix("Read Manga, Manhwa & Manhua Online"),
+    default: withSiteSuffix(
+      "Đọc truyện tranh manga, manwha và manhua mới nhật được cập nhật tại VuaTruyen",
+    ),
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -46,7 +48,9 @@ export const metadata: Metadata = {
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       { url: "/icon.png", sizes: "192x192", type: "image/png" },
     ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
     shortcut: ["/favicon.ico"],
   },
   robots: {
@@ -62,10 +66,12 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "vi_VN",
     url: "/",
     siteName: SITE_NAME,
-    title: withSiteSuffix("Read Manga, Manhwa & Manhua Online"),
+    title: withSiteSuffix(
+      "Đọc truyện tranh manga, manwha và manhua mới nhật được cập nhật tại VuaTruyen",
+    ),
     description: SITE_DESCRIPTION,
     images: [
       {
@@ -78,7 +84,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: withSiteSuffix("Read Manga, Manhwa & Manhua Online"),
+    title: withSiteSuffix(
+      "Đọc truyện tranh manga, manwha và manhua mới nhật được cập nhật tại VuaTruyen",
+    ),
     description: SITE_DESCRIPTION,
     images: ["/body-bg.jpg"],
   },
@@ -101,7 +109,7 @@ export default async function RootLayout({
       }
     : null;
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"

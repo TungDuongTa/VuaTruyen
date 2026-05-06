@@ -10,10 +10,10 @@ const RELATIVE_TIME_UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
 
 export const formatRelativeTime = (
   input: string,
-  locale: string = "en",
+  locale: string = "vi",
 ): string => {
   const date = new Date(input);
-  if (Number.isNaN(date.getTime())) return "just now";
+  if (Number.isNaN(date.getTime())) return "vừa xong";
 
   const diffMs = date.getTime() - Date.now();
   const diffAbsSeconds = Math.round(Math.abs(diffMs) / 1000);
@@ -26,15 +26,15 @@ export const formatRelativeTime = (
     }
   }
 
-  return "just now";
+  return "vừa xong";
 };
 
 export const formatShortDate = (
   dateString: string,
-  locale: string = "en-US",
+  locale: string = "vi-VN",
 ): string => {
   const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "Unknown date";
+  if (Number.isNaN(date.getTime())) return "Không rõ ngày";
 
   return date.toLocaleDateString(locale, {
     day: "numeric",
@@ -42,4 +42,3 @@ export const formatShortDate = (
     year: "numeric",
   });
 };
-

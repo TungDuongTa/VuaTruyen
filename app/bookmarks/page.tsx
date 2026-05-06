@@ -24,8 +24,9 @@ import { withSiteSuffix } from "@/lib/seo";
 const ITEMS_PER_PAGE = 24;
 
 export const metadata: Metadata = {
-  title: "My Library",
-  description: "Manage your bookmarks and reading history.",
+  title: "Theo dõi",
+  description:
+    "Quản lí danh sách truyện yêu thích và lịch sử đọc truyện của bạn",
   alternates: {
     canonical: "/bookmarks",
   },
@@ -34,8 +35,9 @@ export const metadata: Metadata = {
     follow: false,
   },
   openGraph: {
-    title: withSiteSuffix("My Library"),
-    description: "Manage your bookmarks and reading history.",
+    title: withSiteSuffix("Theo dõi"),
+    description:
+      "Quản lí danh sách truyện yêu thích và lịch sử đọc truyện của bạn",
     url: "/bookmarks",
   },
 };
@@ -61,13 +63,13 @@ export default async function BookmarksPage({
           <div className="text-center py-16 bg-card border border-border rounded-xl">
             <Bookmark className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              Sign In Required
+              Vui lòng đăng nhập
             </h1>
             <p className="text-muted-foreground mb-6">
-              Please sign in to view and manage your manga bookmarks.
+              Vui lòng đăng nhập để xem danh sách theo dõi của bạn
             </p>
             <Link href="/sign-in">
-              <Button>Go to Sign In</Button>
+              <Button>Đăng nhập</Button>
             </Link>
           </div>
         </main>
@@ -125,10 +127,10 @@ export default async function BookmarksPage({
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Bookmark className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">My Library</h1>
+            <h1 className="text-3xl font-bold text-foreground">Theo dõi</h1>
           </div>
           <p className="text-muted-foreground">
-            Your bookmarks and reading history.
+            Danh sách theo dõi và lịch sử đọc truyện
           </p>
         </div>
 
@@ -136,11 +138,11 @@ export default async function BookmarksPage({
           <TabsList className="w-full justify-start bg-card border border-border rounded-xl p-1 h-auto flex-wrap mb-8">
             <TabsTrigger value="bookmarks" className="gap-2">
               <Bookmark className="h-4 w-4" />
-              Bookmarks ({bookmarkResult.totalItems})
+              Theo dõi ({bookmarkResult.totalItems})
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <Clock3 className="h-4 w-4" />
-              Reading History ({historyResult.totalItems})
+              Lịch sử ({historyResult.totalItems})
             </TabsTrigger>
           </TabsList>
 
@@ -149,10 +151,10 @@ export default async function BookmarksPage({
               <>
                 <div className="mb-6 flex items-center justify-between gap-3 flex-wrap">
                   <Badge className="bg-accent text-accent-foreground">
-                    {bookmarkResult.totalItems} saved
+                    {bookmarkResult.totalItems} đã lưu
                   </Badge>
                   <p className="text-sm text-muted-foreground">
-                    Page {bookmarkPage} of {bookmarksTotalPages}
+                    Trang {bookmarkPage} trên {bookmarksTotalPages}
                   </p>
                 </div>
 
@@ -168,7 +170,8 @@ export default async function BookmarksPage({
                         <MangaCardApi comic={manga} />
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <p className="text-xs text-muted-foreground">
-                            Saved {formatShortDate(manga.bookmarkedAt)}
+                            Bắt đầu theo dõi từ{" "}
+                            {formatShortDate(manga.bookmarkedAt)}
                           </p>
                           <form action={removeAction}>
                             <Button
@@ -176,7 +179,7 @@ export default async function BookmarksPage({
                               variant="ghost"
                               size="icon"
                               className="text-muted-foreground hover:text-destructive"
-                              aria-label={`Remove ${manga.name} from bookmarks`}
+                              aria-label={`Xóa ${manga.name} khỏi danh sách theo dõi`}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -255,13 +258,13 @@ export default async function BookmarksPage({
               <div className="text-center py-16 bg-card border border-border rounded-xl">
                 <Bookmark className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-foreground mb-2">
-                  No bookmarks yet
+                  Bạn chưa theo dõi bộ truyện nào
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  Start adding manga and they will appear here.
+                  Hãy theo dõi truyện để hiển thị danh sách
                 </p>
                 <Link href="/browse">
-                  <Button>Browse Manga</Button>
+                  <Button>Khám phá truyện mới</Button>
                 </Link>
               </div>
             )}
@@ -275,7 +278,7 @@ export default async function BookmarksPage({
                     {historyResult.totalItems} manga in history
                   </Badge>
                   <p className="text-sm text-muted-foreground">
-                    Page {historyPage} of {historyTotalPages}
+                    Trang {historyPage} trên {historyTotalPages}
                   </p>
                 </div>
 
@@ -284,7 +287,7 @@ export default async function BookmarksPage({
                     <div key={manga.slug}>
                       <MangaCardApi comic={manga} />
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Last read {formatShortDate(manga.latestReadAt)}
+                        Đọc lần cuối vào {formatShortDate(manga.latestReadAt)}
                       </p>
                     </div>
                   ))}
@@ -358,13 +361,13 @@ export default async function BookmarksPage({
               <div className="text-center py-16 bg-card border border-border rounded-xl">
                 <Clock3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-foreground mb-2">
-                  No reading history yet
+                  Chưa có lịch sử đọc truyện nào
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  Start reading chapters and your history will appear here.
+                  Hãy thưởng thức một vài bộ truyện tranh
                 </p>
                 <Link href="/browse">
-                  <Button>Start Reading</Button>
+                  <Button>Khám phá truyện mới</Button>
                 </Link>
               </div>
             )}

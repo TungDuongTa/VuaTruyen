@@ -4,8 +4,8 @@ import { getSessionUser } from "@/lib/server-session";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Account",
-  description: "Sign in or create an account to sync bookmarks and reading progress.",
+  title: "Tài khoản",
+  description: "Hãy đăng nhập để lưu danh sách theo dõi và lịch sử đọc của bạn",
   robots: {
     index: false,
     follow: false,

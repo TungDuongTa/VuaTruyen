@@ -27,9 +27,9 @@ export async function generateMetadata({
     page: currentPage > 1 ? currentPage : undefined,
   });
   const pageSuffix = currentPage > 1 ? ` - Page ${currentPage}` : "";
-  const title = `Latest Manga Updates${pageSuffix}`;
+  const title = `Truyện tranh được cập nhật mới nhất${pageSuffix}`;
   const description =
-    "Browse the newest manga chapter releases and recent updates across the library.";
+    "Theo dõi những bộ truyện tranh được cập nhật mới nhất tại VuaTruyen.";
 
   return {
     title,
@@ -59,7 +59,7 @@ export default async function LatestPage({ searchParams }: PageProps) {
   ]);
   const comics = data?.items || [];
   const firstPageComics =
-    currentPage === 1 ? comics : (firstPageData?.items || comics);
+    currentPage === 1 ? comics : firstPageData?.items || comics;
   const recentActivityComics = firstPageComics.slice(0, 10);
   const pagination = data?.params.pagination;
   const totalPages = pagination
@@ -74,12 +74,10 @@ export default async function LatestPage({ searchParams }: PageProps) {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Clock className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">
-              Latest Updates
-            </h1>
+            <h1 className="text-3xl font-bold text-foreground">Mới cập nhật</h1>
           </div>
           <p className="text-muted-foreground">
-            The newest manga chapters, updated daily
+            Các bộ truyện tranh mới nhất, được cập nhật hàng ngày
           </p>
         </div>
 
@@ -87,10 +85,10 @@ export default async function LatestPage({ searchParams }: PageProps) {
         {pagination && (
           <div className="flex items-center gap-3 mb-6">
             <Badge className="bg-accent text-accent-foreground">
-              {pagination.totalItems} total
+              Tổng {pagination.totalItems} truyện
             </Badge>
             <p className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
+              Trang {currentPage} trên {totalPages}
             </p>
           </div>
         )}
@@ -106,10 +104,10 @@ export default async function LatestPage({ searchParams }: PageProps) {
           <div className="text-center py-16">
             <div className="text-6xl mb-4">📚</div>
             <h3 className="text-xl font-semibold text-foreground mb-2">
-              No manga found
+              Không tìm thấy truyện
             </h3>
             <p className="text-muted-foreground">
-              Check back later for updates
+              Hãy quay lại sau để xem những cập nhật mới nhất
             </p>
           </div>
         )}
@@ -159,7 +157,7 @@ export default async function LatestPage({ searchParams }: PageProps) {
         {/* Horizontal List View */}
         <section className="mt-12">
           <h2 className="text-xl font-bold text-foreground mb-6">
-            Recent Activity
+            Được cập nhật gần đây
           </h2>
           <div className="space-y-3">
             {recentActivityComics.map((comic) => (

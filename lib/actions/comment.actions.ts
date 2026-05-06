@@ -127,7 +127,9 @@ const buildCommentPagination = (
 
 const findAuthUsersByIds = async (
   userIds: Array<ObjectId | string>,
-): Promise<Array<{ _id?: ObjectId | string; name?: string; image?: string }>> => {
+): Promise<
+  Array<{ _id?: ObjectId | string; name?: string; image?: string }>
+> => {
   if (userIds.length === 0) return [];
 
   const mongoose = await connectToDatabase();

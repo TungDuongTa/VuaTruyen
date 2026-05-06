@@ -15,10 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { searchComicsQuick } from "@/lib/actions/otruyen-actions";
+import { formatRelativeTime } from "@/lib/date-time";
 import {
   OTruyenComic,
   getImageUrl,
-  formatUpdatedAt,
 } from "@/types/otruyen-types";
 
 interface SearchCommandProps {
@@ -83,9 +83,9 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
         className="max-w-2xl p-0 overflow-hidden bg-card border-border"
         showCloseButton={false}
       >
-        <DialogTitle className="sr-only">Search Manga</DialogTitle>
+        <DialogTitle className="sr-only">Tìm kiếm truyện </DialogTitle>
         <DialogDescription className="sr-only">
-          Search for manga, manhwa, or manhua by title.
+          Tìm kiếm theo tên truyện
         </DialogDescription>
 
         {/* Search Input */}
@@ -115,11 +115,11 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
         <div className="max-h-[400px] overflow-y-auto">
           {!hasSearched && query.length < 2 ? (
             <div className="py-12 text-center text-muted-foreground">
-              Type at least 2 characters to search...
+              Nhập ít nhất 2 ký tự để bắt đầu tìm kiếm.....
             </div>
           ) : results.length === 0 && hasSearched && !isPending ? (
             <div className="py-12 text-center text-muted-foreground">
-              No results found for &quot;{query}&quot;
+              Không tìm thấy kết quả cho &quot;{query}&quot;
             </div>
           ) : (
             <div className="p-2">
@@ -150,7 +150,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     <p className="text-sm text-muted-foreground mt-0.5">
                       {comic.chaptersLatest?.[0]?.chapter_name
                         ? `Chapter ${comic.chaptersLatest[0].chapter_name}`
-                        : formatUpdatedAt(comic.updatedAt)}
+                        : formatRelativeTime(comic.updatedAt)}
                     </p>
                     <div className="flex flex-wrap items-center gap-1.5 mt-2">
                       {comic.category.slice(0, 3).map((cat, index) => (
@@ -177,7 +177,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
             onClick={handleSelect}
           >
             <Button className="w-full gap-2" variant="default">
-              View all results
+              Xem tất cả kết quả tìm kiếm
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
@@ -195,11 +195,10 @@ export function SearchTrigger({ onClick }: { onClick: () => void }) {
       className="flex w-full items-center gap-3 rounded-xl border border-border/70 bg-card/70 px-4 py-2.5 text-muted-foreground transition-colors hover:border-primary/30 hover:bg-secondary/60"
     >
       <Search className="h-4 w-4 shrink-0" />
-      <span className="text-sm flex-1 text-left">Search manga...</span>
+      <span className="text-sm flex-1 text-left">Tìm truyện....</span>
       <kbd className="hidden h-6 items-center rounded-md border border-border/80 bg-secondary/80 px-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:inline-flex">
         Ctrl K
       </kbd>
     </button>
   );
 }
-

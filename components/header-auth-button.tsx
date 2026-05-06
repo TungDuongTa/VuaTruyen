@@ -37,7 +37,7 @@ export function HeaderAuthButton({ user }: HeaderAuthButtonProps) {
     <Link href="/sign-in">
       <Button variant="secondary" size="sm" className="gap-2">
         <User className="h-4 w-4" />
-        <span className="hidden sm:inline">Sign In</span>
+        <span className="hidden sm:inline">Đăng nhập</span>
       </Button>
     </Link>
   );

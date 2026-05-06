@@ -28,8 +28,8 @@ export async function generateMetadata({
 
   if (!comic) {
     return {
-      title: `Chapter ${chapter} Not Found`,
-      description: "The 18+ chapter you requested could not be found.",
+      title: `Không tìm thấy chapter ${chapter} `,
+      description: "Không tìm thấy chapter này.",
       alternates: {
         canonical: canonicalPath,
       },
@@ -41,7 +41,7 @@ export async function generateMetadata({
   }
 
   const title = `${comic.name} Chapter ${chapter} (18+)`;
-  const description = `Read ${comic.name} chapter ${chapter} in the mature manga library with smooth chapter navigation.`;
+  const description = `Đọc truyện 18+ ${comic.name} chapter ${chapter} mới nhất được cập nhật liên tục tại VuaTruyen.`;
 
   return {
     title,
@@ -87,10 +87,10 @@ export default async function Manga18ChapterReaderPage({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <h1 className="mb-4 text-2xl font-bold text-foreground">
-          Chapter Not Found
+          Không tìm thấy chapter
         </h1>
         <Link href={`/18+/${id}`}>
-          <Button>Go Back</Button>
+          <Button>Quay lại</Button>
         </Link>
       </div>
     );

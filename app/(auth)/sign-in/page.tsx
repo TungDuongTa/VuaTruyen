@@ -42,7 +42,7 @@ const SignIn = () => {
       }
     } catch (error) {
       console.error("Sign-in error:", error);
-      toast.error("Sign-in failed. Please try again.", {
+      toast.error("Đăng nhập thất bại. Vui lòng thử lại", {
         description:
           error instanceof Error ? error.message : "Failed to sign in",
       });
@@ -60,7 +60,7 @@ const SignIn = () => {
             className="w-full h-full object-contain"
           />
           <p className="text-muted-foreground">
-            Sign in to track your reading progress and bookmarks
+            Hãy đăng nhập để lưu danh sách theo dõi và lịch sử đọc của bạn
           </p>
         </div>
 
@@ -104,26 +104,26 @@ const SignIn = () => {
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">
                   <input type="checkbox" className="rounded border-border" />
-                  Remember me
+                  Nhớ tài khoản
                 </label>
                 <Link href="#" className="text-sm text-primary hover:underline">
-                  Forgot password?
+                  Quên mật khẩu?
                 </Link>
               </div>
               <Button type="submit" className="w-full">
-                Sign In
+                Đăng nhập
               </Button>
             </form>
 
             <div className="mt-6 pt-6 border-t border-border">
               <p className="text-center text-sm text-muted-foreground mb-3">
-                Don't have an account?{" "}
+                Chưa có tài khoản?{" "}
                 <Link href="/sign-up" className="text-primary hover:underline">
-                  Sign up
+                  Đăng kí
                 </Link>
               </p>
               <p className="text-center text-sm text-muted-foreground mb-4">
-                Or continue with
+                Hoặc đăng nhập với
               </p>
               <SocialButton />
             </div>

@@ -16,18 +16,22 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Home",
+  title: "Trang chủ",
   description: SITE_DESCRIPTION,
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: withSiteSuffix("Read Manga, Manhwa & Manhua Online"),
+    title: withSiteSuffix(
+      "Đọc truyện tranh manga, manhwa và manhua miễn phí được cập nhật nhanh nhất",
+    ),
     description: SITE_DESCRIPTION,
     url: "/",
   },
   twitter: {
-    title: withSiteSuffix("Read Manga, Manhwa & Manhua Online"),
+    title: withSiteSuffix(
+      "Đọc truyện tranh manga, manhwa và manhua miễn phí được cập nhật nhanh nhất",
+    ),
     description: SITE_DESCRIPTION,
   },
 };
@@ -59,7 +63,14 @@ export default async function HomePage() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_NAME,
-    alternateName: ["Vua Truyen"],
+    alternateName: [
+      "Vua Truyen",
+      "Vua truyện",
+      "vua truyen",
+      "Vua truyen",
+      "Vua Truyện",
+      "vua truyện",
+    ],
     url: toAbsoluteUrl("/"),
     potentialAction: {
       "@type": "SearchAction",
@@ -86,14 +97,12 @@ export default async function HomePage() {
         {/* Latest Updates Grid Section */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-foreground">
-              Latest Updates
-            </h2>
+            <h2 className="text-2xl font-bold text-foreground">Mới cập nhật</h2>
             <Link
               href="/latest"
               className="flex items-center gap-1 text-sm text-primary hover:underline"
             >
-              View All <ChevronRight className="h-4 w-4" />
+              Xem tất cả <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
@@ -128,7 +137,7 @@ export default async function HomePage() {
           {/* Left Side - Manga List */}
           <div className="lg:col-span-2">
             <h2 className="text-2xl font-bold text-foreground mb-6">
-              Recommended For You
+              Truyện đề cử
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4  gap-4 md:gap-6">
               {ongoingComics.slice(0, 24).map((comic) => (
@@ -148,13 +157,14 @@ export default async function HomePage() {
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-foreground">
-              Completed Series
+              Truyện đã hoàn thành
             </h2>
             <Link
               href="/browse?status=completed"
               className="flex items-center gap-1 text-sm text-primary hover:underline"
             >
-              View All <ChevronRight className="h-4 w-4" />
+              Xem tất cả
+              <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="grid gap-3">

@@ -61,12 +61,12 @@ export function Header({ user }: HeaderProps) {
   }, [pathname]);
 
   const navLinks = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/browse", label: "Browse", icon: Library },
-    { href: "/latest", label: "Latest", icon: Clock },
+    { href: "/", label: "Trang chủ", icon: Home },
+    { href: "/browse", label: "Khám phá", icon: Library },
+    { href: "/latest", label: "Mới nhất", icon: Clock },
     { href: "/18+", label: "18+", icon: ShieldAlert },
-    { href: "/bookmarks", label: "Bookmarks", icon: Bookmark },
-    { href: "/ranking", label: "Ranking", icon: Trophy },
+    { href: "/bookmarks", label: "Theo dõi", icon: Bookmark },
+    { href: "/ranking", label: "BXH", icon: Trophy },
   ];
 
   const isActiveLink = (href: string) => {
