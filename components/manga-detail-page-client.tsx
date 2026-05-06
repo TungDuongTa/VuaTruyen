@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
 import { formatRelativeTime } from "@/lib/date-time";
 import { formatViewCount } from "@/lib/view-utils";
+import { toast } from "sonner";
 import {
   type ComicDetailItem,
   formatStatus,
@@ -48,6 +49,7 @@ export function MangaDetailPageClient({
 }: MangaDetailPageClientProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [chaptersOrder, setChaptersOrder] = useState<"desc" | "asc">("desc");
+  const [isSharing, setIsSharing] = useState(false);
 
   const chapters = comic.chapters?.[0]?.server_data || [];
   const sortedChapters = [...chapters].sort((a, b) => {
@@ -77,6 +79,44 @@ export function MangaDetailPageClient({
       latestChapterName: latestChapter?.chapter_name,
       routeBase,
     });
+
+  const handleShare = async () => {
+    if (isSharing) return;
+
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: comic.name,
+      text: `\u0110\u1ECDc ${comic.name} tr\u00EAn VuaTruyen`,
+      url: shareUrl,
+    };
+
+    setIsSharing(true);
+
+    try {
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
+        }
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("\u0110\u00E3 sao ch\u00E9p li\u00EAn k\u1EBFt truy\u1EC7n.");
+        return;
+      }
+
+      toast.error("Kh\u00F4ng th\u1EC3 chia s\u1EBB l\u00FAc n\u00E0y.");
+    } catch {
+      toast.error("Kh\u00F4ng th\u1EC3 chia s\u1EBB l\u00FAc n\u00E0y.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -205,9 +245,15 @@ export function MangaDetailPageClient({
                       ? "Đã theo dõi"
                       : "Theo dõi"}
                 </Button>
-                <Button size="lg" variant="ghost" className="gap-2">
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  className="gap-2"
+                  onClick={handleShare}
+                  disabled={isSharing}
+                >
                   <Share2 className="h-4 w-4" />
-                  Chia sẻ
+                  {isSharing ? "\u0110ang chia s\u1EBB..." : "Chia s\u1EBB"}
                 </Button>
               </div>
             </div>
