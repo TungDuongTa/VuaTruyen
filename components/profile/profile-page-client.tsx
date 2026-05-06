@@ -18,7 +18,10 @@ import {
   UserRound,
 } from "lucide-react";
 import { signOut, updateUserProfile } from "@/lib/actions/auth.actions";
-import { getLevelBadgeTier, getLevelUsernameEffect } from "@/lib/level-badge-tiers";
+import {
+  getLevelBadgeTier,
+  getLevelUsernameEffect,
+} from "@/lib/level-badge-tiers";
 import {
   EXP_PER_CHAPTER,
   EXP_PER_LEVEL,
@@ -110,7 +113,7 @@ export function ProfilePageClient({
     if (normalizedName.length < 2 || normalizedName.length > 40) {
       setNotice({
         type: "error",
-        message: "Display name must be between 2 and 40 characters.",
+        message: "Tên hiển thị phải từ 2 dến 40 ký tự",
       });
       return;
     }
@@ -193,23 +196,25 @@ export function ProfilePageClient({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <UserRound className="h-5 w-5 text-primary" />
-              Profile Settings
+              Hồ sơ
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="display-name">Display Name</Label>
+              <Label htmlFor="display-name">Tên hiển thị</Label>
               <Input
                 id="display-name"
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
                 maxLength={40}
-                placeholder="Enter your display name"
+                placeholder="Nhập tên hiển thị"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="avatar-url">Avatar URL or Uploaded Image</Label>
+              <Label htmlFor="avatar-url">
+                URL ảnh đại diện hoặc tải ảnh lên
+              </Label>
               <Input
                 id="avatar-url"
                 value={avatarInput}
@@ -237,7 +242,7 @@ export function ProfilePageClient({
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="h-4 w-4" />
-                Upload Avatar
+                Tải ảnh đại diện
               </Button>
               <Button
                 type="button"
@@ -252,7 +257,7 @@ export function ProfilePageClient({
                 }}
               >
                 <Camera className="h-4 w-4" />
-                Remove Avatar
+                Xóa ảnh đại diện
               </Button>
             </div>
 
@@ -278,12 +283,12 @@ export function ProfilePageClient({
               {isSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
+                  Đang lưu...
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  Save Changes
+                  Lưu
                 </>
               )}
             </Button>
@@ -294,7 +299,7 @@ export function ProfilePageClient({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Trophy className="h-5 w-5 text-primary" />
-              Reader Level
+              Cấp bậc
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -312,19 +317,19 @@ export function ProfilePageClient({
 
             <p className="text-sm text-muted-foreground">
               {isMaxLevel
-                ? "Maximum level reached. Keep reading to grow your total EXP."
-                : `${readingExp.currentLevelExp}/${EXP_PER_LEVEL} EXP in this level. ${readingExp.expToNextLevel} EXP until Level ${nextLevel}.`}
+                ? "Bạn đã đạt cấp độ tối đa. Vuatruyen xin cảm ơn"
+                : `Cần ${readingExp.expToNextLevel} EXP để đạt level  ${nextLevel}.`}
             </p>
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg border border-border/70 bg-background/60 p-3">
-                <p className="text-muted-foreground">Total EXP</p>
+                <p className="text-muted-foreground">Tổng số EXP</p>
                 <p className="text-lg font-semibold text-foreground">
                   {readingExp.totalExp.toLocaleString()}
                 </p>
               </div>
               <div className="rounded-lg border border-border/70 bg-background/60 p-3">
-                <p className="text-muted-foreground">Chapters Read</p>
+                <p className="text-muted-foreground">Số chapters đã đọc</p>
                 <p className="text-lg font-semibold text-foreground">
                   {readingExp.chaptersRead.toLocaleString()}
                 </p>
@@ -332,8 +337,7 @@ export function ProfilePageClient({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              EXP is earned from manga reading activity. Current rate:{" "}
-              {EXP_PER_CHAPTER} EXP per chapter.
+              Hãy đọc thêm nhiều truyện để tăng cấp !!!
             </p>
 
             <Button
@@ -346,12 +350,12 @@ export function ProfilePageClient({
               {isSigningOut ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Signing Out...
+                  Đang đăng xuất...
                 </>
               ) : (
                 <>
                   <LogOut className="h-4 w-4" />
-                  Sign Out
+                  Đăng xuất
                 </>
               )}
             </Button>

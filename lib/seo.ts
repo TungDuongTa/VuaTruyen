@@ -1,7 +1,7 @@
 export const SITE_NAME = "VuaTruyen";
 
 export const SITE_DESCRIPTION =
-  "Read manga, manhwa, and manhua online with daily updates, rankings, bookmarks, and chapter progress tracking.";
+  "Đọc truyện tranh manga, manhwa và manhua online, được cập nhật hằng ngày, có bảng xếp hạng, theo dõi và tiến độ đọc.";
 
 const FALLBACK_BASE_URL = "http://localhost:3000";
 
@@ -35,7 +35,10 @@ export const withSiteSuffix = (title: string): string =>
   `${title} | ${SITE_NAME}`;
 
 export const stripHtml = (value: string): string =>
-  value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 export const truncateText = (value: string, maxLength: number): string => {
   const normalized = value.trim();

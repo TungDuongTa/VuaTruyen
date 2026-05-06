@@ -27,9 +27,9 @@ export async function generateMetadata({
     page: currentPage > 1 ? currentPage : undefined,
   });
   const pageSuffix = currentPage > 1 ? ` - Page ${currentPage}` : "";
-  const title = `18+ Manga Library${pageSuffix}`;
+  const title = `Thư viện truyện tranh 18+ ${pageSuffix}`;
   const description =
-    "Explore the mature manga collection with chapter updates and browsing tools.";
+    "Lạc vào tiên cảnh, giải trí sau những giờ đọc truyện căng thẳng";
 
   return {
     title,
@@ -72,19 +72,12 @@ export default async function Manga18Page({ searchParams }: PageProps) {
         <div className="mb-8">
           <div className="mb-2 flex items-center gap-3">
             <ShieldAlert className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">18+ Library</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Thư viện truyện tranh 18+
+            </h1>
           </div>
           <p className="text-muted-foreground">
-            Mature manga collections for your reading pleasure.
-          </p>
-        </div>
-
-        <div className="mb-6 flex items-center gap-3">
-          <Badge className="bg-accent text-accent-foreground">
-            {pagination.totalItems} total
-          </Badge>
-          <p className="text-sm text-muted-foreground">
-            Page {safeCurrentPage} of {totalPages}
+            Giải trí sau những giờ đọc truyện căng thẳng
           </p>
         </div>
 
@@ -97,7 +90,7 @@ export default async function Manga18Page({ searchParams }: PageProps) {
         ) : (
           <div className="py-16 text-center">
             <h3 className="mb-2 text-xl font-semibold text-foreground">
-              No 18+ manga found
+              Không tìm thấy truyện nào
             </h3>
             <p className="text-muted-foreground">
               Add documents into `mangas18` to populate this page.

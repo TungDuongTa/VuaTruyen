@@ -12,7 +12,9 @@ type ChapterReaderPageProps = {
   params: Promise<{ id: string; chapter: string }>;
 };
 
-const getComicDetailCached = cache(async (slug: string) => getComicDetail(slug));
+const getComicDetailCached = cache(async (slug: string) =>
+  getComicDetail(slug),
+);
 
 export async function generateMetadata({
   params,
@@ -25,8 +27,8 @@ export async function generateMetadata({
 
   if (!comic) {
     return {
-      title: `Chapter ${chapter} Not Found`,
-      description: "The chapter you requested could not be found.",
+      title: `Không tìm thấy chapter ${chapter}`,
+      description: "Không tìm thấy chapter bạn yêu cầu",
       alternates: {
         canonical: canonicalPath,
       },
@@ -38,7 +40,7 @@ export async function generateMetadata({
   }
 
   const title = `${comic.name} Chapter ${chapter}`;
-  const description = `Read ${comic.name} chapter ${chapter} online with high-quality pages and smooth chapter navigation.`;
+  const description = `Đọc truyện tranh ${comic.name} chapter ${chapter} mới nhất được cập nhật tại Vuatruyen`;
 
   return {
     title,
@@ -80,10 +82,10 @@ export default async function ChapterReaderPage({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <h1 className="mb-4 text-2xl font-bold text-foreground">
-          Chapter Not Found
+          Không tìm thấy chapter
         </h1>
         <Link href={`/manga/${id}`}>
-          <Button>Go Back</Button>
+          <Button>Quay lại</Button>
         </Link>
       </div>
     );
@@ -99,10 +101,10 @@ export default async function ChapterReaderPage({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <h1 className="mb-4 text-2xl font-bold text-foreground">
-          Chapter Not Found
+          Không tìm thấy chapter
         </h1>
         <Link href={`/manga/${comic.slug || id}`}>
-          <Button>Go Back</Button>
+          <Button>Quay lại</Button>
         </Link>
       </div>
     );
@@ -118,10 +120,10 @@ export default async function ChapterReaderPage({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <h1 className="mb-4 text-2xl font-bold text-foreground">
-          Chapter Not Found
+          Không tìm thấy chapter
         </h1>
         <Link href={`/manga/${comic.slug || id}`}>
-          <Button>Go Back</Button>
+          <Button>Quay lại</Button>
         </Link>
       </div>
     );

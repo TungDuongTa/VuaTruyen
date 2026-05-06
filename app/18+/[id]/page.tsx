@@ -27,21 +27,23 @@ export async function generateMetadata({
 
   if (!comic) {
     return {
-      title: "Manga Not Found",
-      description: "The 18+ manga you requested could not be found.",
+      title: "Không tìm thấy truyện tranh 18+ nào.",
+      description: "Không tìm thấy truyện tranh 18+ nào.",
       alternates: {
         canonical: canonicalPath,
       },
     };
   }
 
-  const fallbackDescription = `Read ${comic.name} in the mature manga collection with chapter navigation and reading progress.`;
+  const fallbackDescription = `Đọc truyện 18+ ${comic.name} mới nhật được cập nhật liên tục tại VuaTruyen`;
   const description = truncateText(
     stripHtml(comic.content || "") || fallbackDescription,
     160,
   );
   const title = `${comic.name} (18+)`;
-  const coverImage = comic.thumb_url?.trim() ? getImageUrl(comic.thumb_url) : "";
+  const coverImage = comic.thumb_url?.trim()
+    ? getImageUrl(comic.thumb_url)
+    : "";
 
   return {
     title,
@@ -90,10 +92,10 @@ export default async function Manga18DetailPage({
       <div className="min-h-screen">
         <main className="flex min-h-[60vh] flex-col items-center justify-center">
           <h1 className="mb-4 text-2xl font-bold text-foreground">
-            Manga Not Found
+            Không tìm thấy truyện
           </h1>
           <Link href="/18+">
-            <Button>Back to 18+ Library</Button>
+            <Button>Về thư viện 18+</Button>
           </Link>
         </main>
       </div>

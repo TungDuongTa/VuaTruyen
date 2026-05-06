@@ -200,10 +200,11 @@ export default function BrowsePage() {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Browse Library
+            Khám phá thư viện truyện tranh
           </h1>
           <p className="text-muted-foreground">
-            Discover thousands of manga, manhwa, and manhua titles
+            Khám phá hàng ngàn bộ truyện tranh hot nhất được cập nhật hàng ngày
+            tại VuaTruyen
           </p>
         </div>
 
@@ -216,7 +217,7 @@ export default function BrowsePage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search by title..."
+              placeholder="Tìm theo tên truyện...."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -227,7 +228,7 @@ export default function BrowsePage() {
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit">Search</Button>
+            <Button type="submit">Tìm kiếm</Button>
 
             <Button
               type="button"
@@ -236,7 +237,7 @@ export default function BrowsePage() {
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
-              Filters
+              Bộ lọc
               {selectedGenre && (
                 <span className="ml-1 bg-primary-foreground text-primary rounded-full text-xs w-5 h-5 flex items-center justify-center font-bold">
                   1
@@ -280,7 +281,7 @@ export default function BrowsePage() {
                   className="text-muted-foreground"
                 >
                   <X className="h-4 w-4 mr-1" />
-                  Clear All
+                  Xóa tất cả
                 </Button>
               )}
             </div>
@@ -288,7 +289,7 @@ export default function BrowsePage() {
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Status
+                  Trạng thái
                 </label>
                 <Select
                   value={selectedStatus}
@@ -298,9 +299,9 @@ export default function BrowsePage() {
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
                     <SelectItem value="ongoing">Ongoing</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="completed">Hoàn thành</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -309,10 +310,10 @@ export default function BrowsePage() {
             {/* Genre Tags - multi-select */}
             <div>
               <label className="text-sm font-medium text-foreground mb-3 block">
-                Genres
+                Thể loại
                 {selectedGenre && (
                   <span className="ml-2 text-muted-foreground font-normal">
-                    (1 selected)
+                    (đã chọn 1)
                   </span>
                 )}
               </label>
@@ -343,7 +344,7 @@ export default function BrowsePage() {
         {hasActiveFilters && (
           <div className="flex flex-wrap items-center gap-2 mb-6">
             <span className="text-sm text-muted-foreground">
-              Active filters:
+              Bộ lọc đang áp dụng:
             </span>
             {debouncedQuery && (
               <Badge
@@ -355,7 +356,7 @@ export default function BrowsePage() {
                   updateUrl({ query: "", page: 1 });
                 }}
               >
-                Search: {debouncedQuery}
+                Tìm kiếm: {debouncedQuery}
                 <X className="h-3 w-3" />
               </Badge>
             )}
@@ -392,10 +393,10 @@ export default function BrowsePage() {
           <p className="text-sm text-muted-foreground">
             {pagination ? (
               <>
-                Showing {comics.length} of {pagination.totalItems} results
+                Hiển thị {comics.length} trên {pagination.totalItems} kết quả
               </>
             ) : (
-              <>Showing {comics.length} results</>
+              <>Hiển thị {comics.length} kết quả</>
             )}
           </p>
         </div>
@@ -464,16 +465,15 @@ export default function BrowsePage() {
         ) : (
           <div className="text-center py-16">
             <h3 className="text-xl font-semibold text-foreground mb-2">
-              No manga found
+              Không tìm thấy truyện
             </h3>
             <p className="text-muted-foreground mb-4">
-              Try adjusting your filters or search query
+              Hãy thử tìm kiếm lại theo cách khác
             </p>
-            <Button onClick={clearFilters}>Clear Filters</Button>
+            <Button onClick={clearFilters}>Xóa bộ lọc</Button>
           </div>
         )}
       </main>
     </div>
   );
 }
-

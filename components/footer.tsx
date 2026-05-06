@@ -8,8 +8,8 @@ export function Footer() {
       { label: "Manga", href: "/browse?type=manga" },
       { label: "Manhwa", href: "/browse?type=manhwa" },
       { label: "Manhua", href: "/browse?type=manhua" },
-      { label: "18+ Library", href: "/18+" },
-      { label: "Latest Updates", href: "/latest" },
+      { label: "18+ ", href: "/18+" },
+      { label: "Khám phá", href: "/latest" },
     ],
     genres: [
       { label: "Action", href: "/browse?genre=action" },
@@ -21,13 +21,13 @@ export function Footer() {
       { label: "Discord", href: "#" },
       { label: "Reddit", href: "#" },
       { label: "Twitter", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "Liên hệ", href: "#" },
     ],
     legal: [
-      { label: "Terms of Service", href: "#" },
-      { label: "Privacy Policy", href: "#" },
+      { label: "Điều khoản sử dụng", href: "#" },
+      { label: "Chính sách bảo mật", href: "#" },
       { label: "DMCA", href: "#" },
-      { label: "Cookie Policy", href: "#" },
+      { label: "Chính sách Cookie", href: "#" },
     ],
   };
 
@@ -43,14 +43,14 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Your ultimate destination for reading manga, manhwa, and manhua
-              online for free.
+              Điểm đến lý tưởng để đọc truyện tranh manga, manhwa và manhua được
+              cập nhật mỗi ngày.
             </p>
           </div>
 
           {/* Browse */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Browse</h3>
+            <h3 className="font-semibold text-foreground mb-4">Khám phá</h3>
             <ul className="space-y-2">
               {footerLinks.browse.map((link) => (
                 <li key={link.label}>
@@ -67,7 +67,7 @@ export function Footer() {
 
           {/* Genres */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Genres</h3>
+            <h3 className="font-semibold text-foreground mb-4">Thể loại</h3>
             <ul className="space-y-2">
               {footerLinks.genres.map((link) => (
                 <li key={link.label}>
@@ -84,7 +84,7 @@ export function Footer() {
 
           {/* Community */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Community</h3>
+            <h3 className="font-semibold text-foreground mb-4">Cộng đồng</h3>
             <ul className="space-y-2">
               {footerLinks.community.map((link) => (
                 <li key={link.label}>
@@ -101,7 +101,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Legal</h3>
+            <h3 className="font-semibold text-foreground mb-4">Chính sách</h3>
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>

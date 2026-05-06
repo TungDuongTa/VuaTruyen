@@ -2,22 +2,22 @@ import type { Metadata } from "next";
 import { withSiteSuffix } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Browse Manga",
+  title: "Khám phá",
   description:
-    "Search and filter manga, manhwa, and manhua by genre and status.",
+    "Tìm kiếm những bộ truyện tranh manga, manwha và manhua mới nhất tại VuaTruyen",
   alternates: {
     canonical: "/browse",
   },
   openGraph: {
-    title: withSiteSuffix("Browse Manga"),
+    title: withSiteSuffix("Khám phá"),
     description:
-      "Search and filter manga, manhwa, and manhua by genre and status.",
+      "Tìm kiếm những bộ truyện tranh manga, manwha và manhua mới nhất tại VuaTruyen",
     url: "/browse",
   },
   twitter: {
-    title: withSiteSuffix("Browse Manga"),
+    title: withSiteSuffix("Khám phá"),
     description:
-      "Search and filter manga, manhwa, and manhua by genre and status.",
+      "Tìm kiếm những bộ truyện tranh manga, manwha và manhua mới nhất tại VuaTruyen",
   },
 };
 

@@ -199,7 +199,7 @@ export function ChapterReaderPageClient({
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link href="/">Home</Link>
+                    <Link href="/">Trang chủ</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -233,15 +233,15 @@ export function ChapterReaderPageClient({
                   <Link
                     href={`${comicHref}/chapter/${prevChapter.chapter_name}`}
                   >
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="ghost" className="gap-2">
                       <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      Chaper trước
                     </Button>
                   </Link>
                 ) : (
-                  <Button variant="outline" className="gap-2" disabled>
+                  <Button variant="ghost" className="gap-2" disabled>
                     <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    Chaper trước
                   </Button>
                 )}
 
@@ -249,14 +249,14 @@ export function ChapterReaderPageClient({
                   <Link
                     href={`${comicHref}/chapter/${nextChapter.chapter_name}`}
                   >
-                    <Button variant="outline" className="gap-2">
-                      Next
+                    <Button variant="ghost" className="gap-2">
+                      Chapter sau
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 ) : (
-                  <Button variant="outline" className="gap-2" disabled>
-                    Next
+                  <Button variant="ghost" className="gap-2" disabled>
+                    Chapter sau
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 )}
@@ -285,28 +285,28 @@ export function ChapterReaderPageClient({
             <div className="mb-3 flex shrink-0 flex-wrap items-center justify-center gap-2">
               {prevChapter ? (
                 <Link href={`${comicHref}/chapter/${prevChapter.chapter_name}`}>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="ghost" className="gap-2">
                     <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    Chapter trước
                   </Button>
                 </Link>
               ) : (
-                <Button variant="outline" className="gap-2" disabled>
+                <Button variant="ghost" className="gap-2" disabled>
                   <ChevronLeft className="h-4 w-4" />
-                  Previous
+                  Chapter trước
                 </Button>
               )}
 
               {nextChapter ? (
                 <Link href={`${comicHref}/chapter/${nextChapter.chapter_name}`}>
-                  <Button variant="outline" className="gap-2">
-                    Next
+                  <Button variant="ghost" className="gap-2">
+                    Chapter sau
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </Link>
               ) : (
                 <Button variant="outline" className="gap-2" disabled>
-                  Next
+                  Chapter sau
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               )}
@@ -316,7 +316,7 @@ export function ChapterReaderPageClient({
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link href="/">Home</Link>
+                    <Link href="/">Trang chủ</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />

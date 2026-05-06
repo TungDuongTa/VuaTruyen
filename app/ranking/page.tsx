@@ -12,10 +12,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import {
-  buildCanonicalPath,
-  withSiteSuffix,
-} from "@/lib/seo";
+import { buildCanonicalPath, withSiteSuffix } from "@/lib/seo";
 import {
   getMangaRankings,
   type MangaRankingPeriod,
@@ -32,10 +29,10 @@ const RANKING_TABS: Array<{
   label: string;
   Icon: typeof Flame;
 }> = [
-  { key: "daily", label: "Daily", Icon: Flame },
-  { key: "weekly", label: "Weekly", Icon: TrendingUp },
-  { key: "monthly", label: "Monthly", Icon: Clock },
-  { key: "allTime", label: "All Time", Icon: Trophy },
+  { key: "daily", label: "Ngày", Icon: Flame },
+  { key: "weekly", label: "Tuần", Icon: TrendingUp },
+  { key: "monthly", label: "Tháng", Icon: Clock },
+  { key: "allTime", label: "Tất cả", Icon: Trophy },
 ];
 
 interface RankingPageProps {
@@ -79,9 +76,9 @@ export async function generateMetadata({
     page: currentPage > 1 ? currentPage : undefined,
   });
   const pageSuffix = currentPage > 1 ? ` - Page ${currentPage}` : "";
-  const title = `${tabLabel} Manga Rankings${pageSuffix}`;
+  const title = `${tabLabel} Bảng xếp hạng${pageSuffix}`;
   const description =
-    "Discover top manga by view count with daily, weekly, monthly, and all-time ranking charts.";
+    "Khám phá những bộ truyện tranh được xem nhiều nhất bởi đọc giả.";
 
   return {
     title,
@@ -110,17 +107,24 @@ export default async function RankingPage({ searchParams }: RankingPageProps) {
   const rankings = await getMangaRankings(MAX_ITEMS_PER_TAB);
   const rankedComics = rankings[activeTab].slice(0, MAX_ITEMS_PER_TAB);
 
-  const totalPages = Math.max(1, Math.ceil(rankedComics.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(rankedComics.length / ITEMS_PER_PAGE),
+  );
   const currentPage = Number.isFinite(requestedPage)
     ? Math.min(Math.max(1, requestedPage), totalPages)
     : 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const pageComics = rankedComics.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const pageComics = rankedComics.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
 
   const visiblePages = getVisiblePages(currentPage, totalPages, 7);
   const showStartEllipsis = visiblePages.length > 0 && visiblePages[0] > 2;
   const showEndEllipsis =
-    visiblePages.length > 0 && visiblePages[visiblePages.length - 1] < totalPages - 1;
+    visiblePages.length > 0 &&
+    visiblePages[visiblePages.length - 1] < totalPages - 1;
 
   return (
     <div className="min-h-screen">
@@ -128,10 +132,12 @@ export default async function RankingPage({ searchParams }: RankingPageProps) {
         <section className="mb-8">
           <div className="mb-2 flex items-center gap-3">
             <Trophy className="h-8 w-8 text-chart-3" />
-            <h1 className="text-3xl font-bold text-foreground">Manga Rankings</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Bảng xếp hạng
+            </h1>
           </div>
           <p className="text-muted-foreground">
-            Top viewed manga by day, week, month, and all-time.
+            Khám phá những bộ truyện tranh được xem nhiều nhất bởi đọc giả.
           </p>
         </section>
 
@@ -156,20 +162,10 @@ export default async function RankingPage({ searchParams }: RankingPageProps) {
 
         {rankedComics.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border/70 bg-card/60 py-16 text-center text-muted-foreground">
-            No ranking data yet for this period.
+            Chưa có dữ liệu cho mốc thời gian này.
           </div>
         ) : (
           <>
-            <section className="mb-6 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Showing {startIndex + 1}-{startIndex + pageComics.length} of{" "}
-                {rankedComics.length} manga
-              </p>
-              <Badge variant="outline" className="font-medium">
-                Page {currentPage} of {totalPages}
-              </Badge>
-            </section>
-
             <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 md:gap-6">
               {pageComics.map((comic, index) => {
                 const rank = startIndex + index + 1;
@@ -179,7 +175,9 @@ export default async function RankingPage({ searchParams }: RankingPageProps) {
                     : comic.periodViews || 0,
                 );
                 const latestChapterRaw = String(
-                  comic.latestChapterName || comic.chaptersLatest?.[0]?.chapter_name || "",
+                  comic.latestChapterName ||
+                    comic.chaptersLatest?.[0]?.chapter_name ||
+                    "",
                 ).trim();
                 const latestChapterLabel = latestChapterRaw
                   ? latestChapterRaw.toLowerCase().startsWith("chapter")
@@ -210,7 +208,10 @@ export default async function RankingPage({ searchParams }: RankingPageProps) {
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious
-                        href={buildRankingUrl(activeTab, Math.max(1, currentPage - 1))}
+                        href={buildRankingUrl(
+                          activeTab,
+                          Math.max(1, currentPage - 1),
+                        )}
                         aria-disabled={currentPage === 1}
                         className={cn(
                           currentPage === 1 && "pointer-events-none opacity-50",

@@ -42,7 +42,7 @@ const SignUp = () => {
       }
     } catch (error) {
       console.error("Sign-up error:", error);
-      toast.error("Sign-up failed. Please try again.", {
+      toast.error("Đăng kí thất bại. Vui lòng thử lại.", {
         description:
           error instanceof Error
             ? error.message
@@ -62,7 +62,7 @@ const SignUp = () => {
             className="w-full h-full object-contain"
           />
           <p className="text-muted-foreground">
-            Sign up to track your reading progress and bookmarks
+            Hãy đăng kí để lưu danh sách theo dõi và lịch sử đọc của bạn
           </p>
         </div>
 
@@ -112,24 +112,24 @@ const SignUp = () => {
               />
               <div>
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <input type="checkbox" className="rounded border-border" />I
-                  agree to the Terms of Service and Privacy Policy
+                  <input type="checkbox" className="rounded border-border" />
+                  Tôi đồng ý với điều khoản sử dụng
                 </label>
               </div>
               <Button type="submit" disabled={isSubmitting} className="w-full">
-                {isSubmitting ? "Creating Account ..." : "Create Account"}
+                {isSubmitting ? "Đang tạo tài khoản ..." : "Tạo tài khoản"}
               </Button>
             </form>
 
             <div className="mt-6 pt-6 border-t border-border">
               <p className="text-center text-sm text-muted-foreground mb-3">
-                Already have an account?{" "}
+                Đã có tài khoản?{" "}
                 <Link href="/sign-in" className="text-primary hover:underline">
-                  Sign in
+                  Đăng nhập
                 </Link>
               </p>
               <p className="text-center text-sm text-muted-foreground mb-4">
-                Or continue with
+                Hoặc đăng nhập với
               </p>
               <SocialButton />
             </div>

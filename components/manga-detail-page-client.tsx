@@ -21,11 +21,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
+import { formatRelativeTime } from "@/lib/date-time";
 import { formatViewCount } from "@/lib/view-utils";
 import {
   type ComicDetailItem,
   formatStatus,
-  formatUpdatedAt,
   getImageUrl,
 } from "@/types/otruyen-types";
 
@@ -133,11 +133,11 @@ export function MangaDetailPageClient({
                 </span>
                 <span className="flex items-center gap-2 text-muted-foreground">
                   <Eye className="h-5 w-5" />
-                  <span>{formatViewCount(initialTotalViews)} views</span>
+                  <span>{formatViewCount(initialTotalViews)} lượt xem</span>
                 </span>
                 <span className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="h-5 w-5" />
-                  <span>{formatUpdatedAt(comic.updatedAt)}</span>
+                  <span>{formatRelativeTime(comic.updatedAt)}</span>
                 </span>
               </div>
 
@@ -146,7 +146,7 @@ export function MangaDetailPageClient({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <User className="h-4 w-4" />
                     <span className="text-sm">
-                      Author:{" "}
+                      Tác giả:{" "}
                       <span className="font-medium text-foreground">
                         {comic.author.join(", ")}
                       </span>
@@ -170,18 +170,22 @@ export function MangaDetailPageClient({
 
               <div className="flex flex-wrap gap-3">
                 {firstChapter && (
-                  <Link href={`${comicHref}/chapter/${firstChapter.chapter_name}`}>
+                  <Link
+                    href={`${comicHref}/chapter/${firstChapter.chapter_name}`}
+                  >
                     <Button size="lg" className="gap-2">
                       <Play className="h-4 w-4" />
-                      Start Reading
+                      Đọc từ đầu
                     </Button>
                   </Link>
                 )}
                 {latestChapter && (
-                  <Link href={`${comicHref}/chapter/${latestChapter.chapter_name}`}>
+                  <Link
+                    href={`${comicHref}/chapter/${latestChapter.chapter_name}`}
+                  >
                     <Button size="lg" variant="outline" className="gap-2">
                       <BookOpen className="h-4 w-4" />
-                      Latest Chapter
+                      Chapter mới nhất
                     </Button>
                   </Link>
                 )}
@@ -196,25 +200,27 @@ export function MangaDetailPageClient({
                     className={`h-4 w-4 ${isBookmarked ? "fill-current" : ""}`}
                   />
                   {isBookmarkLoading
-                    ? "Saving..."
+                    ? "Đang lưu vào theo dõi..."
                     : isBookmarked
-                      ? "Bookmarked"
-                      : "Bookmark"}
+                      ? "Đã theo dõi"
+                      : "Theo dõi"}
                 </Button>
                 <Button size="lg" variant="ghost" className="gap-2">
                   <Share2 className="h-4 w-4" />
-                  Share
+                  Chia sẻ
                 </Button>
               </div>
             </div>
           </div>
 
           <div className="mt-8 rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-3 text-lg font-semibold text-foreground">Synopsis</h2>
+            <h2 className="mb-3 text-lg font-semibold text-foreground">
+              Giới thiệu
+            </h2>
             <div
               className={`leading-relaxed text-muted-foreground ${!isDescriptionExpanded ? "line-clamp-3" : ""}`}
               dangerouslySetInnerHTML={{
-                __html: comic.content || "No description available.",
+                __html: comic.content || "Chưa có mô tả",
               }}
             />
             {comic.content && comic.content.length > 200 && (
@@ -227,12 +233,12 @@ export function MangaDetailPageClient({
                 {isDescriptionExpanded ? (
                   <>
                     <ChevronUp className="mr-1 h-4 w-4" />
-                    Show Less
+                    Thu gọn
                   </>
                 ) : (
                   <>
                     <ChevronDown className="mr-1 h-4 w-4" />
-                    Read More
+                    Xem thêm
                   </>
                 )}
               </Button>
@@ -244,25 +250,27 @@ export function MangaDetailPageClient({
               <TabsList className="h-auto w-full flex-wrap justify-start rounded-xl border border-border bg-card p-1">
                 <TabsTrigger value="chapters" className="gap-2">
                   <BookOpen className="h-4 w-4" />
-                  Chapters ({chapters.length})
+                  Tổng số chapter: {chapters.length}
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="chapters" className="mt-6">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">
-                    Chapter List
+                    Danh sách chapter
                   </h2>
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-2"
                     onClick={() =>
-                      setChaptersOrder(chaptersOrder === "desc" ? "asc" : "desc")
+                      setChaptersOrder(
+                        chaptersOrder === "desc" ? "asc" : "desc",
+                      )
                     }
                   >
                     <ArrowUpDown className="h-4 w-4" />
-                    {chaptersOrder === "desc" ? "Newest First" : "Oldest First"}
+                    {chaptersOrder === "desc" ? "Mới nhất" : "Cũ nhất"}
                   </Button>
                 </div>
 
@@ -298,7 +306,7 @@ export function MangaDetailPageClient({
                         {isRead && (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
                             <CheckCircle2 className="h-3.5 w-3.5" />
-                            Read
+                            Đã đọc
                           </span>
                         )}
                       </Link>

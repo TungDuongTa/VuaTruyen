@@ -45,7 +45,7 @@ export function HeroSectionApi({ featuredComics }: HeroSectionApiProps) {
   if (featured.length === 0) {
     return (
       <section className="relative h-[520px] md:h-[620px] overflow-hidden rounded-2xl z-0 bg-card flex items-center justify-center">
-        <p className="text-muted-foreground">Loading featured manga...</p>
+        <p className="text-muted-foreground">Đang tải truyện nổi bật...</p>
       </section>
     );
   }
@@ -85,9 +85,6 @@ export function HeroSectionApi({ featuredComics }: HeroSectionApiProps) {
             className="max-w-lg hero-slide-left"
           >
             <div className="flex items-center gap-2 mb-4">
-              <Badge className="bg-primary text-primary-foreground">
-                Featured
-              </Badge>
               <Badge
                 variant="outline"
                 className="border-accent text-accent bg-background/50"
@@ -131,7 +128,7 @@ export function HeroSectionApi({ featuredComics }: HeroSectionApiProps) {
               <Link href={`/manga/${currentComic.slug}`}>
                 <Button size="lg" className="gap-2 shadow-lg cursor-pointer">
                   <Play className="h-4 w-4" />
-                  Start Reading
+                  Đọc ngay
                 </Button>
               </Link>
               <Link href={`/manga/${currentComic.slug}`}>
@@ -141,7 +138,7 @@ export function HeroSectionApi({ featuredComics }: HeroSectionApiProps) {
                   className="gap-2 bg-background/50 backdrop-blur-sm hover:bg-background/80 cursor-pointer"
                 >
                   <BookOpen className="h-4 w-4" />
-                  View Details
+                  Xem chi tiết
                 </Button>
               </Link>
             </div>

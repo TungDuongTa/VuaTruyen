@@ -2,10 +2,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { formatRelativeTime } from "@/lib/date-time";
 import {
   OTruyenComic,
   getImageUrl,
-  formatUpdatedAt,
 } from "@/types/otruyen-types";
 
 const FALLBACK_COVER =
@@ -55,14 +55,14 @@ export function MangaCardApi({
               className="mt-1 inline-flex w-fit items-center gap-1 text-xs"
             >
               <Clock className="h-3 w-3" />
-              {formatUpdatedAt(comic.updatedAt)}
+              {formatRelativeTime(comic.updatedAt)}
             </Badge>
             {showLatestChapter && (
               <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {latestChapterName
                   ? `Chapter ${latestChapterName}`
-                  : "coming soon"}
+                  : "Đang cập nhật"}
               </p>
             )}
           </div>
@@ -110,7 +110,7 @@ export function MangaCardApi({
           className="absolute top-2 left-2 inline-flex items-center gap-1 border-white/35 bg-black/60 text-xs text-white backdrop-blur-sm"
         >
           <Clock className="h-3 w-3" />
-          {formatUpdatedAt(comic.updatedAt)}
+          {formatRelativeTime(comic.updatedAt)}
         </Badge>
       </div>
 

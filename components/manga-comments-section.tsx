@@ -133,13 +133,12 @@ export function MangaCommentsSection({
     () =>
       isChapterScope
         ? {
-            title: `Chapter ${chapterName} Comments`,
-            subtitle: "Only comments from this chapter are shown here.",
+            title: `Bình luận về chapter ${chapterName}`,
+            subtitle: "Chỉ có bình luận của chapter này được hiển thị tại đây.",
           }
         : {
-            title: "Comments",
-            subtitle:
-              "This feed combines manga comments and all chapter comments.",
+            title: "Bình luận",
+            subtitle: "Tất cả bình luận của truyện đều được hiển thị tại đây",
           },
     [chapterName, isChapterScope],
   );
@@ -202,44 +201,47 @@ export function MangaCommentsSection({
     [currentPage, pagination.totalPages],
   );
 
-  const loadComments = useCallback(async (requestedPage: number) => {
-    if (!comicSlug) {
-      setComments([]);
-      setViewer(null);
-      setPagination(EMPTY_PAGINATION);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const feedData =
-        isChapterScope && chapterName
-          ? await getChapterComments(
-              comicSlug,
-              chapterName,
-              requestedPage,
-              COMMENTS_PAGE_SIZE,
-            )
-          : await getMangaComments(
-              comicSlug,
-              requestedPage,
-              COMMENTS_PAGE_SIZE,
-            );
-
-      setViewer(feedData.viewer);
-      setComments(feedData.comments.map(normalizeComment));
-      setPagination(feedData.pagination);
-      if (feedData.pagination.page !== requestedPage) {
-        setCurrentPage(feedData.pagination.page);
+  const loadComments = useCallback(
+    async (requestedPage: number) => {
+      if (!comicSlug) {
+        setComments([]);
+        setViewer(null);
+        setPagination(EMPTY_PAGINATION);
+        setIsLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error("Failed to load comments:", error);
-      toast.error("Could not load comments right now.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [chapterName, comicSlug, isChapterScope]);
+
+      setIsLoading(true);
+      try {
+        const feedData =
+          isChapterScope && chapterName
+            ? await getChapterComments(
+                comicSlug,
+                chapterName,
+                requestedPage,
+                COMMENTS_PAGE_SIZE,
+              )
+            : await getMangaComments(
+                comicSlug,
+                requestedPage,
+                COMMENTS_PAGE_SIZE,
+              );
+
+        setViewer(feedData.viewer);
+        setComments(feedData.comments.map(normalizeComment));
+        setPagination(feedData.pagination);
+        if (feedData.pagination.page !== requestedPage) {
+          setCurrentPage(feedData.pagination.page);
+        }
+      } catch (error) {
+        console.error("Failed to load comments:", error);
+        toast.error("Could not load comments right now.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [chapterName, comicSlug, isChapterScope],
+  );
 
   useEffect(() => {
     setCurrentPage(1);
@@ -276,7 +278,7 @@ export function MangaCommentsSection({
 
   const handleStartReply = (comment: CommentFeedItem) => {
     if (!viewer) {
-      toast.error("Please sign in to reply.");
+      toast.error("Vui lòng đăng nhập để trả lời bình luận.");
       router.push("/sign-in");
       return;
     }
@@ -296,7 +298,7 @@ export function MangaCommentsSection({
     }
 
     if (!viewer) {
-      toast.error("Please sign in to comment.");
+      toast.error("Vui lòng đăng nhập để bình luận.");
       router.push("/sign-in");
       return;
     }
@@ -384,7 +386,7 @@ export function MangaCommentsSection({
 
   const handleToggleLike = async (comment: CommentFeedItem) => {
     if (!viewer) {
-      toast.error("Please sign in to like comments.");
+      toast.error("Vui lòng đăng nhập để thích bình luận.");
       router.push("/sign-in");
       return;
     }
@@ -503,7 +505,7 @@ export function MangaCommentsSection({
               [targetComment.id]: event.target.value,
             }))
           }
-          placeholder={`Reply to ${targetComment.userName}...`}
+          placeholder={`Trả lời ${targetComment.userName}...`}
           rows={2}
           maxLength={1000}
           className="resize-none border-primary/20 bg-background/70 text-sm"
@@ -519,7 +521,7 @@ export function MangaCommentsSection({
               size="sm"
               onClick={() => setActiveReplyId(null)}
             >
-              Cancel
+              Hủy
             </Button>
             <Button
               type="button"
@@ -533,7 +535,7 @@ export function MangaCommentsSection({
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              Send Reply
+              Gửi
             </Button>
           </div>
         </div>
@@ -628,7 +630,7 @@ export function MangaCommentsSection({
               onClick={() => handleStartReply(comment)}
             >
               <CornerDownRight className="h-3.5 w-3.5" />
-              Reply
+              Trả lời
             </Button>
           </div>
         </div>
@@ -670,8 +672,8 @@ export function MangaCommentsSection({
                   >
                     <CornerDownRight className="mr-1 h-3.5 w-3.5" />
                     {isChildExpanded
-                      ? "Hide replies"
-                      : `View replies (${grandChildCount})`}
+                      ? "Ẩn bớt bình luận"
+                      : `Xem thêm ${grandChildCount} bình luận `}
                   </Button>
                 </div>
               )}
@@ -707,8 +709,7 @@ export function MangaCommentsSection({
           </p>
         </div>
         <Badge variant="outline" className="border-primary/40 text-primary">
-          {pagination.totalItems}{" "}
-          {pagination.totalItems === 1 ? "thread" : "threads"}
+          {pagination.totalItems} Bình luận
         </Badge>
       </div>
 
@@ -746,7 +747,7 @@ export function MangaCommentsSection({
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Share your thoughts
+                  Hãy chia sẻ cảm nghĩ của bạn
                 </p>
               </div>
             </div>
@@ -754,7 +755,7 @@ export function MangaCommentsSection({
             <Textarea
               value={newComment}
               onChange={(event) => setNewComment(event.target.value)}
-              placeholder="Write your comment..."
+              placeholder="Viết bình luận của bạn..."
               rows={3}
               className="resize-none border-primary/20 bg-background/70 text-sm"
               maxLength={1000}
@@ -775,19 +776,19 @@ export function MangaCommentsSection({
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
-                Post Comment
+                Gửi
               </Button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-3 rounded-lg border border-dashed border-border bg-background/60 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              You need to sign in to leave a comment.
+              Vui lòng đăng nhập để để lại bình luận.
             </p>
             <Link href="/sign-in">
               <Button size="sm" className="gap-2">
                 <LogIn className="h-4 w-4" />
-                Sign In
+                Đăng nhập
               </Button>
             </Link>
           </div>
@@ -801,7 +802,7 @@ export function MangaCommentsSection({
           </div>
         ) : rootComments.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border/70 bg-background/25 py-10 text-center text-sm text-muted-foreground">
-            No comments yet. Be the first to start the discussion.
+            Chưa có bình luận nào
           </div>
         ) : (
           <div className="space-y-4">
@@ -830,8 +831,8 @@ export function MangaCommentsSection({
                       >
                         <CornerDownRight className="mr-1 h-3.5 w-3.5" />
                         {isExpanded
-                          ? "Hide replies"
-                          : `View replies (${totalReplies})`}
+                          ? "Ẩn bớt bình luận"
+                          : `Xem thêm ${totalReplies} bình luận`}
                       </Button>
                     </div>
                   )}
@@ -852,7 +853,7 @@ export function MangaCommentsSection({
       {pagination.totalPages > 1 && (
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-border/50 pt-4">
           <p className="text-xs text-muted-foreground">
-            Page {pagination.page} of {pagination.totalPages}
+            Trang {pagination.page} / {pagination.totalPages}
           </p>
           <div className="flex items-center gap-2">
             <Button

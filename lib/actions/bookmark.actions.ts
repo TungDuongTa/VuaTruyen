@@ -117,7 +117,9 @@ export const getCurrentUserBookmarksPage = async ({
     .skip(skip)
     .limit(normalized.pageSize)
     .lean();
-  const bookmarkSlugs = bookmarks.map((bookmark: any) => String(bookmark.slug || ""));
+  const bookmarkSlugs = bookmarks.map((bookmark: any) =>
+    String(bookmark.slug || ""),
+  );
   const inferredRouteMap = await resolveMangaRouteBases(bookmarkSlugs);
 
   return {
@@ -153,7 +155,7 @@ export const toggleMangaBookmark = async (
   if (!userId) {
     return {
       success: false,
-      message: "Please sign in to bookmark manga.",
+      message: "Vui lòng đăng nhập để đánh dấu truyện tranh.",
       bookmarked: false,
       requiresSignIn: true,
     };
@@ -165,7 +167,8 @@ export const toggleMangaBookmark = async (
     userId,
     slug: input.slug,
   }).select("_id routeBase");
-  const routeBase = normalizeMangaRouteBase(input.routeBase) || DEFAULT_MANGA_ROUTE_BASE;
+  const routeBase =
+    normalizeMangaRouteBase(input.routeBase) || DEFAULT_MANGA_ROUTE_BASE;
 
   if (existing) {
     await BookmarkModel.deleteOne({ _id: existing._id });
@@ -175,7 +178,7 @@ export const toggleMangaBookmark = async (
 
     return {
       success: true,
-      message: "Removed from bookmarks.",
+      message: "Đã xóa khỏi danh sách theo dõi",
       bookmarked: false,
     };
   }
@@ -204,7 +207,7 @@ export const toggleMangaBookmark = async (
 
     return {
       success: true,
-      message: "Added to bookmarks.",
+      message: "Đã thêm vào danh sách theo dõi",
       bookmarked: true,
     };
   } catch (error: any) {

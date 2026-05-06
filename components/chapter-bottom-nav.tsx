@@ -113,7 +113,7 @@ export default function ChapterBottomNav({
               variant="ghost"
               size="icon"
               className="h-10 w-10 shrink-0"
-              title="Home"
+              title="Trang chủ"
             >
               <Home className="h-5 w-5" />
             </Button>
@@ -124,7 +124,7 @@ export default function ChapterBottomNav({
               variant="ghost"
               size="icon"
               className="h-10 w-10 shrink-0"
-              title="Chapter List"
+              title="Danh sách chapter"
             >
               <List className="h-5 w-5" />
             </Button>
@@ -136,7 +136,7 @@ export default function ChapterBottomNav({
                 variant="ghost"
                 size="icon"
                 className="h-10 w-10 shrink-0"
-                title="Previous Chapter"
+                title="Chapter trước"
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
@@ -147,7 +147,7 @@ export default function ChapterBottomNav({
               size="icon"
               className="h-10 w-10 shrink-0"
               disabled
-              title="Previous Chapter"
+              title="Chapter trước"
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
@@ -159,7 +159,7 @@ export default function ChapterBottomNav({
           >
             <BookOpen className="h-4 w-4 text-primary shrink-0" />
             <span className="text-sm font-semibold text-foreground truncate">
-              Ch. {chapter}
+              Chapter {chapter}
             </span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground rotate-90 shrink-0" />
           </button>
@@ -170,7 +170,7 @@ export default function ChapterBottomNav({
                 variant="ghost"
                 size="icon"
                 className="h-10 w-10 shrink-0"
-                title="Next Chapter"
+                title="Chapter sau"
               >
                 <ChevronRight className="h-5 w-5" />
               </Button>
@@ -181,7 +181,7 @@ export default function ChapterBottomNav({
               size="icon"
               className="h-10 w-10 shrink-0"
               disabled
-              title="Next Chapter"
+              title="Chapter sau"
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
@@ -193,7 +193,7 @@ export default function ChapterBottomNav({
             className={`h-10 w-10 shrink-0 ${isBookmarked ? "text-primary" : ""}`}
             onClick={onToggleBookmark}
             disabled={isBookmarkLoading}
-            title="Bookmark"
+            title="Theo dõi"
           >
             {isBookmarkLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -216,7 +216,9 @@ export default function ChapterBottomNav({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-              <h3 className="font-semibold text-foreground">Chapter List</h3>
+              <h3 className="font-semibold text-foreground">
+                Danh sách chapter
+              </h3>
               <Button variant="ghost" size="icon" onClick={onCloseChapterList}>
                 <X className="h-4 w-4" />
               </Button>
@@ -255,7 +257,7 @@ export default function ChapterBottomNav({
                       {isRead && (
                         <span className="inline-flex items-center gap-1 text-xs font-medium shrink-0">
                           <CheckCircle2 className="h-3.5 w-3.5" />
-                          Read
+                          Đã đọc
                         </span>
                       )}
                     </div>

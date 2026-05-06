@@ -7,18 +7,16 @@ import { isMangaBookmarked } from "@/lib/actions/bookmark.actions";
 import { getMangaViewStats } from "@/lib/actions/manga-view.actions";
 import { getComicDetail } from "@/lib/actions/otruyen-actions";
 import { getReadingProgressChapterNames } from "@/lib/actions/reading-progress.actions";
-import {
-  stripHtml,
-  truncateText,
-  withSiteSuffix,
-} from "@/lib/seo";
+import { stripHtml, truncateText, withSiteSuffix } from "@/lib/seo";
 import { getImageUrl } from "@/types/otruyen-types";
 
 type MangaDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-const getComicDetailCached = cache(async (slug: string) => getComicDetail(slug));
+const getComicDetailCached = cache(async (slug: string) =>
+  getComicDetail(slug),
+);
 
 export async function generateMetadata({
   params,
@@ -30,21 +28,23 @@ export async function generateMetadata({
 
   if (!comic) {
     return {
-      title: "Manga Not Found",
-      description: "The manga you requested could not be found.",
+      title: "Không tìm thấy truyện",
+      description: "Không tìm thấy truyện",
       alternates: {
         canonical: canonicalPath,
       },
     };
   }
 
-  const fallbackDescription = `Read ${comic.name} online with chapter updates, reading progress, and community features.`;
+  const fallbackDescription = `Đọc truyện ${comic.name} mới nhất được cập nhật tại VuaTruyen `;
   const description = truncateText(
     stripHtml(comic.content || "") || fallbackDescription,
     160,
   );
-  const title = `${comic.name} Manga`;
-  const coverImage = comic.thumb_url?.trim() ? getImageUrl(comic.thumb_url) : "";
+  const title = `Truyện tranh ${comic.name} `;
+  const coverImage = comic.thumb_url?.trim()
+    ? getImageUrl(comic.thumb_url)
+    : "";
 
   return {
     title,
@@ -95,10 +95,10 @@ export default async function MangaDetailPage({
       <div className="min-h-screen">
         <main className="flex min-h-[60vh] flex-col items-center justify-center">
           <h1 className="mb-4 text-2xl font-bold text-foreground">
-            Manga Not Found
+            Không tìm thấy truyện
           </h1>
           <Link href="/">
-            <Button>Go Home</Button>
+            <Button>Quay về trang chủ</Button>
           </Link>
         </main>
       </div>

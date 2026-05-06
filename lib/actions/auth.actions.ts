@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 export const signUpWithEmail = async (data: SignUpFormData) => {
   try {
-    const response = await auth.api.signUpEmail({
+    await auth.api.signUpEmail({
       body: {
         name: data.userName,
         email: data.email,
@@ -51,7 +51,7 @@ export const updateUserProfile = async (data: UpdateUserProfileInput) => {
     if (name.length < 2 || name.length > 40) {
       return {
         success: false,
-        message: "Display name must be between 2 and 40 characters.",
+        message: "Tên hiển thị phải có từ 2 đén 40 ký tự",
       };
     }
 
@@ -81,7 +81,7 @@ export const updateUserProfile = async (data: UpdateUserProfileInput) => {
 
 export const signInWithEmail = async (data: SignInFormData) => {
   try {
-    const response = await auth.api.signInEmail({
+    await auth.api.signInEmail({
       body: {
         email: data.email,
         password: data.password,
@@ -92,7 +92,7 @@ export const signInWithEmail = async (data: SignInFormData) => {
     console.error("Sign-in error:", error);
     return {
       success: false,
-      message: "Email or password is not correct. Please try again",
+      message: "Email hoặc mật khẩu không đúng. Vui lòng thử lại",
     };
   }
 };
