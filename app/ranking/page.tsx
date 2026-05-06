@@ -76,7 +76,7 @@ export async function generateMetadata({
     page: currentPage > 1 ? currentPage : undefined,
   });
   const pageSuffix = currentPage > 1 ? ` - Page ${currentPage}` : "";
-  const title = `${tabLabel} Bảng xếp hạng${pageSuffix}`;
+  const title = `Bảng xếp hạng ${tabLabel}| ${pageSuffix}`;
   const description =
     "Khám phá những bộ truyện tranh được xem nhiều nhất bởi đọc giả.";
 
