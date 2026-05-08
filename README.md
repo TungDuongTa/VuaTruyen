@@ -2,16 +2,6 @@
 
 A full-stack manga reader built with Next.js App Router, Better Auth, and MongoDB.
 
-## Feature
-
-- Authentication (email/password + Google OAuth)
-- Bookmarks and reading history
-- Chapter progress tracking
-- Reader level/EXP system
-- View-based rankings (daily/weekly/monthly/all-time)
-- Nested comments with likes
-- Dedicated 18+ library backed by MongoDB collections
-
 ## Table of Contents
 
 - [Overview](#overview)
@@ -34,6 +24,14 @@ This project is a production-style manga web app focused on:
 - Hybrid data architecture
 
 ## Feature Highlights
+
+- Authentication (email/password + Google OAuth)
+- Bookmarks and reading history
+- Chapter progress tracking
+- Reader level/EXP system
+- View-based rankings (daily/weekly/monthly/all-time)
+- Nested comments with likes
+- Dedicated 18+ library backed by MongoDB collections
 
 ### Content Discovery
 
