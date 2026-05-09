@@ -40,8 +40,8 @@ const periodTabs: Array<{
   Icon: typeof Flame;
 }> = [
   { key: "daily", label: "Ngày", Icon: Flame },
-  { key: "weekly", label: "Tháng", Icon: TrendingUp },
-  { key: "monthly", label: "Năm", Icon: Clock },
+  { key: "weekly", label: "Tuần", Icon: TrendingUp },
+  { key: "monthly", label: "Tháng", Icon: Clock },
   { key: "allTime", label: "Tất cả", Icon: Trophy },
 ];
 
