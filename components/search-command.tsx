@@ -4,6 +4,7 @@ import * as React from "react";
 import { useState, useEffect, useCallback, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, X, ArrowRight, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -27,6 +28,7 @@ interface SearchCommandProps {
 }
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 300);
   const [results, setResults] = useState<OTruyenComic[]>([]);
@@ -77,6 +79,17 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
     setQuery("");
   }, [onOpenChange]);
 
+  const navigateToBrowse = useCallback(() => {
+    const trimmedQuery = query.trim();
+    const href = trimmedQuery
+      ? `/browse?q=${encodeURIComponent(trimmedQuery)}`
+      : "/browse";
+
+    onOpenChange(false);
+    setQuery("");
+    router.push(href);
+  }, [onOpenChange, query, router]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -94,6 +107,12 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                navigateToBrowse();
+              }
+            }}
             placeholder="Search manga, manhwa, manhua..."
             className="flex-1 bg-transparent px-4 py-4 text-base text-foreground placeholder:text-muted-foreground outline-none"
             autoFocus
@@ -103,6 +122,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
           )}
           {query && (
             <button
+              type="button"
               onClick={() => setQuery("")}
               className="p-1 rounded-md hover:bg-secondary text-muted-foreground"
             >
@@ -172,15 +192,14 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 
         {/* View All Results Button */}
         <div className="border-t border-border p-3">
-          <Link
-            href={`/browse${query ? `?q=${encodeURIComponent(query)}` : ""}`}
-            onClick={handleSelect}
+          <Button
+            className="w-full gap-2"
+            variant="default"
+            onClick={navigateToBrowse}
           >
-            <Button className="w-full gap-2" variant="default">
-              Xem tất cả kết quả tìm kiếm
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+            Xem tất cả kết quả tìm kiếm
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
