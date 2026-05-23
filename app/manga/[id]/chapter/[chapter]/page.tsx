@@ -6,6 +6,7 @@ import { ChapterReaderPageClient } from "@/components/chapter-reader-page-client
 import { isMangaBookmarked } from "@/lib/actions/bookmark.actions";
 import { getComicDetail, getChapterData } from "@/lib/actions/otruyen-actions";
 import { getReadingProgressChapterNames } from "@/lib/actions/reading-progress.actions";
+import { getSessionUser } from "@/lib/server-session";
 import { withSiteSuffix } from "@/lib/seo";
 
 type ChapterReaderPageProps = {
@@ -65,6 +66,34 @@ export default async function ChapterReaderPage({
   params,
 }: ChapterReaderPageProps) {
   const { id, chapter } = await params;
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    const callbackUrl = encodeURIComponent(`/manga/${id}/chapter/${chapter}`);
+
+    return (
+      <div className="min-h-screen">
+        <main className="mx-auto max-w-4xl px-4 py-16">
+          <div className="rounded-2xl border border-border bg-card px-6 py-14 text-center shadow-sm">
+            <h1 className="mb-3 text-2xl font-semibold text-foreground">
+              Hãy đăng nhập để đọc chapter này
+            </h1>
+            <p className="mb-6 text-muted-foreground">
+              Bạn cần đăng nhập để xem được nội dung của chapter này
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link href={`/sign-in?callbackUrl=${callbackUrl}`}>
+                <Button>Đăng nhập</Button>
+              </Link>
+              <Link href={`/manga/${id}`}>
+                <Button variant="outline">Quay lại</Button>
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const [detailResult, bookmarkResult, readResult] = await Promise.allSettled([
     getComicDetailCached(id),

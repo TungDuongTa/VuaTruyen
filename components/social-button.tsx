@@ -1,10 +1,15 @@
 import { Button } from "./ui/button";
 import { signInWithGoogle } from "@/lib/actions/auth.actions";
 
-const SocialButton = () => {
+type SocialButtonProps = {
+  callbackUrl?: string;
+};
+
+const SocialButton = ({ callbackUrl = "/" }: SocialButtonProps) => {
   return (
     <div className="grid grid-cols-1 gap-3">
       <form action={signInWithGoogle}>
+        <input type="hidden" name="callbackUrl" value={callbackUrl} />
         <Button type="submit" variant="outline" className="w-full gap-2">
           <svg className="h-4 w-4" viewBox="0 0 24 24">
             <path
