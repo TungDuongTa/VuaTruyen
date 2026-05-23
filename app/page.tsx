@@ -116,13 +116,13 @@ export default async function HomePage() {
         </section> */}
 
         {/* Main Content with Sidebar Section */}
-        <section className="grid lg:grid-cols-3 gap-8 mb-12">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Left Side - Manga List */}
           <div className="lg:col-span-2">
             <h2 className="text-2xl font-bold text-foreground mb-6">
               Truyện đề cử
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4  gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
               {ongoingComics.slice(0, 24).map((comic) => (
                 <MangaCardApi key={comic._id} comic={comic} />
               ))}
