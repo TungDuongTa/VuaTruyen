@@ -89,9 +89,6 @@ export function CommentsSection({ comments }: CommentsSectionProps) {
                           </span>
                         </Badge>
                       </div>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {formatRelativeTime(comment.createdAt)}
-                      </span>
                     </div>
 
                     <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
@@ -111,13 +108,19 @@ export function CommentsSection({ comments }: CommentsSectionProps) {
                       )}
                     </div>
 
-                    <p className="break-words text-sm text-muted-foreground">
+                    <p className="wrap-break-words text-sm text-muted-foreground">
                       {comment.content}
                     </p>
 
-                    <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                      <ThumbsUp className="h-3.5 w-3.5" />
-                      <span>{comment.likeCount}</span>
+                    <div className="mt-2 flex items-center justify-between gap-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        <span>{comment.likeCount}</span>
+                      </div>
+
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {formatRelativeTime(comment.createdAt)}
+                      </span>
                     </div>
                   </div>
                 </div>
