@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -100,6 +100,8 @@ export function MangaCommentsSection({
   className,
 }: MangaCommentsSectionProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [viewer, setViewer] = useState<CommentViewer>(null);
   const [comments, setComments] = useState<CommentFeedItem[]>([]);
   const [pagination, setPagination] =
@@ -129,6 +131,18 @@ export function MangaCommentsSection({
     ? getLevelUsernameEffect(viewer.level)
     : null;
   const viewerLevelBadgeTier = viewer ? getLevelBadgeTier(viewer.level) : null;
+  const searchParamString = searchParams.toString();
+  const signInHref = useMemo(() => {
+    const callbackPath = pathname || "/";
+    const callbackUrl = searchParamString
+      ? `${callbackPath}?${searchParamString}`
+      : callbackPath;
+
+    return `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  }, [pathname, searchParamString]);
+  const redirectToSignIn = useCallback(() => {
+    router.push(signInHref);
+  }, [router, signInHref]);
 
   const scopeMeta = useMemo(
     () =>
@@ -280,7 +294,7 @@ export function MangaCommentsSection({
   const handleStartReply = (comment: CommentFeedItem) => {
     if (!viewer) {
       toast.error("Vui lòng đăng nhập để trả lời bình luận.");
-      router.push("/sign-in");
+      redirectToSignIn();
       return;
     }
 
@@ -300,7 +314,7 @@ export function MangaCommentsSection({
 
     if (!viewer) {
       toast.error("Vui lòng đăng nhập để bình luận.");
-      router.push("/sign-in");
+      redirectToSignIn();
       return;
     }
 
@@ -316,7 +330,7 @@ export function MangaCommentsSection({
 
       if (!result.success) {
         toast.error(result.message);
-        if (result.requiresSignIn) router.push("/sign-in");
+        if (result.requiresSignIn) redirectToSignIn();
         return;
       }
 
@@ -334,14 +348,14 @@ export function MangaCommentsSection({
 
   const handleReplySubmit = async (targetComment: CommentFeedItem) => {
     if (!viewer) {
-      toast.error("Please sign in to reply.");
-      router.push("/sign-in");
+      toast.error("Vui lòng đăng nhập để trả lời bình luận.");
+      redirectToSignIn();
       return;
     }
 
     const draft = (replyDrafts[targetComment.id] || "").trim();
     if (!draft) {
-      toast.error("Please enter a reply before posting.");
+      toast.error("Hãy điền bình luận trước khi đăng");
       return;
     }
 
@@ -357,7 +371,7 @@ export function MangaCommentsSection({
 
       if (!result.success) {
         toast.error(result.message);
-        if (result.requiresSignIn) router.push("/sign-in");
+        if (result.requiresSignIn) redirectToSignIn();
         return;
       }
 
@@ -388,7 +402,7 @@ export function MangaCommentsSection({
   const handleToggleLike = async (comment: CommentFeedItem) => {
     if (!viewer) {
       toast.error("Vui lòng đăng nhập để thích bình luận.");
-      router.push("/sign-in");
+      redirectToSignIn();
       return;
     }
 
@@ -428,7 +442,7 @@ export function MangaCommentsSection({
           ),
         );
         toast.error(result.message);
-        if (result.requiresSignIn) router.push("/sign-in");
+        if (result.requiresSignIn) redirectToSignIn();
         return;
       }
 
@@ -791,7 +805,7 @@ export function MangaCommentsSection({
             <p className="text-sm text-muted-foreground">
               Vui lòng đăng nhập để để lại bình luận.
             </p>
-            <Link href="/sign-in">
+            <Link href={signInHref}>
               <Button size="sm" className="gap-2">
                 <LogIn className="h-4 w-4" />
                 Đăng nhập

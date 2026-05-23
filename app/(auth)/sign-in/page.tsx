@@ -9,13 +9,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema } from "@/lib/zod/auth.schema";
 import { signInWithEmail } from "@/lib/actions/auth.actions";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import SocialButton from "@/components/social-button";
 import Image from "next/image";
+import { normalizeCallbackUrl } from "@/lib/view-utils";
+
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const callbackUrl = normalizeCallbackUrl(searchParams.get("callbackUrl"));
   const {
     register,
     handleSubmit,
@@ -34,7 +38,7 @@ const SignIn = () => {
     try {
       const result = await signInWithEmail(data);
       if (result?.success) {
-        router.replace("/");
+        router.replace(callbackUrl);
       } else {
         const message = result.message ?? "Invalid email or password";
         setError("password", { type: "manual", message });
@@ -80,10 +84,10 @@ const SignIn = () => {
 
               <InputField
                 name="password"
-                label="Password"
+                label="Mật Khẩu"
                 Icon={Lock}
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder="Hãy nhập mật khẩu của bạn"
                 register={register}
                 error={errors.password}
                 children={
@@ -125,7 +129,7 @@ const SignIn = () => {
               <p className="text-center text-sm text-muted-foreground mb-4">
                 Hoặc đăng nhập với
               </p>
-              <SocialButton />
+              <SocialButton callbackUrl={callbackUrl} />
             </div>
           </CardContent>
         </Card>

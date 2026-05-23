@@ -3,6 +3,7 @@ import { auth } from "../better-auth/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { normalizeCallbackUrl } from "../view-utils";
 export const signUpWithEmail = async (data: SignUpFormData) => {
   try {
     await auth.api.signUpEmail({
@@ -96,11 +97,17 @@ export const signInWithEmail = async (data: SignInFormData) => {
     };
   }
 };
-export const signInWithGoogle = async () => {
+
+export const signInWithGoogle = async (formData?: FormData) => {
+  const callbackUrlInput = formData?.get("callbackUrl");
+  const callbackURL = normalizeCallbackUrl(
+    typeof callbackUrlInput === "string" ? callbackUrlInput : null,
+  );
+
   const response = await auth.api.signInSocial({
     body: {
       provider: "google",
-      callbackURL: "/",
+      callbackURL,
       disableRedirect: true,
     },
   });

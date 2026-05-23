@@ -72,10 +72,10 @@ const SignUp = () => {
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               <InputField
                 name="userName"
-                label="UserName"
+                label="Tên thí chủ"
                 Icon={User}
                 type="text"
-                placeholder="Enter your username"
+                placeholder="Hãy nhập tên của bạn"
                 register={register}
                 error={errors.userName}
               />
@@ -90,10 +90,10 @@ const SignUp = () => {
               />
               <InputField
                 name="password"
-                label="Password"
+                label="Mật khẩu"
                 Icon={Lock}
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder="Hãy nhập mật khẩu của bạn"
                 register={register}
                 error={errors.password}
                 children={
