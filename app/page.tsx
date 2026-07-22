@@ -3,7 +3,7 @@ import { HeroSectionApi } from "@/components/hero-section-api";
 import { RankingSidebarApi } from "@/components/ranking-sidebar-api";
 import { CommentsSection } from "@/components/comments-section";
 import { MangaCardApi } from "@/components/manga-card-api";
-import { getHomeData, getListByType } from "@/lib/actions/otruyen-actions";
+import { getHomeData, getListByType } from "@/lib/actions/manga-actions";
 import { getRecentTopLevelComments } from "@/lib/actions/comment.actions";
 import { getMangaRankings } from "@/lib/actions/manga-view.actions";
 import {
@@ -14,6 +14,10 @@ import {
 } from "@/lib/seo";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+
+// Data comes straight from MongoDB now (no fetch cache), so opt into ISR
+// to keep the old "refresh at most every 60s" behavior.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title:
@@ -42,7 +46,7 @@ export default async function HomePage() {
     getMangaRankings(10),
   ]);
 
-  const featuredComics = homeData?.items || [];
+  const featuredComics = homeData;
   const latestComics = latestData?.items || [];
   const completedComics = completedData?.items || [];
   const ongoingComics = ongoingData?.items || [];

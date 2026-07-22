@@ -4,7 +4,6 @@ const mangaViewStatSchema = new Schema(
   {
     comicId: { type: String, default: "" },
     comicSlug: { type: String, required: true, unique: true },
-    routeBase: { type: String, default: "/manga" },
     comicName: { type: String, default: "" },
     thumbUrl: { type: String, default: "" },
     comicUpdatedAt: { type: String, default: "" },

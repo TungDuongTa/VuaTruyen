@@ -4,33 +4,18 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { toggleMangaBookmark } from "@/lib/actions/bookmark.actions";
-import type { Category } from "@/types/otruyen-types";
 
 type UseBookmarkToggleInput = {
   initialBookmarked: boolean;
-  comicId: string;
   slug: string;
-  name: string;
-  thumbUrl: string;
-  status: string;
-  comicUpdatedAt: string;
-  categories: Category[];
-  latestChapterName?: string;
-  routeBase?: string;
+  comicId?: string;
   signInPath?: string;
 };
 
 export const useBookmarkToggle = ({
   initialBookmarked,
-  comicId,
   slug,
-  name,
-  thumbUrl,
-  status,
-  comicUpdatedAt,
-  categories,
-  latestChapterName,
-  routeBase = "/manga",
+  comicId,
   signInPath = "/sign-in",
 }: UseBookmarkToggleInput) => {
   const router = useRouter();
@@ -47,15 +32,8 @@ export const useBookmarkToggle = ({
     setIsBookmarkLoading(true);
     try {
       const result = await toggleMangaBookmark({
-        comicId,
         slug,
-        routeBase: routeBase === "/18+" ? "/18+" : "/manga",
-        name,
-        thumbUrl,
-        status,
-        comicUpdatedAt,
-        categories: categories || [],
-        latestChapterName,
+        comicId,
       });
 
       if (!result.success) {
@@ -74,20 +52,7 @@ export const useBookmarkToggle = ({
     } finally {
       setIsBookmarkLoading(false);
     }
-  }, [
-    isBookmarkLoading,
-    comicId,
-    slug,
-    routeBase,
-    name,
-    thumbUrl,
-    status,
-    comicUpdatedAt,
-    categories,
-    latestChapterName,
-    router,
-    signInPath,
-  ]);
+  }, [isBookmarkLoading, slug, comicId, router, signInPath]);
 
   return {
     isBookmarked,

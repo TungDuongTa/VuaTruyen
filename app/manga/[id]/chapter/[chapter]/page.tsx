@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderPageClient } from "@/components/chapter-reader-page-client";
 import { isMangaBookmarked } from "@/lib/actions/bookmark.actions";
-import { getComicDetail, getChapterData } from "@/lib/actions/otruyen-actions";
+import { getComicDetail, getChapterData } from "@/lib/actions/manga-actions";
 import { getReadingProgressChapterNames } from "@/lib/actions/reading-progress.actions";
 import { getSessionUser } from "@/lib/server-session";
 import { withSiteSuffix } from "@/lib/seo";
@@ -21,8 +21,7 @@ export async function generateMetadata({
   params,
 }: ChapterReaderPageProps): Promise<Metadata> {
   const { id, chapter } = await params;
-  const detailData = await getComicDetailCached(id);
-  const comic = detailData?.item;
+  const comic = await getComicDetailCached(id);
   const comicSlug = comic?.slug || id;
   const canonicalPath = `/manga/${comicSlug}/chapter/${chapter}`;
 
@@ -101,13 +100,12 @@ export default async function ChapterReaderPage({
     getReadingProgressChapterNames(id),
   ]);
 
-  const detailData =
-    detailResult.status === "fulfilled" ? detailResult.value : null;
+  const comic = detailResult.status === "fulfilled" ? detailResult.value : null;
   const initialBookmarked =
     bookmarkResult.status === "fulfilled" ? bookmarkResult.value : false;
   const initialReadChapterNames =
     readResult.status === "fulfilled" ? readResult.value : [];
-  if (!detailData?.item) {
+  if (!comic) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <h1 className="mb-4 text-2xl font-bold text-foreground">
@@ -120,7 +118,6 @@ export default async function ChapterReaderPage({
     );
   }
 
-  const comic = detailData.item;
   const allChapters = comic.chapters?.[0]?.server_data || [];
   const currentChapterData = allChapters.find(
     (c) => c.chapter_name === chapter,
@@ -139,11 +136,8 @@ export default async function ChapterReaderPage({
     );
   }
 
-  const chapterContent = await getChapterData(
-    currentChapterData.chapter_api_data,
-  );
-  const chapterImages = chapterContent?.item?.chapter_image || [];
-  const chapterPath = chapterContent?.item?.chapter_path || "";
+  const chapterContent = await getChapterData(comic.slug || id, chapter);
+  const chapterImages = chapterContent?.chapter_image || [];
 
   if (chapterImages.length === 0) {
     return (
@@ -164,7 +158,6 @@ export default async function ChapterReaderPage({
       chapter={chapter}
       comic={comic}
       chapterImages={chapterImages}
-      chapterPath={chapterPath}
       initialBookmarked={initialBookmarked}
       initialReadChapterNames={initialReadChapterNames}
     />

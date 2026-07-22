@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
 import { MangaCardApi } from "@/components/manga-card-api";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getManga18ListPage } from "@/lib/actions/manga18.actions";
+import { getListByTag } from "@/lib/actions/manga-actions";
 import { getVisiblePages } from "@/lib/pagination";
 import { buildCanonicalPath, withSiteSuffix } from "@/lib/seo";
 
@@ -53,9 +52,13 @@ export default async function Manga18Page({ searchParams }: PageProps) {
   const { page } = await searchParams;
   const currentPage = toSafePageNumber(page);
 
-  const data = await getManga18ListPage({ page: currentPage });
-  const comics = data.items;
-  const pagination = data.pagination;
+  const data = await getListByTag("18+", currentPage);
+  const comics = data?.items || [];
+  const pagination = data?.pagination || {
+    totalItems: 0,
+    totalItemsPerPage: 24,
+    currentPage: 1,
+  };
   const totalPages = Math.max(
     1,
     Math.ceil(pagination.totalItems / pagination.totalItemsPerPage),
@@ -84,7 +87,7 @@ export default async function Manga18Page({ searchParams }: PageProps) {
         {comics.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-6 lg:grid-cols-5 xl:grid-cols-6">
             {comics.map((comic) => (
-              <MangaCardApi key={comic._id} comic={comic} routeBase="/18+" />
+              <MangaCardApi key={comic._id} comic={comic} />
             ))}
           </div>
         ) : (
@@ -93,7 +96,7 @@ export default async function Manga18Page({ searchParams }: PageProps) {
               Không tìm thấy truyện nào
             </h3>
             <p className="text-muted-foreground">
-              Add documents into `mangas18` to populate this page.
+              Chưa có truyện nào được gắn tag 18+.
             </p>
           </div>
         )}

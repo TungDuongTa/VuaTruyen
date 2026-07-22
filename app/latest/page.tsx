@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MangaCardApi } from "@/components/manga-card-api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getListByType } from "@/lib/actions/otruyen-actions";
+import { getListByType } from "@/lib/actions/manga-actions";
 import { getVisiblePages } from "@/lib/pagination";
 import { buildCanonicalPath, withSiteSuffix } from "@/lib/seo";
 import Link from "next/link";
@@ -61,7 +61,7 @@ export default async function LatestPage({ searchParams }: PageProps) {
   const firstPageComics =
     currentPage === 1 ? comics : firstPageData?.items || comics;
   const recentActivityComics = firstPageComics.slice(0, 10);
-  const pagination = data?.params.pagination;
+  const pagination = data?.pagination;
   const totalPages = pagination
     ? Math.ceil(pagination.totalItems / pagination.totalItemsPerPage)
     : 1;

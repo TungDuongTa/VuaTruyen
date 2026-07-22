@@ -6,7 +6,7 @@ import Image from "next/image";
 import { BookOpen, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { OTruyenComic, getImageUrl, formatStatus } from "@/types/otruyen-types";
+import { OTruyenComic, formatStatus } from "@/types/otruyen-types";
 
 interface HeroSectionApiProps {
   featuredComics: OTruyenComic[];
@@ -60,7 +60,7 @@ export function HeroSectionApi({ featuredComics }: HeroSectionApiProps) {
         className="absolute inset-y-0 right-0 w-full md:w-[48%] hero-slide-right"
       >
         <Image
-          src={getImageUrl(currentComic.thumb_url)}
+          src={currentComic.thumb_url}
           alt={currentComic.name}
           fill
           sizes="(max-width: 768px) 100vw, 48vw"

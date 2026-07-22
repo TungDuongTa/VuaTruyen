@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Trophy, TrendingUp, Clock, Flame, Loader2, Eye } from "lucide-react";
-import { getImageUrl } from "@/types/otruyen-types";
 import {
   getMangaRankings,
   type MangaRankingItem,
@@ -136,7 +135,7 @@ export function RankingSidebarApi({
           rankedComics.map((comic, index) => (
             <Link
               key={`${activeTab}-${comic._id}`}
-              href={`${comic.routeBase || "/manga"}/${comic.slug}`}
+              href={`/manga/${comic.slug}`}
               className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary transition-colors group"
             >
               <div
@@ -147,11 +146,7 @@ export function RankingSidebarApi({
 
               <div className="relative w-10 h-14 shrink-0 overflow-hidden rounded-md bg-muted">
                 <Image
-                  src={
-                    comic.thumb_url?.trim()
-                      ? getImageUrl(comic.thumb_url)
-                      : FALLBACK_COVER
-                  }
+                  src={comic.thumb_url?.trim() ? comic.thumb_url : FALLBACK_COVER}
                   alt={comic.name}
                   fill
                   sizes="40px"

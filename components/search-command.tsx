@@ -15,12 +15,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { searchComicsQuick } from "@/lib/actions/otruyen-actions";
+import { searchComicsQuick } from "@/lib/actions/manga-actions";
 import { formatRelativeTime } from "@/lib/date-time";
-import {
-  OTruyenComic,
-  getImageUrl,
-} from "@/types/otruyen-types";
+import { OTruyenComic } from "@/types/otruyen-types";
 
 interface SearchCommandProps {
   open: boolean;
@@ -153,7 +150,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   {/* Cover Image */}
                   <div className="relative w-14 h-20 shrink-0 overflow-hidden rounded-md bg-muted">
                     <Image
-                      src={getImageUrl(comic.thumb_url)}
+                      src={comic.thumb_url}
                       alt={comic.name}
                       fill
                       sizes="56px"

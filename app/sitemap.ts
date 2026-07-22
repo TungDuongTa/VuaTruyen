@@ -1,27 +1,14 @@
 import type { MetadataRoute } from "next";
-import { connectToDatabase } from "@/database/mongoose";
-import { getManga18ListPage } from "@/lib/actions/manga18.actions";
+import { getHomeData, getListByType } from "@/lib/actions/manga-actions";
 import { getMangaRankings } from "@/lib/actions/manga-view.actions";
-import { getHomeData, getListByType } from "@/lib/actions/otruyen-actions";
+import {
+  getAdultMangaCount,
+  getAllMangaSlugs,
+} from "@/lib/services/manga.service";
 import { toAbsoluteUrl } from "@/lib/seo";
 
-type Manga18Row = {
-  slug?: unknown;
-  updatedAt?: unknown;
-  lastCrawledAt?: unknown;
-  createdAt?: unknown;
-};
-
-const toValidDate = (...values: unknown[]): Date => {
-  for (const value of values) {
-    if (!value) continue;
-    const parsed = new Date(String(value));
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed;
-    }
-  }
-  return new Date();
-};
+// Regenerate the sitemap hourly instead of freezing it at build time.
+export const revalidate = 3600;
 
 const normalizeSlug = (value: unknown): string => String(value || "").trim();
 
@@ -29,13 +16,14 @@ const getPublicMangaSlugs = async (): Promise<string[]> => {
   const slugSet = new Set<string>();
 
   try {
-    const [homeData, latestData, completedData, ongoingData, rankingData] =
+    const [homeData, latestData, completedData, ongoingData, rankingData, allSlugs] =
       await Promise.all([
         getHomeData(),
         getListByType("truyen-moi", 1),
         getListByType("hoan-thanh", 1),
         getListByType("dang-phat-hanh", 1),
         getMangaRankings(120),
+        getAllMangaSlugs(),
       ]);
 
     const addItems = (items: Array<{ slug?: string }> = []) => {
@@ -45,7 +33,7 @@ const getPublicMangaSlugs = async (): Promise<string[]> => {
       }
     };
 
-    addItems(homeData?.items || []);
+    addItems(homeData);
     addItems(latestData?.items || []);
     addItems(completedData?.items || []);
     addItems(ongoingData?.items || []);
@@ -53,6 +41,9 @@ const getPublicMangaSlugs = async (): Promise<string[]> => {
     addItems(rankingData.weekly || []);
     addItems(rankingData.monthly || []);
     addItems(rankingData.allTime || []);
+    for (const slug of allSlugs) {
+      slugSet.add(slug);
+    }
   } catch (error) {
     console.error("Failed to build public manga sitemap entries:", error);
   }
@@ -60,42 +51,14 @@ const getPublicMangaSlugs = async (): Promise<string[]> => {
   return Array.from(slugSet);
 };
 
-const getManga18Rows = async (): Promise<Manga18Row[]> => {
-  try {
-    const mongoose = await connectToDatabase();
-    const db = mongoose.connection.db;
-    if (!db) return [];
-
-    return db
-      .collection<Manga18Row>("mangas18")
-      .find({})
-      .project({
-        slug: 1,
-        updatedAt: 1,
-        lastCrawledAt: 1,
-        createdAt: 1,
-      })
-      .toArray();
-  } catch (error) {
-    console.error("Failed to load 18+ sitemap entries:", error);
-    return [];
-  }
-};
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const [publicMangaSlugs, manga18Rows, manga18List] = await Promise.all([
+  const [publicMangaSlugs, adultCount] = await Promise.all([
     getPublicMangaSlugs(),
-    getManga18Rows(),
-    getManga18ListPage({ page: 1, pageSize: 1 }),
+    getAdultMangaCount(),
   ]);
 
-  const total18Pages = Math.max(
-    1,
-    Math.ceil(
-      manga18List.pagination.totalItems / manga18List.pagination.totalItemsPerPage,
-    ),
-  );
+  const total18Pages = Math.max(1, Math.ceil(adultCount / 24));
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
@@ -151,24 +114,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const manga18Routes: MetadataRoute.Sitemap = manga18Rows.flatMap((row) => {
-    const slug = normalizeSlug(row.slug);
-    if (!slug) return [];
-
-    return [
-      {
-        url: toAbsoluteUrl(`/18+/${slug}`),
-        lastModified: toValidDate(
-          row.lastCrawledAt,
-          row.updatedAt,
-          row.createdAt,
-          now,
-        ),
-        changeFrequency: "weekly" as const,
-        priority: 0.6,
-      },
-    ];
-  });
-
-  return [...staticRoutes, ...paginated18Routes, ...mangaRoutes, ...manga18Routes];
+  return [...staticRoutes, ...paginated18Routes, ...mangaRoutes];
 }

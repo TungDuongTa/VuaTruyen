@@ -32,7 +32,6 @@ type ChapterBottomNavProps = {
   isBookmarked: boolean;
   isBookmarkLoading: boolean;
   onToggleBookmark: () => void;
-  routeBase?: string;
 };
 
 export default function ChapterBottomNav({
@@ -49,7 +48,6 @@ export default function ChapterBottomNav({
   isBookmarked,
   isBookmarkLoading,
   onToggleBookmark,
-  routeBase = "/manga",
 }: ChapterBottomNavProps) {
   const router = useRouter();
   const chapterListContainerRef = useRef<HTMLDivElement | null>(null);
@@ -119,7 +117,7 @@ export default function ChapterBottomNav({
             </Button>
           </Link>
 
-          <Link href={`${routeBase}/${comicSlug}`}>
+          <Link href={`/manga/${comicSlug}`}>
             <Button
               variant="ghost"
               size="icon"
@@ -131,7 +129,7 @@ export default function ChapterBottomNav({
           </Link>
 
           {prevChapterName ? (
-            <Link href={`${routeBase}/${comicSlug}/chapter/${prevChapterName}`}>
+            <Link href={`/manga/${comicSlug}/chapter/${prevChapterName}`}>
               <Button
                 variant="ghost"
                 size="icon"
@@ -165,7 +163,7 @@ export default function ChapterBottomNav({
           </button>
 
           {nextChapterName ? (
-            <Link href={`${routeBase}/${comicSlug}/chapter/${nextChapterName}`}>
+            <Link href={`/manga/${comicSlug}/chapter/${nextChapterName}`}>
               <Button
                 variant="ghost"
                 size="icon"
@@ -245,7 +243,7 @@ export default function ChapterBottomNav({
                     onClick={() => {
                       onCloseChapterList();
                       router.push(
-                        `${routeBase}/${comicSlug}/chapter/${ch.chapter_name}`,
+                        `/manga/${comicSlug}/chapter/${ch.chapter_name}`,
                       );
                     }}
                   >

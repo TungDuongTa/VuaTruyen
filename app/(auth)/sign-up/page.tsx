@@ -3,9 +3,8 @@ import InputField from "@/components/forms/InputField";
 import SocialButton from "@/components/social-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { signUpWithEmail } from "@/lib/actions/auth.actions";
-import { signUpSchema } from "@/lib/zod/auth.schema";
+import { signUpSchema, type SignUpFormData } from "@/lib/zod/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import Image from "next/image";
@@ -21,8 +20,6 @@ const SignUp = () => {
   const {
     register,
     handleSubmit,
-    control,
-    setError,
     formState: { errors, isSubmitting },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),

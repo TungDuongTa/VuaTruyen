@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signInSchema } from "@/lib/zod/auth.schema";
+import { signInSchema, type SignInFormData } from "@/lib/zod/auth.schema";
 import { signInWithEmail } from "@/lib/actions/auth.actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -23,7 +23,6 @@ const SignIn = () => {
   const {
     register,
     handleSubmit,
-    control,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<SignInFormData>({

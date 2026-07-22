@@ -1,8 +1,28 @@
+import type { LucideIcon } from "lucide-react";
+import type {
+  FieldError,
+  FieldValues,
+  Path,
+  UseFormRegister,
+} from "react-hook-form";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { cn } from "@/lib/utils";
 
-export default function InputField({
+type FormInputProps<T extends FieldValues> = {
+  name: Path<T>;
+  label: string;
+  placeholder: string;
+  Icon?: LucideIcon;
+  type?: string;
+  register: UseFormRegister<T>;
+  error?: FieldError;
+  disabled?: boolean;
+  value?: string;
+  children?: React.ReactNode;
+};
+
+export default function InputField<T extends FieldValues>({
   name,
   label,
   placeholder,
@@ -10,11 +30,10 @@ export default function InputField({
   register,
   error,
   Icon,
-  // validation,
   disabled,
   value,
   children,
-}: FormInputProps) {
+}: FormInputProps<T>) {
   return (
     <div className="space-y-2  ">
       <Label

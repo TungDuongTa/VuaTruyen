@@ -2,12 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/database/mongoose";
-import { MangaViewStatModel } from "@/database/models/manga-view-stat.model";
 import { ReadingProgressModel } from "@/database/models/reading-progress.model";
-import { getManga18Detail } from "@/lib/actions/manga18.actions";
 import { trackMangaChapterView } from "@/lib/actions/manga-view.actions";
-import { getComicDetail } from "@/lib/actions/otruyen-actions";
 import { normalizePageAndSize } from "@/lib/pagination";
+import { getMangaCardsBySlugs } from "@/lib/services/manga.service";
 import {
   getUserReadingExpStats,
   incrementUserReadingStatsForNewChapter,
@@ -15,12 +13,6 @@ import {
 import { getCurrentUserId } from "@/lib/server-session";
 import type { ReadingExpStats } from "@/lib/user-level";
 import type { OTruyenComic } from "@/types/otruyen-types";
-import {
-  DEFAULT_MANGA_ROUTE_BASE,
-  normalizeMangaRouteBase,
-  resolveMangaRouteBases,
-  type MangaRouteBase,
-} from "@/lib/server/manga-route";
 
 type MarkChapterAsReadProgressInput = {
   comicId?: string;
@@ -41,7 +33,6 @@ type RecordChapterVisitInput = {
   comicUpdatedAt?: string;
   chapterName: string;
   latestChapterName?: string;
-  routeBase?: MangaRouteBase;
 };
 
 type RecordChapterVisitResult = {
@@ -74,102 +65,16 @@ type ReadingProgressDoc = {
   updatedAt?: Date | string | null;
 };
 
-type MangaViewStatDoc = {
-  comicId?: string;
-  comicSlug?: string;
-  routeBase?: string;
-  comicName?: string;
-  thumbUrl?: string;
-  comicUpdatedAt?: string;
-  latestChapterName?: string;
-};
-
 const DEFAULT_READING_HISTORY_PAGE_SIZE = 24;
 const MAX_READING_HISTORY_PAGE_SIZE = 60;
-const LIVE_HISTORY_SYNC_CONCURRENCY = 6;
 
 const normalizeString = (value: unknown): string => String(value || "").trim();
-
-const mapWithConcurrency = async <T, R>(
-  items: T[],
-  concurrency: number,
-  mapper: (item: T, index: number) => Promise<R>,
-): Promise<R[]> => {
-  if (!items.length) return [];
-  const safeConcurrency = Math.max(1, Math.min(concurrency, items.length));
-  const results = new Array<R>(items.length);
-  let nextIndex = 0;
-
-  const workers = Array.from({ length: safeConcurrency }, async () => {
-    while (true) {
-      const currentIndex = nextIndex;
-      nextIndex += 1;
-      if (currentIndex >= items.length) {
-        return;
-      }
-      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
-    }
-  });
-
-  await Promise.all(workers);
-  return results;
-};
 
 const uniqueChapterNames = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
   return Array.from(
     new Set(value.map((chapter) => normalizeString(chapter)).filter(Boolean)),
   );
-};
-
-type LiveHistoryMetadata = {
-  comicName?: string;
-  thumbUrl?: string;
-  comicUpdatedAt?: string;
-  latestChapterName?: string;
-};
-
-const getLatestChapterNameFromDetail = (chapters: any): string => {
-  const serverData = Array.isArray(chapters?.[0]?.server_data)
-    ? chapters[0].server_data
-    : [];
-  if (!serverData.length) return "";
-  return String(serverData[serverData.length - 1]?.chapter_name || "").trim();
-};
-
-const getLiveHistoryMetadata = async (
-  slug: string,
-  routeBase: MangaRouteBase,
-): Promise<LiveHistoryMetadata | null> => {
-  if (!slug) return null;
-
-  try {
-    if (routeBase === "/18+") {
-      const detail = await getManga18Detail(slug);
-      if (!detail) return null;
-
-      return {
-        comicName: detail.name,
-        thumbUrl: detail.thumb_url,
-        comicUpdatedAt: detail.updatedAt,
-        latestChapterName: getLatestChapterNameFromDetail(detail.chapters),
-      };
-    }
-
-    const detailData = await getComicDetail(slug);
-    const detail = detailData?.item;
-    if (!detail) return null;
-
-    return {
-      comicName: detail.name,
-      thumbUrl: detail.thumb_url,
-      comicUpdatedAt: detail.updatedAt,
-      latestChapterName: getLatestChapterNameFromDetail(detail.chapters),
-    };
-  } catch (error) {
-    console.error(`Failed to load live history metadata for "${slug}":`, error);
-    return null;
-  }
 };
 
 const toIsoDateString = (
@@ -185,31 +90,9 @@ const toIsoDateString = (
   return new Date().toISOString();
 };
 
-const resolveHistoryMetadata = (
-  comicSlug: string,
-  viewStat?: MangaViewStatDoc,
-) => {
-  const comicId = normalizeString(viewStat?.comicId);
-  const name = normalizeString(viewStat?.comicName) || comicSlug;
-  const thumbUrl = normalizeString(viewStat?.thumbUrl);
-  const comicUpdatedAt = normalizeString(viewStat?.comicUpdatedAt);
-  const latestChapterName = normalizeString(viewStat?.latestChapterName);
-  const routeBase = normalizeMangaRouteBase(viewStat?.routeBase);
-
-  return {
-    comicId,
-    routeBase,
-    name,
-    thumbUrl,
-    comicUpdatedAt,
-    latestChapterName,
-  };
-};
-
 const toReadingHistoryComic = (
   doc: ReadingProgressDoc,
-  viewStat?: MangaViewStatDoc,
-  routeBase: MangaRouteBase = DEFAULT_MANGA_ROUTE_BASE,
+  manga: OTruyenComic | undefined,
 ): ReadingHistoryComic | null => {
   const comicSlug = normalizeString(doc.comicSlug);
   if (!comicSlug) return null;
@@ -222,24 +105,29 @@ const toReadingHistoryComic = (
     doc.updatedAt,
     doc.createdAt,
   );
-  const metadata = resolveHistoryMetadata(comicSlug, viewStat);
+
+  if (manga) {
+    return {
+      ...manga,
+      latestReadAt,
+      latestReadChapterName,
+    };
+  }
 
   return {
-    _id: metadata.comicId || normalizeString(doc.comicId) || comicSlug,
-    name: metadata.name,
+    _id: normalizeString(doc.comicId) || comicSlug,
+    name: comicSlug,
     slug: comicSlug,
-    routeBase: metadata.routeBase || routeBase,
     origin_name: [],
     status: "ongoing",
-    thumb_url: metadata.thumbUrl,
-    sub_docquyen: false,
+    thumb_url: "",
     category: [],
-    updatedAt: metadata.comicUpdatedAt || latestReadAt,
-    chaptersLatest: (metadata.latestChapterName || latestReadChapterName)
+    updatedAt: latestReadAt,
+    chaptersLatest: latestReadChapterName
       ? [
           {
             filename: "",
-            chapter_name: metadata.latestChapterName || latestReadChapterName,
+            chapter_name: latestReadChapterName,
             chapter_title: "",
             chapter_api_data: "",
           },
@@ -368,110 +256,11 @@ export const getCurrentUserReadingHistoryPage = async ({
         rows.map((row) => normalizeString(row.comicSlug)).filter(Boolean),
       ),
     );
+    const mangaBySlug = await getMangaCardsBySlugs(slugs);
 
-    const viewStatRows = await MangaViewStatModel.find({
-      comicSlug: { $in: slugs },
-    })
-      .select(
-        "comicId comicSlug routeBase comicName thumbUrl comicUpdatedAt latestChapterName",
-      )
-      .lean();
-    const inferredRouteMap = await resolveMangaRouteBases(slugs);
-
-    const viewStatMap = new Map<string, MangaViewStatDoc>(
-      viewStatRows.map((row: any) => [normalizeString(row.comicSlug), row]),
-    );
-
-    const enrichedRows = await mapWithConcurrency(
-      rows,
-      LIVE_HISTORY_SYNC_CONCURRENCY,
-      async (row) => {
-        const slug = normalizeString(row.comicSlug);
-        if (!slug) {
-          return {
-            row,
-            routeBase: DEFAULT_MANGA_ROUTE_BASE,
-            mergedViewStat: undefined,
-            previousViewStat: undefined,
-          };
-        }
-
-        const viewStat = viewStatMap.get(slug);
-        const routeBase =
-          normalizeMangaRouteBase(viewStat?.routeBase) ||
-          inferredRouteMap.get(slug) ||
-          DEFAULT_MANGA_ROUTE_BASE;
-        const live = await getLiveHistoryMetadata(slug, routeBase);
-        const mergedViewStat: MangaViewStatDoc = {
-          comicSlug: slug,
-          comicId: normalizeString(viewStat?.comicId) || normalizeString(row.comicId),
-          routeBase,
-          comicName: live?.comicName || normalizeString(viewStat?.comicName) || slug,
-          thumbUrl: live?.thumbUrl || normalizeString(viewStat?.thumbUrl),
-          comicUpdatedAt:
-            live?.comicUpdatedAt || normalizeString(viewStat?.comicUpdatedAt),
-          latestChapterName:
-            live?.latestChapterName || normalizeString(viewStat?.latestChapterName),
-        };
-
-        return {
-          row,
-          routeBase,
-          mergedViewStat,
-          previousViewStat: viewStat,
-        };
-      },
-    );
-
-    const statUpdateOps = enrichedRows
-      .filter(({ mergedViewStat, previousViewStat }) => {
-        if (!mergedViewStat?.comicSlug) return false;
-        if (!previousViewStat) return true;
-
-        return (
-          normalizeString(previousViewStat.comicId) !==
-            normalizeString(mergedViewStat.comicId) ||
-          normalizeString(previousViewStat.routeBase) !==
-            normalizeString(mergedViewStat.routeBase) ||
-          normalizeString(previousViewStat.comicName) !==
-            normalizeString(mergedViewStat.comicName) ||
-          normalizeString(previousViewStat.thumbUrl) !==
-            normalizeString(mergedViewStat.thumbUrl) ||
-          normalizeString(previousViewStat.comicUpdatedAt) !==
-            normalizeString(mergedViewStat.comicUpdatedAt) ||
-          normalizeString(previousViewStat.latestChapterName) !==
-            normalizeString(mergedViewStat.latestChapterName)
-        );
-      })
-      .map(({ mergedViewStat }) => ({
-        updateOne: {
-          filter: { comicSlug: mergedViewStat?.comicSlug || "" },
-          update: {
-            $set: {
-              comicId: normalizeString(mergedViewStat?.comicId),
-              comicSlug: normalizeString(mergedViewStat?.comicSlug),
-              routeBase:
-                normalizeMangaRouteBase(mergedViewStat?.routeBase) ||
-                DEFAULT_MANGA_ROUTE_BASE,
-              comicName: normalizeString(mergedViewStat?.comicName),
-              thumbUrl: normalizeString(mergedViewStat?.thumbUrl),
-              comicUpdatedAt: normalizeString(mergedViewStat?.comicUpdatedAt),
-              latestChapterName: normalizeString(
-                mergedViewStat?.latestChapterName,
-              ),
-            },
-          },
-          upsert: true,
-        },
-      }));
-
-    if (statUpdateOps.length > 0) {
-      await MangaViewStatModel.bulkWrite(statUpdateOps, { ordered: false });
-    }
-
-    const items = enrichedRows
-      .map(({ row, mergedViewStat, routeBase }) =>
-        toReadingHistoryComic(row, mergedViewStat, routeBase),
+    const items = rows
+      .map((row) =>
+        toReadingHistoryComic(row, mangaBySlug.get(normalizeString(row.comicSlug))),
       )
       .filter((item): item is ReadingHistoryComic => Boolean(item));
 
@@ -568,7 +357,6 @@ export const recordChapterVisit = async (
       comicUpdatedAt: input.comicUpdatedAt,
       chapterName: input.chapterName,
       latestChapterName: input.latestChapterName,
-      routeBase: input.routeBase,
     }),
     markChapterAsReadProgress({
       comicId: input.comicId,

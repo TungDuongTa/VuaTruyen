@@ -28,15 +28,10 @@ import {
   getListByType,
   getByCategory,
   getCategories,
-} from "@/lib/actions/otruyen-actions";
+} from "@/lib/actions/manga-actions";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { getVisiblePages } from "@/lib/pagination";
+import { getVisiblePages, toPositiveInt } from "@/lib/pagination";
 import { OTruyenComic, Category, Pagination } from "@/types/otruyen-types";
-
-const toPositiveInt = (value: string | null, fallback = 1) => {
-  const parsed = Number.parseInt(value || "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-};
 
 const normalizeStatus = (value: string | null) => {
   if (value === "ongoing" || value === "completed") return value;
@@ -105,13 +100,13 @@ export default function BrowsePage() {
           const data = await searchComics(debouncedQuery, currentPage);
           if (data) {
             setComics(data.items);
-            setPagination(data.params.pagination);
+            setPagination(data.pagination);
           }
         } else if (selectedGenre) {
           const data = await getByCategory(selectedGenre, currentPage);
           if (data) {
             setComics(data.items);
-            setPagination(data.params.pagination);
+            setPagination(data.pagination);
           }
         } else {
           let listType = "truyen-moi";
@@ -121,7 +116,7 @@ export default function BrowsePage() {
           const data = await getListByType(listType, currentPage);
           if (data) {
             setComics(data.items);
-            setPagination(data.params.pagination);
+            setPagination(data.pagination);
           }
         }
       } catch (error) {

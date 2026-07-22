@@ -3,10 +3,7 @@ import Image from "next/image";
 import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeTime } from "@/lib/date-time";
-import {
-  OTruyenComic,
-  getImageUrl,
-} from "@/types/otruyen-types";
+import { OTruyenComic } from "@/types/otruyen-types";
 
 const FALLBACK_COVER =
   "https://placehold.co/300x450/111827/9CA3AF?text=No+Cover";
@@ -15,23 +12,18 @@ interface MangaCardApiProps {
   comic: OTruyenComic;
   showLatestChapter?: boolean;
   variant?: "default" | "compact" | "horizontal";
-  routeBase?: string;
 }
 
 export function MangaCardApi({
   comic,
   showLatestChapter = true,
   variant = "default",
-  routeBase = "/manga",
 }: MangaCardApiProps) {
-  const coverSrc = comic.thumb_url?.trim()
-    ? getImageUrl(comic.thumb_url)
-    : FALLBACK_COVER;
+  const coverSrc = comic.thumb_url?.trim() ? comic.thumb_url : FALLBACK_COVER;
   const latestChapterName = String(
     comic.chaptersLatest?.[0]?.chapter_name || "",
   ).trim();
-  const resolvedRouteBase = comic.routeBase || routeBase;
-  const comicHref = `${resolvedRouteBase}/${comic.slug}`;
+  const comicHref = `/manga/${comic.slug}`;
 
   if (variant === "horizontal") {
     return (

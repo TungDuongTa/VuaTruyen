@@ -27,7 +27,6 @@ import { toast } from "sonner";
 import {
   type ComicDetailItem,
   formatStatus,
-  getImageUrl,
 } from "@/types/otruyen-types";
 
 type MangaDetailPageClientProps = {
@@ -36,7 +35,6 @@ type MangaDetailPageClientProps = {
   initialBookmarked: boolean;
   initialReadChapterNames: string[];
   initialTotalViews: number;
-  routeBase?: string;
 };
 
 export function MangaDetailPageClient({
@@ -45,7 +43,6 @@ export function MangaDetailPageClient({
   initialBookmarked,
   initialReadChapterNames,
   initialTotalViews,
-  routeBase = "/manga",
 }: MangaDetailPageClientProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [chaptersOrder, setChaptersOrder] = useState<"desc" | "asc">("desc");
@@ -64,19 +61,12 @@ export function MangaDetailPageClient({
     () => new Set(initialReadChapterNames),
     [initialReadChapterNames],
   );
-  const comicHref = `${routeBase}/${comic.slug}`;
+  const comicHref = `/manga/${comic.slug}`;
   const { isBookmarked, isBookmarkLoading, handleBookmarkToggle } =
     useBookmarkToggle({
       initialBookmarked,
       comicId: comic._id,
       slug: comic.slug,
-      name: comic.name,
-      thumbUrl: comic.thumb_url,
-      status: comic.status,
-      comicUpdatedAt: comic.updatedAt,
-      categories: comic.category || [],
-      latestChapterName: latestChapter?.chapter_name,
-      routeBase,
     });
 
   const handleShare = async () => {
@@ -122,7 +112,7 @@ export function MangaDetailPageClient({
       <main>
         <div className="relative h-64 overflow-hidden md:h-80">
           <Image
-            src={getImageUrl(comic.thumb_url)}
+            src={comic.thumb_url}
             alt={comic.name}
             fill
             sizes="100vw"
@@ -137,7 +127,7 @@ export function MangaDetailPageClient({
             <div className="shrink-0">
               <div className="relative mx-auto aspect-[3/4] w-48 overflow-hidden rounded-xl bg-muted shadow-2xl shadow-primary/20 md:mx-0 md:w-56">
                 <Image
-                  src={getImageUrl(comic.thumb_url)}
+                  src={comic.thumb_url}
                   alt={comic.name}
                   fill
                   sizes="(max-width: 768px) 192px, 224px"

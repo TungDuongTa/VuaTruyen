@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { normalizeCallbackUrl } from "../view-utils";
+import type { SignInFormData, SignUpFormData } from "../zod/auth.schema";
 export const signUpWithEmail = async (data: SignUpFormData) => {
   try {
     await auth.api.signUpEmail({

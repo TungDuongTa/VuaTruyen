@@ -21,7 +21,6 @@ import { recordChapterVisit } from "@/lib/actions/reading-progress.actions";
 import {
   type ChapterImage,
   type ComicDetailItem,
-  getChapterImageUrl,
 } from "@/types/otruyen-types";
 
 type ChapterReaderPageClientProps = {
@@ -29,10 +28,8 @@ type ChapterReaderPageClientProps = {
   chapter: string;
   comic: ComicDetailItem;
   chapterImages: ChapterImage[];
-  chapterPath: string;
   initialBookmarked: boolean;
   initialReadChapterNames: string[];
-  routeBase?: string;
 };
 
 export function ChapterReaderPageClient({
@@ -40,10 +37,8 @@ export function ChapterReaderPageClient({
   chapter,
   comic,
   chapterImages,
-  chapterPath,
   initialBookmarked,
   initialReadChapterNames,
-  routeBase = "/manga",
 }: ChapterReaderPageClientProps) {
   const VISIT_DEDUPE_WINDOW_MS = 15_000;
   const router = useRouter();
@@ -68,19 +63,12 @@ export function ChapterReaderPageClient({
   const currentChapterInfo = chapters.find((c) => c.chapter_name === chapter);
   const latestChapter =
     chapters.length > 0 ? chapters[chapters.length - 1] : null;
-  const comicHref = `${routeBase}/${comic.slug}`;
+  const comicHref = `/manga/${comic.slug}`;
   const { isBookmarked, isBookmarkLoading, handleBookmarkToggle } =
     useBookmarkToggle({
       initialBookmarked,
       comicId: comic._id,
       slug: comic.slug,
-      name: comic.name,
-      thumbUrl: comic.thumb_url,
-      status: comic.status,
-      comicUpdatedAt: comic.updatedAt,
-      categories: comic.category || [],
-      latestChapterName: latestChapter?.chapter_name,
-      routeBase,
     });
 
   useEffect(() => {
@@ -116,7 +104,6 @@ export function ChapterReaderPageClient({
         comicUpdatedAt: comic.updatedAt,
         chapterName: chapter,
         latestChapterName: latestChapter?.chapter_name,
-        routeBase: routeBase === "/18+" ? "/18+" : "/manga",
       });
 
       if (!result.success) {
@@ -157,7 +144,7 @@ export function ChapterReaderPageClient({
       }
 
       const comicSlug = comic?.slug || id;
-      const comicRouteHref = `${routeBase}/${comicSlug}`;
+      const comicRouteHref = `/manga/${comicSlug}`;
 
       if (e.key === "ArrowLeft") {
         if (prevChapter) {
@@ -176,12 +163,9 @@ export function ChapterReaderPageClient({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [prevChapter, nextChapter, comic?.slug, id, router, routeBase]);
+  }, [prevChapter, nextChapter, comic?.slug, id, router]);
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
-
-  const getImageUrlForPage = (imageFile: string) =>
-    getChapterImageUrl(chapterPath, imageFile);
 
   return (
     <div className="min-h-screen">
@@ -262,7 +246,7 @@ export function ChapterReaderPageClient({
           {chapterImages.map((img, index) => (
             <div key={index} className="relative w-full">
               <Image
-                src={getImageUrlForPage(img.image_file)}
+                src={img.image_file}
                 alt={`Page ${index + 1}`}
                 width={800}
                 height={1200}
@@ -350,7 +334,6 @@ export function ChapterReaderPageClient({
         isBookmarked={isBookmarked}
         isBookmarkLoading={isBookmarkLoading}
         onToggleBookmark={handleBookmarkToggle}
-        routeBase={routeBase}
       />
 
       <Button

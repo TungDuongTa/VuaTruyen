@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 import { MangaDetailPageClient } from "@/components/manga-detail-page-client";
 import { isMangaBookmarked } from "@/lib/actions/bookmark.actions";
 import { getMangaViewStats } from "@/lib/actions/manga-view.actions";
-import { getComicDetail } from "@/lib/actions/otruyen-actions";
+import { getComicDetail } from "@/lib/actions/manga-actions";
 import { getReadingProgressChapterNames } from "@/lib/actions/reading-progress.actions";
 import { stripHtml, truncateText, withSiteSuffix } from "@/lib/seo";
-import { getImageUrl } from "@/types/otruyen-types";
 
 type MangaDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -22,8 +21,7 @@ export async function generateMetadata({
   params,
 }: MangaDetailPageProps): Promise<Metadata> {
   const { id } = await params;
-  const detailData = await getComicDetailCached(id);
-  const comic = detailData?.item;
+  const comic = await getComicDetailCached(id);
   const canonicalPath = `/manga/${comic?.slug || id}`;
 
   if (!comic) {
@@ -42,9 +40,7 @@ export async function generateMetadata({
     160,
   );
   const title = `Truyện tranh ${comic.name} `;
-  const coverImage = comic.thumb_url?.trim()
-    ? getImageUrl(comic.thumb_url)
-    : "";
+  const coverImage = comic.thumb_url?.trim() ? comic.thumb_url : "";
 
   return {
     title,
@@ -87,10 +83,9 @@ export default async function MangaDetailPage({
       getMangaViewStats(id),
     ]);
 
-  const detailData =
-    detailResult.status === "fulfilled" ? detailResult.value : null;
+  const comic = detailResult.status === "fulfilled" ? detailResult.value : null;
 
-  if (!detailData?.item) {
+  if (!comic) {
     return (
       <div className="min-h-screen">
         <main className="flex min-h-[60vh] flex-col items-center justify-center">
@@ -115,7 +110,7 @@ export default async function MangaDetailPage({
   return (
     <MangaDetailPageClient
       id={id}
-      comic={detailData.item}
+      comic={comic}
       initialBookmarked={initialBookmarked}
       initialReadChapterNames={initialReadChapterNames}
       initialTotalViews={initialTotalViews}
