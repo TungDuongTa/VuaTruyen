@@ -314,6 +314,18 @@ export const getMangaByCategory = async (
   );
 };
 
+/** Match crawler sync: only publish done chapters; keep legacy rows without status. */
+const readableChapterFilter = (mangaSlug: string, chapterName?: string) => {
+  const filter: Record<string, unknown> = {
+    mangaSlug,
+    $or: [{ crawlStatus: "done" }, { crawlStatus: { $exists: false } }],
+  };
+  if (chapterName !== undefined) {
+    filter.chapterName = chapterName;
+  }
+  return filter;
+};
+
 export const getMangaDetail = async (
   slug: string,
 ): Promise<ComicDetailItem | null> => {
@@ -322,7 +334,7 @@ export const getMangaDetail = async (
   const manga = await MangaModel.findOne({ slug }).lean();
   if (!manga) return null;
 
-  const chapters = await ChapterModel.find({ mangaSlug: slug })
+  const chapters = await ChapterModel.find(readableChapterFilter(slug))
     .select("chapterName chapterTitle chapterNumber")
     .sort({ chapterNumber: 1 })
     .lean();
@@ -341,7 +353,7 @@ export const getMangaChapter = async (
 
   const [manga, chapter] = await Promise.all([
     MangaModel.findOne({ slug }).lean(),
-    ChapterModel.findOne({ mangaSlug: slug, chapterName }).lean(),
+    ChapterModel.findOne(readableChapterFilter(slug, chapterName)).lean(),
   ]);
 
   if (!manga || !chapter) return null;

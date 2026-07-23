@@ -1,10 +1,7 @@
 "use server";
 
 import {
-  getHomeMangaData,
   getMangaByCategory,
-  getMangaChapter,
-  getMangaDetail,
   getMangaList,
   searchManga,
   type MangaListType,
@@ -13,6 +10,9 @@ import {
   getCachedAdultListPage1,
   getCachedBrowseListPage1,
   getCachedCategories,
+  getCachedHomeData,
+  getCachedMangaChapter,
+  getCachedMangaDetail,
 } from "@/lib/server/manga-cache";
 import type {
   Category,
@@ -54,7 +54,7 @@ async function safeQuery<T>(
 }
 
 export async function getHomeData(): Promise<OTruyenComic[]> {
-  const items = await safeQuery("home data", () => getHomeMangaData());
+  const items = await safeQuery("home data", () => getCachedHomeData());
   return items || [];
 }
 
@@ -125,7 +125,7 @@ export async function getByCategory(
 export async function getComicDetail(
   slug: string,
 ): Promise<ComicDetailItem | null> {
-  return safeQuery(`manga ${slug}`, () => getMangaDetail(slug));
+  return safeQuery(`manga ${slug}`, () => getCachedMangaDetail(slug));
 }
 
 export async function getChapterData(
@@ -133,7 +133,7 @@ export async function getChapterData(
   chapterName: string,
 ): Promise<ChapterItem | null> {
   return safeQuery(`chapter ${mangaSlug}/${chapterName}`, () =>
-    getMangaChapter(mangaSlug, chapterName),
+    getCachedMangaChapter(mangaSlug, chapterName),
   );
 }
 
