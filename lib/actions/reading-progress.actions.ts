@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/database/mongoose";
+import { BookmarkModel } from "@/database/models/bookmark.model";
 import { ReadingProgressModel } from "@/database/models/reading-progress.model";
 import { trackMangaChapterView } from "@/lib/actions/manga-view.actions";
 import { normalizePageAndSize } from "@/lib/pagination";
@@ -153,39 +154,67 @@ export const getCurrentUserReadingExpStats =
     return getUserReadingExpStats(userId);
   };
 
+export type MangaPersonalState = {
+  bookmarked: boolean;
+  readChapterNames: string[];
+};
+
+const emptyPersonalState = (): MangaPersonalState => ({
+  bookmarked: false,
+  readChapterNames: [],
+});
+
+/** Bookmark + read chapters for the current user (one round-trip). */
+export const getMangaPersonalState = async (
+  comicSlug: string,
+): Promise<MangaPersonalState> => {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return emptyPersonalState();
+
+    const normalizedComicSlug = normalizeString(comicSlug);
+    if (!normalizedComicSlug) return emptyPersonalState();
+
+    await connectToDatabase();
+
+    const [bookmarkDoc, progressDocRaw] = await Promise.all([
+      BookmarkModel.findOne({
+        userId,
+        slug: normalizedComicSlug,
+      })
+        .select("_id")
+        .lean(),
+      ReadingProgressModel.findOne({
+        userId,
+        comicSlug: normalizedComicSlug,
+        readChapters: { $exists: true },
+      })
+        .select("readChapters lastReadChapter -_id")
+        .lean(),
+    ]);
+
+    const progressDoc = progressDocRaw as ReadingProgressDoc | null;
+    const readChapters = uniqueChapterNames(progressDoc?.readChapters);
+    const lastReadChapter = normalizeString(progressDoc?.lastReadChapter);
+    if (lastReadChapter && !readChapters.includes(lastReadChapter)) {
+      readChapters.unshift(lastReadChapter);
+    }
+
+    return {
+      bookmarked: Boolean(bookmarkDoc),
+      readChapterNames: readChapters,
+    };
+  } catch (error) {
+    console.error("Failed to load manga personal state:", error);
+    return emptyPersonalState();
+  }
+};
+
 export const getReadingProgressChapterNames = async (
   comicSlug: string,
 ): Promise<string[]> => {
-  try {
-    const userId = await getCurrentUserId();
-    if (!userId) return [];
-
-    const normalizedComicSlug = normalizeString(comicSlug);
-    if (!normalizedComicSlug) return [];
-
-    await connectToDatabase();
-    const row = (await ReadingProgressModel.findOne({
-      userId,
-      comicSlug: normalizedComicSlug,
-      readChapters: { $exists: true },
-    })
-      .select("readChapters lastReadChapter -_id")
-      .lean()) as ReadingProgressDoc | null;
-
-    if (!row) return [];
-
-    const readChapters = uniqueChapterNames(row.readChapters);
-    const lastReadChapter = String(row.lastReadChapter || "").trim();
-
-    if (lastReadChapter && !readChapters.includes(lastReadChapter)) {
-      return [lastReadChapter, ...readChapters];
-    }
-
-    return readChapters;
-  } catch (error) {
-    console.error("Failed to load reading progress chapter names:", error);
-    return [];
-  }
+  const state = await getMangaPersonalState(comicSlug);
+  return state.readChapterNames;
 };
 
 export const getCurrentUserReadingHistoryPage = async ({

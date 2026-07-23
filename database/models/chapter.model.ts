@@ -15,12 +15,6 @@ const chapterSchema = new Schema(
     chapterTitle: { type: String, default: "" },
     chapterNumber: { type: Number, required: true, index: true },
     pages: { type: [chapterPageSchema], default: [] },
-    // Written by the crawler; optional for legacy rows without the field.
-    crawlStatus: {
-      type: String,
-      enum: ["pending", "crawling", "done", "error"],
-      index: true,
-    },
   },
   { timestamps: true },
 );

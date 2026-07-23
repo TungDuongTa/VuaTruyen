@@ -10,8 +10,6 @@ import {
 } from "@/lib/pagination";
 import { buildCanonicalPath, withSiteSuffix } from "@/lib/seo";
 
-export const revalidate = 3600;
-
 interface PageProps {
   searchParams: Promise<{
     page?: string;

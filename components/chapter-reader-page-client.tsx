@@ -17,7 +17,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
-import { useMangaPersonalState } from "@/hooks/use-manga-personal-state";
 import { recordChapterVisit } from "@/lib/actions/reading-progress.actions";
 import { type ChapterImage, type ComicDetailItem } from "@/types/manga-types";
 
@@ -26,6 +25,8 @@ type ChapterReaderPageClientProps = {
   chapter: string;
   comic: ComicDetailItem;
   chapterImages: ChapterImage[];
+  initialBookmarked?: boolean;
+  initialReadChapterNames?: string[];
 };
 
 export function ChapterReaderPageClient({
@@ -33,20 +34,20 @@ export function ChapterReaderPageClient({
   chapter,
   comic,
   chapterImages,
+  initialBookmarked = false,
+  initialReadChapterNames = [],
 }: ChapterReaderPageClientProps) {
   const VISIT_DEDUPE_WINDOW_MS = 15_000;
   const router = useRouter();
   const inFlightVisitKeysRef = useRef<Set<string>>(new Set());
   const [showChapterList, setShowChapterList] = useState(false);
-  const {
-    isBookmarked: loadedBookmarked,
-    readChapterNames: loadedReadChapterNames,
-  } = useMangaPersonalState(comic.slug);
-  const [readChapterNames, setReadChapterNames] = useState<string[]>([]);
+  const [readChapterNames, setReadChapterNames] = useState(
+    initialReadChapterNames,
+  );
 
   useEffect(() => {
-    setReadChapterNames(loadedReadChapterNames);
-  }, [loadedReadChapterNames]);
+    setReadChapterNames(initialReadChapterNames);
+  }, [initialReadChapterNames]);
 
   const chapters = comic.chapters?.[0]?.server_data || [];
   const orderedChapters = chapters;
@@ -66,7 +67,7 @@ export function ChapterReaderPageClient({
   const comicHref = `/manga/${comic.slug}`;
   const { isBookmarked, isBookmarkLoading, handleBookmarkToggle } =
     useBookmarkToggle({
-      initialBookmarked: loadedBookmarked,
+      initialBookmarked,
       comicId: comic._id,
       slug: comic.slug,
     });

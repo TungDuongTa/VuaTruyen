@@ -1,19 +1,15 @@
 "use server";
 
 import {
+  getHomeMangaData,
   getMangaByCategory,
+  getMangaCategories,
+  getMangaChapter,
+  getMangaDetail,
   getMangaList,
   searchManga,
   type MangaListType,
 } from "@/lib/services/manga.service";
-import {
-  getCachedAdultListPage1,
-  getCachedBrowseListPage1,
-  getCachedCategories,
-  getCachedHomeData,
-  getCachedMangaChapter,
-  getCachedMangaDetail,
-} from "@/lib/server/manga-cache";
 import type {
   Category,
   ChapterItem,
@@ -54,7 +50,7 @@ async function safeQuery<T>(
 }
 
 export async function getHomeData(): Promise<OTruyenComic[]> {
-  const items = await safeQuery("home data", () => getCachedHomeData());
+  const items = await safeQuery("home data", () => getHomeMangaData());
   return items || [];
 }
 
@@ -64,20 +60,11 @@ export async function getListByType(
   options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
   const listType = toListType(type);
-  const cursor = options.cursor || null;
-
-  // Hot path: first page, no cursor — shared Data Cache across requests.
-  if (page === 1 && !cursor) {
-    return safeQuery(`cached list ${listType}`, () =>
-      getCachedBrowseListPage1(listType),
-    );
-  }
-
   return safeQuery(`list ${listType}`, () =>
     getMangaList({
       type: listType,
       page,
-      cursor,
+      cursor: options.cursor || null,
       direction: options.direction,
     }),
   );
@@ -89,26 +76,20 @@ export async function getListByTag(
   pageSize: number = 24,
   options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  const cursor = options.cursor || null;
-
-  if (tag === "18+" && page === 1 && !cursor && pageSize === 24) {
-    return safeQuery("cached list tag 18+", () => getCachedAdultListPage1());
-  }
-
   return safeQuery(`list tag ${tag}`, () =>
     getMangaList({
       type: "truyen-moi",
       tag,
       page,
       pageSize,
-      cursor,
+      cursor: options.cursor || null,
       direction: options.direction,
     }),
   );
 }
 
 export async function getCategories(): Promise<Category[]> {
-  const items = await safeQuery("categories", () => getCachedCategories());
+  const items = await safeQuery("categories", () => getMangaCategories());
   return items || [];
 }
 
@@ -125,7 +106,7 @@ export async function getByCategory(
 export async function getComicDetail(
   slug: string,
 ): Promise<ComicDetailItem | null> {
-  return safeQuery(`manga ${slug}`, () => getCachedMangaDetail(slug));
+  return safeQuery(`manga ${slug}`, () => getMangaDetail(slug));
 }
 
 export async function getChapterData(
@@ -133,7 +114,7 @@ export async function getChapterData(
   chapterName: string,
 ): Promise<ChapterItem | null> {
   return safeQuery(`chapter ${mangaSlug}/${chapterName}`, () =>
-    getCachedMangaChapter(mangaSlug, chapterName),
+    getMangaChapter(mangaSlug, chapterName),
   );
 }
 

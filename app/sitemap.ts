@@ -7,9 +7,6 @@ import {
 } from "@/lib/services/manga.service";
 import { toAbsoluteUrl } from "@/lib/seo";
 
-// Regenerate the sitemap hourly instead of freezing it at build time.
-export const revalidate = 3600;
-
 const normalizeSlug = (value: unknown): string => String(value || "").trim();
 
 const getPublicMangaEntries = async () => {

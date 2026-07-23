@@ -5,23 +5,13 @@ import { Button } from "@/components/ui/button";
 import { MangaDetailPageClient } from "@/components/manga-detail-page-client";
 import { getMangaViewStats } from "@/lib/actions/manga-view.actions";
 import { getComicDetail } from "@/lib/actions/manga-actions";
+import { getMangaPersonalState } from "@/lib/actions/reading-progress.actions";
 import {
   stripHtml,
   toAbsoluteUrl,
   truncateText,
   withSiteSuffix,
 } from "@/lib/seo";
-
-// Public manga pages: cache at the edge and refresh at most every 1 hour.
-// Per-user bookmark/progress is loaded client-side so this stays ISR-eligible.
-export const revalidate = 3600;
-export const dynamic = "force-static";
-export const dynamicParams = true;
-
-// Empty = generate none at build time; unknown slugs are still ISR'd on first request.
-export async function generateStaticParams() {
-  return [] as Array<{ id: string }>;
-}
 
 type MangaDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -93,9 +83,10 @@ export default async function MangaDetailPage({
 }: MangaDetailPageProps) {
   const { id } = await params;
 
-  const [detailResult, viewResult] = await Promise.allSettled([
+  const [detailResult, viewResult, personalResult] = await Promise.allSettled([
     getComicDetailCached(id),
     getMangaViewStats(id),
+    getMangaPersonalState(id),
   ]);
 
   const comic = detailResult.status === "fulfilled" ? detailResult.value : null;
@@ -117,6 +108,10 @@ export default async function MangaDetailPage({
 
   const initialTotalViews =
     viewResult.status === "fulfilled" ? viewResult.value.totalViews : 0;
+  const personalState =
+    personalResult.status === "fulfilled"
+      ? personalResult.value
+      : { bookmarked: false, readChapterNames: [] };
 
   const mangaUrl = toAbsoluteUrl(`/manga/${comic.slug}`);
   const description = truncateText(
@@ -175,6 +170,8 @@ export default async function MangaDetailPage({
         id={id}
         comic={comic}
         initialTotalViews={initialTotalViews}
+        initialBookmarked={personalState.bookmarked}
+        initialReadChapterNames={personalState.readChapterNames}
       />
     </>
   );

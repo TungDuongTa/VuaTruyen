@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
-import { useMangaPersonalState } from "@/hooks/use-manga-personal-state";
 import { formatRelativeTime } from "@/lib/date-time";
 import { formatViewCount } from "@/lib/format";
 import { toast } from "sonner";
@@ -34,18 +33,21 @@ type MangaDetailPageClientProps = {
   id: string;
   comic: ComicDetailItem;
   initialTotalViews: number;
+  initialBookmarked?: boolean;
+  initialReadChapterNames?: string[];
 };
 
 export function MangaDetailPageClient({
   id,
   comic,
   initialTotalViews,
+  initialBookmarked = false,
+  initialReadChapterNames = [],
 }: MangaDetailPageClientProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [chaptersOrder, setChaptersOrder] = useState<"desc" | "asc">("desc");
   const [isSharing, setIsSharing] = useState(false);
-  const { isBookmarked: loadedBookmarked, readChapterNames } =
-    useMangaPersonalState(comic.slug);
+  const readChapterNames = initialReadChapterNames;
 
   const chapters = comic.chapters?.[0]?.server_data || [];
   const sortedChapters = useMemo(
@@ -63,7 +65,7 @@ export function MangaDetailPageClient({
   const comicHref = `/manga/${comic.slug}`;
   const { isBookmarked, isBookmarkLoading, handleBookmarkToggle } =
     useBookmarkToggle({
-      initialBookmarked: loadedBookmarked,
+      initialBookmarked,
       comicId: comic._id,
       slug: comic.slug,
     });

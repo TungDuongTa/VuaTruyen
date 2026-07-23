@@ -4,18 +4,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderPageClient } from "@/components/chapter-reader-page-client";
 import { getComicDetail, getChapterData } from "@/lib/actions/manga-actions";
+import { getMangaPersonalState } from "@/lib/actions/reading-progress.actions";
 import { toAbsoluteUrl, withSiteSuffix } from "@/lib/seo";
-
-// Public chapter pages: cache at the edge and refresh at most every 24 hours.
-// Per-user bookmark/progress is loaded client-side so this stays ISR-eligible.
-export const revalidate = 86400;
-export const dynamic = "force-static";
-export const dynamicParams = true;
-
-// Empty = generate none at build time; unknown chapters are still ISR'd on first request.
-export async function generateStaticParams() {
-  return [] as Array<{ id: string; chapter: string }>;
-}
 
 type ChapterReaderPageProps = {
   params: Promise<{ id: string; chapter: string }>;
@@ -116,7 +106,11 @@ export default async function ChapterReaderPage({
     );
   }
 
-  const chapterContent = await getChapterData(comic.slug || id, chapter);
+  const mangaSlug = comic.slug || id;
+  const [chapterContent, personalState] = await Promise.all([
+    getChapterData(mangaSlug, chapter),
+    getMangaPersonalState(mangaSlug),
+  ]);
   const chapterImages = chapterContent?.chapter_image || [];
 
   if (chapterImages.length === 0) {
@@ -125,7 +119,7 @@ export default async function ChapterReaderPage({
         <h1 className="mb-4 text-2xl font-bold text-foreground">
           Không tìm thấy chapter
         </h1>
-        <Link href={`/manga/${comic.slug || id}`}>
+        <Link href={`/manga/${mangaSlug}`}>
           <Button>Quay lại</Button>
         </Link>
       </div>
@@ -190,6 +184,8 @@ export default async function ChapterReaderPage({
         chapter={chapter}
         comic={comic}
         chapterImages={chapterImages}
+        initialBookmarked={personalState.bookmarked}
+        initialReadChapterNames={personalState.readChapterNames}
       />
     </>
   );
