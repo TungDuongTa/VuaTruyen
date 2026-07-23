@@ -17,7 +17,7 @@ import { ChevronRight } from "lucide-react";
 
 // Data comes straight from MongoDB now (no fetch cache), so opt into ISR
 // to keep a "refresh at most every 1 hour" ISR cache.
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: {
