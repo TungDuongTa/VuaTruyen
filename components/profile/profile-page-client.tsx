@@ -22,11 +22,7 @@ import {
   getLevelBadgeTier,
   getLevelUsernameEffect,
 } from "@/lib/level-badge-tiers";
-import {
-  EXP_PER_CHAPTER,
-  EXP_PER_LEVEL,
-  type ReadingExpStats,
-} from "@/lib/user-level";
+import type { ReadingExpStats } from "@/lib/user-level";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +47,12 @@ type NoticeState = {
 } | null;
 
 const MAX_AVATAR_SIZE_BYTES = 1024 * 1024;
+const ALLOWED_AVATAR_MIME = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
 
 export function ProfilePageClient({
   initialProfile,
@@ -59,10 +61,12 @@ export function ProfilePageClient({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [displayName, setDisplayName] = useState(initialProfile.name);
-  const [avatarInput, setAvatarInput] = useState(initialProfile.image || "");
+  const [avatarUrl, setAvatarUrl] = useState(initialProfile.image || "");
   const [avatarPreview, setAvatarPreview] = useState(
     initialProfile.image || "",
   );
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [clearAvatar, setClearAvatar] = useState(false);
   const [notice, setNotice] = useState<NoticeState>(null);
   const [isSaving, startSaving] = useTransition();
   const [isSigningOut, startSigningOut] = useTransition();
@@ -85,8 +89,11 @@ export function ProfilePageClient({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setNotice({ type: "error", message: "Please select an image file." });
+    if (!ALLOWED_AVATAR_MIME.has(file.type)) {
+      setNotice({
+        type: "error",
+        message: "Avatar must be JPEG, PNG, WebP, or GIF.",
+      });
       return;
     }
 
@@ -98,14 +105,27 @@ export function ProfilePageClient({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      setAvatarInput(result);
-      setAvatarPreview(result);
-      setNotice(null);
-    };
-    reader.readAsDataURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPendingFile(file);
+    setClearAvatar(false);
+    setAvatarPreview((prev) => {
+      if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return objectUrl;
+    });
+    setNotice(null);
+  };
+
+  const handleClearAvatar = () => {
+    setPendingFile(null);
+    setClearAvatar(true);
+    setAvatarPreview((prev) => {
+      if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return "";
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setNotice(null);
   };
 
   const handleSaveProfile = () => {
@@ -113,20 +133,37 @@ export function ProfilePageClient({
     if (normalizedName.length < 2 || normalizedName.length > 40) {
       setNotice({
         type: "error",
-        message: "Tên hiển thị phải từ 2 dến 40 ký tự",
+        message: "Tên hiển thị phải từ 2 đến 40 ký tự",
       });
       return;
     }
 
     startSaving(async () => {
-      const result = await updateUserProfile({
-        displayName: normalizedName,
-        avatar: avatarInput.trim() || null,
-      });
+      const formData = new FormData();
+      formData.set("displayName", normalizedName);
+      if (clearAvatar) {
+        formData.set("clearAvatar", "1");
+      } else if (pendingFile) {
+        formData.set("avatar", pendingFile);
+      }
+
+      const result = await updateUserProfile(formData);
 
       if (!result.success) {
         setNotice({ type: "error", message: result.message });
         return;
+      }
+
+      const savedImage = result.image ?? null;
+      setAvatarUrl(savedImage || "");
+      setAvatarPreview((prev) => {
+        if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+        return savedImage || "";
+      });
+      setPendingFile(null);
+      setClearAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
 
       setNotice({ type: "success", message: result.message });
@@ -211,26 +248,24 @@ export function ProfilePageClient({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="avatar-url">
-                URL ảnh đại diện hoặc tải ảnh lên
-              </Label>
-              <Input
-                id="avatar-url"
-                value={avatarInput}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setAvatarInput(value);
-                  setAvatarPreview(value);
-                }}
-                placeholder="https://example.com/avatar.png"
-              />
+              <Label>Ảnh đại diện</Label>
+              <p className="text-xs text-muted-foreground">
+                JPEG, PNG, WebP hoặc GIF · tối đa 1MB
+              </p>
+              {(pendingFile || clearAvatar) && (
+                <p className="text-xs text-primary">
+                  {clearAvatar
+                    ? "Ảnh sẽ bị xóa khi bạn lưu."
+                    : `Đã chọn: ${pendingFile?.name}`}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
                 onChange={handleAvatarFileChange}
               />
@@ -247,13 +282,8 @@ export function ProfilePageClient({
                 type="button"
                 variant="ghost"
                 className="gap-2"
-                onClick={() => {
-                  setAvatarInput("");
-                  setAvatarPreview("");
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                  }
-                }}
+                disabled={!avatarUrl && !pendingFile && !clearAvatar}
+                onClick={handleClearAvatar}
               >
                 <Camera className="h-4 w-4" />
                 Xóa ảnh đại diện

@@ -11,6 +11,7 @@ const commentLikeSchema = new Schema(
 );
 
 commentLikeSchema.index({ userId: 1, commentId: 1 }, { unique: true });
+commentLikeSchema.index({ userId: 1, createdAt: -1 });
 
 export const CommentLikeModel =
   models.CommentLike || model("CommentLike", commentLikeSchema);

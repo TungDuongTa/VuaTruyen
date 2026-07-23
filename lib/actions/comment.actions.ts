@@ -6,6 +6,13 @@ import { ObjectId } from "mongodb";
 import { connectToDatabase } from "@/database/mongoose";
 import { CommentLikeModel } from "@/database/models/comment-like.model";
 import { CommentModel } from "@/database/models/comment.model";
+import {
+  COMMENT_CREATE_HOURLY_RATE,
+  COMMENT_CREATE_RATE,
+  COMMENT_LIKE_RATE,
+  COMMENT_MAX_DEPTH,
+  COMMENT_MAX_LENGTH,
+} from "@/lib/comment-limits";
 import { normalizePageAndSize } from "@/lib/pagination";
 import { getUserLevelMap } from "@/lib/server/user-level";
 import { getSessionUser } from "@/lib/server-session";
@@ -85,13 +92,14 @@ type ToggleCommentLikeResult = {
   likeCount?: number;
 };
 
-const COMMENT_MAX_LENGTH = 1000;
 const DEFAULT_RECENT_HOME_COMMENT_LIMIT = 10;
 const MAX_RECENT_HOME_COMMENT_LIMIT = 30;
 const DEFAULT_COMMENT_PAGE_SIZE = 10;
 const MAX_COMMENT_PAGE_SIZE = 30;
 const DEFAULT_COMMENT_AUTHOR_NAME = "User";
 const AUTH_USER_COLLECTION_CANDIDATES = ["user", "users"] as const;
+/** Resolved once per process so we don't listCollections on every comment feed. */
+let cachedAuthUserCollection: string | null | undefined;
 const TOP_LEVEL_COMMENT_QUERY = { parentCommentId: null };
 const COMMENT_PROJECTION =
   "_id userId content comicSlug comicName targetType chapterName parentCommentId likeCount createdAt updatedAt";
@@ -105,6 +113,80 @@ const isDuplicateKeyError = (error: unknown) => {
   if (!error || typeof error !== "object") return false;
   const maybeCode = (error as { code?: unknown }).code;
   return maybeCode === 11000;
+};
+
+const countSince = async (
+  model: typeof CommentModel | typeof CommentLikeModel,
+  userId: string,
+  windowMs: number,
+) => {
+  const since = new Date(Date.now() - windowMs);
+  return model.countDocuments({
+    userId,
+    createdAt: { $gte: since },
+  });
+};
+
+const getCreateCommentRateLimitMessage = async (userId: string) => {
+  const [minuteCount, hourCount] = await Promise.all([
+    countSince(CommentModel, userId, COMMENT_CREATE_RATE.windowMs),
+    countSince(CommentModel, userId, COMMENT_CREATE_HOURLY_RATE.windowMs),
+  ]);
+
+  if (minuteCount >= COMMENT_CREATE_RATE.max) {
+    return `Bạn đã bình luận quá nhanh. Tối đa ${COMMENT_CREATE_RATE.max} bình luận / ${COMMENT_CREATE_RATE.label}.`;
+  }
+
+  if (hourCount >= COMMENT_CREATE_HOURLY_RATE.max) {
+    return `Bạn đã bình luận quá nhiều. Tối đa ${COMMENT_CREATE_HOURLY_RATE.max} bình luận / ${COMMENT_CREATE_HOURLY_RATE.label}.`;
+  }
+
+  return null;
+};
+
+const getLikeRateLimitMessage = async (userId: string) => {
+  const likeCount = await countSince(
+    CommentLikeModel,
+    userId,
+    COMMENT_LIKE_RATE.windowMs,
+  );
+
+  if (likeCount >= COMMENT_LIKE_RATE.max) {
+    return `Bạn đã thích quá nhanh. Tối đa ${COMMENT_LIKE_RATE.max} lượt thích / ${COMMENT_LIKE_RATE.label}.`;
+  }
+
+  return null;
+};
+
+/** Depth 0 = top-level. Walks parents; caps early once past max. */
+const getCommentDepthById = async (
+  commentId: Types.ObjectId,
+): Promise<number> => {
+  let depth = 0;
+  let nextId: string | null = String(commentId);
+  const visited = new Set<string>();
+
+  for (let i = 0; i <= COMMENT_MAX_DEPTH + 1; i += 1) {
+    if (!nextId || visited.has(nextId) || !Types.ObjectId.isValid(nextId)) {
+      break;
+    }
+    visited.add(nextId);
+
+    const rows: Array<{ parentCommentId?: Types.ObjectId | null }> =
+      await CommentModel.find({ _id: nextId })
+        .select("parentCommentId")
+        .limit(1)
+        .lean();
+
+    const parentId = rows[0]?.parentCommentId;
+    if (!parentId) return depth;
+
+    depth += 1;
+    if (depth > COMMENT_MAX_DEPTH) return depth;
+    nextId = String(parentId);
+  }
+
+  return depth;
 };
 
 const buildCommentPagination = (
@@ -136,23 +218,27 @@ const findAuthUsersByIds = async (
   const db = mongoose.connection.db;
   if (!db) return [];
 
-  for (const collectionName of AUTH_USER_COLLECTION_CANDIDATES) {
-    const exists = await db
-      .listCollections({ name: collectionName }, { nameOnly: true })
-      .hasNext();
-    if (!exists) continue;
-
-    const rows = await db
-      .collection(collectionName)
-      .find(
-        { _id: { $in: userIds as any[] } },
-        { projection: { _id: 1, name: 1, image: 1 } },
-      )
-      .toArray();
-    if (rows.length) return rows;
+  if (cachedAuthUserCollection === undefined) {
+    cachedAuthUserCollection = null;
+    for (const collectionName of AUTH_USER_COLLECTION_CANDIDATES) {
+      const exists = await db
+        .listCollections({ name: collectionName }, { nameOnly: true })
+        .hasNext();
+      if (!exists) continue;
+      cachedAuthUserCollection = collectionName;
+      break;
+    }
   }
 
-  return [];
+  if (!cachedAuthUserCollection) return [];
+
+  return db
+    .collection(cachedAuthUserCollection)
+    .find(
+      { _id: { $in: userIds as any[] } },
+      { projection: { _id: 1, name: 1, image: 1 } },
+    )
+    .toArray();
 };
 
 const getCommentAuthorProfileMap = async (
@@ -293,8 +379,20 @@ const getPaginatedCommentDocs = async (
     ...TOP_LEVEL_COMMENT_QUERY,
   };
 
-  const totalItems = await CommentModel.countDocuments(topLevelQuery);
-  const pagination = buildCommentPagination(page, pageSize, totalItems);
+  const requestedPage = Math.max(1, Math.floor(Number(page) || 1));
+  const provisionalSkip = (requestedPage - 1) * pageSize;
+
+  const [totalItems, provisionalDocs] = await Promise.all([
+    CommentModel.countDocuments(topLevelQuery),
+    CommentModel.find(topLevelQuery)
+      .select(COMMENT_PROJECTION)
+      .sort({ createdAt: -1 })
+      .skip(provisionalSkip)
+      .limit(pageSize)
+      .lean(),
+  ]);
+
+  const pagination = buildCommentPagination(requestedPage, pageSize, totalItems);
 
   if (totalItems === 0) {
     return {
@@ -303,13 +401,15 @@ const getPaginatedCommentDocs = async (
     };
   }
 
-  const skip = (pagination.page - 1) * pagination.pageSize;
-  const topLevelDocs = await CommentModel.find(topLevelQuery)
-    .select(COMMENT_PROJECTION)
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(pagination.pageSize)
-    .lean();
+  let topLevelDocs = provisionalDocs;
+  if (pagination.page !== requestedPage) {
+    topLevelDocs = await CommentModel.find(topLevelQuery)
+      .select(COMMENT_PROJECTION)
+      .sort({ createdAt: -1 })
+      .skip((pagination.page - 1) * pageSize)
+      .limit(pageSize)
+      .lean();
+  }
 
   const descendants = await fetchDescendantsForParents(
     scopeQuery,
@@ -531,6 +631,12 @@ export const createComment = async (
   }
 
   await connectToDatabase();
+
+  const rateLimitMessage = await getCreateCommentRateLimitMessage(user.id);
+  if (rateLimitMessage) {
+    return { success: false, message: rateLimitMessage };
+  }
+
   let resolvedTargetType: "manga" | "chapter" = "manga";
   let resolvedChapterName: string | null = null;
 
@@ -544,11 +650,19 @@ export const createComment = async (
       _id: parentObjectId,
       comicSlug,
     })
-      .select("_id comicName targetType chapterName")
+      .select("_id comicName targetType chapterName parentCommentId")
       .lean();
 
     if (!parent) {
       return { success: false, message: "Parent comment not found." };
+    }
+
+    const parentDepth = await getCommentDepthById(parentObjectId);
+    if (parentDepth >= COMMENT_MAX_DEPTH) {
+      return {
+        success: false,
+        message: `Chỉ được trả lời tối đa ${COMMENT_MAX_DEPTH} cấp.`,
+      };
     }
 
     resolvedTargetType = parent.targetType;
@@ -583,11 +697,9 @@ export const createComment = async (
     likeCount: 0,
   });
   const levelMap = await getUserLevelMap([user.id]);
-  revalidatePath(`/manga/${comicSlug}`);
+  // Homepage recent-comments strip is ISR'd; refresh it. Manga/chapter pages
+  // load comments client-side, so busting their caches here is unnecessary.
   revalidatePath("/");
-  if (resolvedTargetType === "chapter" && resolvedChapterName) {
-    revalidatePath(`/manga/${comicSlug}/chapter/${resolvedChapterName}`);
-  }
 
   return {
     success: true,
@@ -632,7 +744,7 @@ export const toggleCommentLike = async (
 
   await connectToDatabase();
   const existing = await CommentModel.findById(commentObjectId)
-    .select("_id comicSlug targetType chapterName")
+    .select("_id")
     .lean();
 
   if (!existing) {
@@ -663,6 +775,11 @@ export const toggleCommentLike = async (
     updatedLikeCount = Number(updatedComment?.likeCount ?? 0);
     likedByViewer = false;
   } else {
+    const rateLimitMessage = await getLikeRateLimitMessage(user.id);
+    if (rateLimitMessage) {
+      return { success: false, message: rateLimitMessage };
+    }
+
     let createdLike = false;
     try {
       await CommentLikeModel.create({
@@ -707,14 +824,7 @@ export const toggleCommentLike = async (
     );
   }
 
-  revalidatePath(`/manga/${existing.comicSlug}`);
-  revalidatePath("/");
-  if (existing.targetType === "chapter" && existing.chapterName) {
-    revalidatePath(
-      `/manga/${existing.comicSlug}/chapter/${existing.chapterName}`,
-    );
-  }
-
+  // Likes update in the client UI; do not revalidate ISR manga/chapter/home pages.
   return {
     success: true,
     message: likedByViewer ? "Liked comment." : "Like removed.",

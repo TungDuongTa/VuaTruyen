@@ -1,18 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  ChevronLeft,
-  ChevronRight,
-  CornerDownRight,
-  Loader2,
-  LogIn,
-  MessageSquareText,
-  Send,
-  ThumbsUp,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, MessageSquareText } from "lucide-react";
 import { toast } from "sonner";
 import {
   createComment,
@@ -23,17 +13,21 @@ import {
   type CommentFeedPagination,
   type CommentViewer,
 } from "@/lib/actions/comment.actions";
-import { formatRelativeTime } from "@/lib/date-time";
-import {
-  getLevelBadgeTier,
-  getLevelUsernameEffect,
-} from "@/lib/level-badge-tiers";
+import { COMMENT_MAX_DEPTH } from "@/lib/comment-limits";
 import { getVisiblePages } from "@/lib/pagination";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { CommentComposer } from "@/components/comments/comment-composer";
+import { CommentThread } from "@/components/comments/comment-thread";
+import {
+  COMMENTS_PAGE_SIZE,
+  getCommentDepth,
+  normalizeComment,
+  resolveThreadRootId,
+  sortNewestFirst,
+  sortOldestFirst,
+} from "@/components/comments/comment-utils";
 
 type MangaCommentsSectionProps = {
   comicSlug: string;
@@ -42,8 +36,6 @@ type MangaCommentsSectionProps = {
   className?: string;
 };
 
-const COMMENTS_PAGE_SIZE = 10;
-
 const EMPTY_PAGINATION: CommentFeedPagination = {
   page: 1,
   pageSize: COMMENTS_PAGE_SIZE,
@@ -51,46 +43,6 @@ const EMPTY_PAGINATION: CommentFeedPagination = {
   totalPages: 1,
   hasNextPage: false,
   hasPrevPage: false,
-};
-
-const getViewerInitial = (viewer: CommentViewer) => {
-  if (!viewer) return "U";
-  const source = viewer.name || viewer.id || "U";
-  return source.charAt(0).toUpperCase();
-};
-
-const sortNewestFirst = (a: CommentFeedItem, b: CommentFeedItem) =>
-  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-
-const sortOldestFirst = (a: CommentFeedItem, b: CommentFeedItem) =>
-  new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-
-const normalizeComment = (comment: CommentFeedItem): CommentFeedItem => ({
-  ...comment,
-  id: String(comment.id),
-  parentCommentId: comment.parentCommentId
-    ? String(comment.parentCommentId)
-    : null,
-});
-
-const resolveThreadRootId = (
-  comment: CommentFeedItem,
-  byId: Map<string, CommentFeedItem>,
-) => {
-  let cursor = comment;
-  const visited = new Set<string>();
-
-  while (cursor.parentCommentId) {
-    if (visited.has(cursor.parentCommentId)) break;
-    visited.add(cursor.parentCommentId);
-
-    const parent = byId.get(cursor.parentCommentId);
-    if (!parent) return cursor.parentCommentId;
-    if (!parent.parentCommentId) return parent.id;
-    cursor = parent;
-  }
-
-  return comment.id;
 };
 
 export function MangaCommentsSection({
@@ -127,10 +79,6 @@ export function MangaCommentsSection({
 
   const isChapterScope = Boolean(chapterName);
   const normalizedComicName = comicName?.trim() || "";
-  const viewerUsernameEffect = viewer
-    ? getLevelUsernameEffect(viewer.level)
-    : null;
-  const viewerLevelBadgeTier = viewer ? getLevelBadgeTier(viewer.level) : null;
   const searchParamString = searchParams.toString();
   const signInHref = useMemo(() => {
     const callbackPath = pathname || "/";
@@ -298,6 +246,11 @@ export function MangaCommentsSection({
       return;
     }
 
+    if (getCommentDepth(comment, commentsById) >= COMMENT_MAX_DEPTH) {
+      toast.error(`Chỉ được trả lời tối đa ${COMMENT_MAX_DEPTH} cấp.`);
+      return;
+    }
+
     const rootId = getRootIdForComment(comment);
     setActiveReplyId(comment.id);
     setThreadExpanded(rootId, true);
@@ -350,6 +303,11 @@ export function MangaCommentsSection({
     if (!viewer) {
       toast.error("Vui lòng đăng nhập để trả lời bình luận.");
       redirectToSignIn();
+      return;
+    }
+
+    if (getCommentDepth(targetComment, commentsById) >= COMMENT_MAX_DEPTH) {
+      toast.error(`Chỉ được trả lời tối đa ${COMMENT_MAX_DEPTH} cấp.`);
       return;
     }
 
@@ -496,218 +454,6 @@ export function MangaCommentsSection({
     setCurrentPage(nextPage);
   };
 
-  const renderReplyComposer = (
-    targetComment: CommentFeedItem,
-    nested = false,
-  ) => {
-    if (activeReplyId !== targetComment.id) return null;
-
-    const draft = replyDrafts[targetComment.id] || "";
-    const isReplySubmitting = submittingReplyTo === targetComment.id;
-
-    return (
-      <div
-        className={cn(
-          "mt-2 rounded-lg border border-border/70 bg-background/45 p-3",
-          nested ? "ml-10" : "ml-11",
-        )}
-      >
-        <Textarea
-          value={draft}
-          onChange={(event) =>
-            setReplyDrafts((prev) => ({
-              ...prev,
-              [targetComment.id]: event.target.value,
-            }))
-          }
-          placeholder={`Trả lời ${targetComment.userName}...`}
-          rows={2}
-          maxLength={1000}
-          className="resize-none border-primary/20 bg-background/70 text-sm"
-        />
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">
-            {draft.trim().length}/1000
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setActiveReplyId(null)}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              className="gap-2"
-              disabled={isReplySubmitting || !draft.trim()}
-              onClick={() => handleReplySubmit(targetComment)}
-            >
-              {isReplySubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              Gửi
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderCommentRow = (comment: CommentFeedItem, nested = false) => {
-    const usernameEffect = getLevelUsernameEffect(comment.userLevel);
-    const levelBadgeTier = getLevelBadgeTier(comment.userLevel);
-
-    return (
-      <div
-        className={cn(
-          "flex items-start gap-3",
-          nested && "rounded-lg border border-border/55 bg-background/30 p-3",
-        )}
-      >
-        <Avatar
-          className={cn(
-            "mt-0.5 border border-border",
-            nested ? "h-8 w-8" : "h-9 w-9",
-          )}
-        >
-          <AvatarImage src={comment.userImage} alt={comment.userName} />
-          <AvatarFallback>
-            {comment.userName.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                "text-sm font-semibold tracking-wide",
-                usernameEffect.className,
-              )}
-              title={`${usernameEffect.name} username effect`}
-            >
-              {comment.userName}
-            </span>
-            <Badge
-              variant="outline"
-              className={cn(
-                "h-5 max-w-[8rem] rounded-full px-2 text-[10px] font-semibold",
-                levelBadgeTier.className,
-              )}
-              title={levelBadgeTier.title}
-            >
-              <span className="truncate">{levelBadgeTier.title}</span>
-            </Badge>
-            {comment.chapterName && (
-              <Badge
-                variant="secondary"
-                className="bg-primary/15 text-primary hover:bg-primary/15"
-              >
-                Chapter {comment.chapterName}
-              </Badge>
-            )}
-            <span className="text-xs text-muted-foreground">
-              {formatRelativeTime(comment.createdAt)}
-            </span>
-          </div>
-
-          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/95">
-            {comment.content}
-          </p>
-
-          <div className="mt-1.5 flex items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-7 gap-1.5 px-2 text-xs",
-                comment.likedByViewer && "text-primary",
-              )}
-              disabled={likingCommentIds.has(comment.id)}
-              onClick={() => handleToggleLike(comment)}
-            >
-              <ThumbsUp
-                className={cn(
-                  "h-3.5 w-3.5",
-                  comment.likedByViewer && "fill-current",
-                )}
-              />
-              {comment.likeCount}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1.5 px-2 text-xs"
-              onClick={() => handleStartReply(comment)}
-            >
-              <CornerDownRight className="h-3.5 w-3.5" />
-              Trả lời
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderChildren = (parentId: string, depth = 1) => {
-    const children = childrenByParentId.get(parentId) || [];
-    if (children.length === 0) return null;
-
-    return (
-      <div className={cn("space-y-2", depth > 1 && "ml-6")}>
-        {children.map((child) => {
-          const hasGrandchildren =
-            (childrenByParentId.get(child.id) || []).length > 0;
-          const grandChildCount = hasGrandchildren
-            ? descendantCountById.get(child.id) ||
-              (childrenByParentId.get(child.id) || []).length
-            : 0;
-          const isChildExpanded = !collapsedReplyThreads.has(child.id);
-
-          return (
-            <div key={child.id} className="relative">
-              <span className="absolute -left-4 top-4 h-px w-4 bg-border/60" />
-              {renderCommentRow(child, true)}
-              {renderReplyComposer(child, true)}
-
-              {hasGrandchildren && (
-                <div className="ml-10 mt-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs text-primary hover:text-primary"
-                    onClick={() =>
-                      setChildThreadExpanded(child.id, !isChildExpanded)
-                    }
-                  >
-                    <CornerDownRight className="mr-1 h-3.5 w-3.5" />
-                    {isChildExpanded
-                      ? "Ẩn bớt bình luận"
-                      : `Xem thêm ${grandChildCount} bình luận `}
-                  </Button>
-                </div>
-              )}
-
-              {hasGrandchildren && isChildExpanded && (
-                <div className="relative ml-4 mt-2 pl-4">
-                  <span className="absolute bottom-0 left-0 top-0 w-px bg-border/60" />
-                  {renderChildren(child.id, depth + 1)}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
     <section
       className={cn(
@@ -731,88 +477,14 @@ export function MangaCommentsSection({
       </div>
 
       <div className="rounded-xl border border-primary/25 bg-background/45 p-3 md:p-4">
-        {viewer ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9 border border-border">
-                <AvatarImage src={viewer.image} alt={viewer.name} />
-                <AvatarFallback>{getViewerInitial(viewer)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p
-                    className={cn(
-                      "text-sm font-semibold tracking-wide",
-                      viewerUsernameEffect?.className,
-                    )}
-                    title={
-                      viewerUsernameEffect
-                        ? `${viewerUsernameEffect.name} username effect`
-                        : undefined
-                    }
-                  >
-                    {viewer.name}
-                  </p>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "h-5 max-w-[8rem] rounded-full px-2 text-[10px] font-semibold",
-                      viewerLevelBadgeTier?.className,
-                    )}
-                    title={viewerLevelBadgeTier?.title}
-                  >
-                    <span className="truncate">
-                      {viewerLevelBadgeTier?.title}
-                    </span>
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Hãy chia sẻ cảm nghĩ của bạn
-                </p>
-              </div>
-            </div>
-
-            <Textarea
-              value={newComment}
-              onChange={(event) => setNewComment(event.target.value)}
-              placeholder="Viết bình luận của bạn..."
-              rows={3}
-              className="resize-none border-primary/20 bg-background/70 text-sm"
-              maxLength={1000}
-            />
-
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-muted-foreground">
-                {newComment.trim().length}/1000
-              </span>
-              <Button
-                type="button"
-                onClick={handleSubmitRootComment}
-                disabled={isSubmitting || !newComment.trim()}
-                className="gap-2"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                Gửi
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3 rounded-lg border border-dashed border-border bg-background/60 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">
-              Vui lòng đăng nhập để để lại bình luận.
-            </p>
-            <Link href={signInHref}>
-              <Button size="sm" className="gap-2">
-                <LogIn className="h-4 w-4" />
-                Đăng nhập
-              </Button>
-            </Link>
-          </div>
-        )}
+        <CommentComposer
+          viewer={viewer}
+          signInHref={signInHref}
+          value={newComment}
+          onChange={setNewComment}
+          onSubmit={handleSubmitRootComment}
+          isSubmitting={isSubmitting}
+        />
       </div>
 
       <div className="mt-5">
@@ -826,46 +498,32 @@ export function MangaCommentsSection({
           </div>
         ) : (
           <div className="space-y-4">
-            {rootComments.map((parent) => {
-              const totalReplies = descendantCountById.get(parent.id) || 0;
-              const isExpanded = expandedThreads.has(parent.id);
-
-              return (
-                <article
-                  key={parent.id}
-                  className="rounded-xl border border-border/70 bg-secondary/35 p-4"
-                >
-                  {renderCommentRow(parent)}
-                  {renderReplyComposer(parent)}
-
-                  {totalReplies > 0 && (
-                    <div className="ml-11 mt-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-primary hover:text-primary"
-                        onClick={() =>
-                          setThreadExpanded(parent.id, !isExpanded)
-                        }
-                      >
-                        <CornerDownRight className="mr-1 h-3.5 w-3.5" />
-                        {isExpanded
-                          ? "Ẩn bớt bình luận"
-                          : `Xem thêm ${totalReplies} bình luận`}
-                      </Button>
-                    </div>
-                  )}
-
-                  {isExpanded && totalReplies > 0 && (
-                    <div className="relative ml-11 mt-2 pl-4">
-                      <span className="absolute bottom-0 left-0 top-0 w-px bg-border/60" />
-                      {renderChildren(parent.id)}
-                    </div>
-                  )}
-                </article>
-              );
-            })}
+            {rootComments.map((parent) => (
+              <CommentThread
+                key={parent.id}
+                root={parent}
+                commentsById={commentsById}
+                childrenByParentId={childrenByParentId}
+                descendantCountById={descendantCountById}
+                isExpanded={expandedThreads.has(parent.id)}
+                collapsedReplyThreads={collapsedReplyThreads}
+                activeReplyId={activeReplyId}
+                replyDrafts={replyDrafts}
+                submittingReplyTo={submittingReplyTo}
+                likingCommentIds={likingCommentIds}
+                onToggleExpanded={(expanded) =>
+                  setThreadExpanded(parent.id, expanded)
+                }
+                onToggleChildExpanded={setChildThreadExpanded}
+                onStartReply={handleStartReply}
+                onCancelReply={() => setActiveReplyId(null)}
+                onReplyDraftChange={(commentId, value) =>
+                  setReplyDrafts((prev) => ({ ...prev, [commentId]: value }))
+                }
+                onReplySubmit={handleReplySubmit}
+                onLike={handleToggleLike}
+              />
+            ))}
           </div>
         )}
       </div>

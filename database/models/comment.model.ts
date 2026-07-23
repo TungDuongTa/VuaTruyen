@@ -20,7 +20,7 @@ const commentSchema = new Schema(
   },
 );
 
-commentSchema.index({ userId: 1 });
+commentSchema.index({ userId: 1, createdAt: -1 });
 commentSchema.index({ parentCommentId: 1, createdAt: -1 });
 commentSchema.index({ comicSlug: 1, parentCommentId: 1, createdAt: -1 });
 commentSchema.index({
