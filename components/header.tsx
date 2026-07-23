@@ -18,16 +18,9 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SearchCommand, SearchTrigger } from "@/components/search-command";
 import { cn } from "@/lib/utils";
-import {
-  HeaderAuthButton,
-  type HeaderUser,
-} from "@/components/header-auth-button";
+import { HeaderAuthButton } from "@/components/header-auth-button";
 
-type HeaderProps = {
-  user?: HeaderUser | null;
-};
-
-export function Header({ user }: HeaderProps) {
+export function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -63,9 +56,9 @@ export function Header({ user }: HeaderProps) {
   const navLinks = [
     { href: "/", label: "Trang chủ", icon: Home },
     { href: "/browse", label: "Khám phá", icon: Library },
-    { href: "/latest", label: "Mới nhất", icon: Clock },
     { href: "/18+", label: "18+", icon: ShieldAlert },
     { href: "/bookmarks", label: "Theo dõi", icon: Bookmark },
+    { href: "/history", label: "Lịch sử", icon: Clock },
     { href: "/ranking", label: "BXH", icon: Trophy },
   ];
 
@@ -113,7 +106,7 @@ export function Header({ user }: HeaderProps) {
                 <ThemeToggle />
               </div>
 
-              <HeaderAuthButton user={user} />
+              <HeaderAuthButton />
 
               <Button
                 variant="ghost"

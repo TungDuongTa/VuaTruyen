@@ -56,3 +56,6 @@ export const getVisiblePages = (
 
   return Array.from({ length: end - start + 1 }, (_, index) => start + index);
 };
+
+/** Offset pagination stays cheap only for early pages; beyond this use cursors. */
+export const MAX_OFFSET_PAGE = 40;

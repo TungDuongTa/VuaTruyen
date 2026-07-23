@@ -3,11 +3,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderPageClient } from "@/components/chapter-reader-page-client";
-import { isMangaBookmarked } from "@/lib/actions/bookmark.actions";
 import { getComicDetail, getChapterData } from "@/lib/actions/manga-actions";
-import { getReadingProgressChapterNames } from "@/lib/actions/reading-progress.actions";
-import { getSessionUser } from "@/lib/server-session";
-import { withSiteSuffix } from "@/lib/seo";
+import { toAbsoluteUrl, withSiteSuffix } from "@/lib/seo";
+
+// Public chapter pages: cache at the edge and refresh at most every 24 hours.
+// Per-user bookmark/progress is loaded client-side so this stays ISR-eligible.
+export const revalidate = 86400;
+export const dynamic = "force-static";
+export const dynamicParams = true;
+
+// Empty = generate none at build time; unknown chapters are still ISR'd on first request.
+export async function generateStaticParams() {
+  return [] as Array<{ id: string; chapter: string }>;
+}
 
 type ChapterReaderPageProps = {
   params: Promise<{ id: string; chapter: string }>;
@@ -40,7 +48,8 @@ export async function generateMetadata({
   }
 
   const title = `${comic.name} Chapter ${chapter}`;
-  const description = `Đọc truyện tranh ${comic.name} chapter ${chapter} mới nhất được cập nhật tại Vuatruyen`;
+  const description = `Đọc truyện tranh ${comic.name} chapter ${chapter} mới nhất được cập nhật tại VuaTruyen`;
+  const coverImage = comic.thumb_url?.trim() ? comic.thumb_url : "";
 
   return {
     title,
@@ -53,10 +62,19 @@ export async function generateMetadata({
       description,
       type: "article",
       url: canonicalPath,
+      images: coverImage
+        ? [
+            {
+              url: coverImage,
+              alt: `${comic.name} Chapter ${chapter}`,
+            },
+          ]
+        : undefined,
     },
     twitter: {
       title: withSiteSuffix(title),
       description,
+      images: coverImage ? [coverImage] : undefined,
     },
   };
 }
@@ -65,46 +83,8 @@ export default async function ChapterReaderPage({
   params,
 }: ChapterReaderPageProps) {
   const { id, chapter } = await params;
-  const sessionUser = await getSessionUser();
 
-  if (!sessionUser) {
-    const callbackUrl = encodeURIComponent(`/manga/${id}/chapter/${chapter}`);
-
-    return (
-      <div className="min-h-screen">
-        <main className="mx-auto max-w-4xl px-4 py-16">
-          <div className="rounded-2xl border border-border bg-card px-6 py-14 text-center shadow-sm">
-            <h1 className="mb-3 text-2xl font-semibold text-foreground">
-              Hãy đăng nhập để đọc chapter này
-            </h1>
-            <p className="mb-6 text-muted-foreground">
-              Bạn cần đăng nhập để xem được nội dung của chapter này
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link href={`/sign-in?callbackUrl=${callbackUrl}`}>
-                <Button>Đăng nhập</Button>
-              </Link>
-              <Link href={`/manga/${id}`}>
-                <Button variant="outline">Quay lại</Button>
-              </Link>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  const [detailResult, bookmarkResult, readResult] = await Promise.allSettled([
-    getComicDetailCached(id),
-    isMangaBookmarked(id),
-    getReadingProgressChapterNames(id),
-  ]);
-
-  const comic = detailResult.status === "fulfilled" ? detailResult.value : null;
-  const initialBookmarked =
-    bookmarkResult.status === "fulfilled" ? bookmarkResult.value : false;
-  const initialReadChapterNames =
-    readResult.status === "fulfilled" ? readResult.value : [];
+  const comic = await getComicDetailCached(id);
   if (!comic) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
@@ -152,14 +132,65 @@ export default async function ChapterReaderPage({
     );
   }
 
+  const mangaUrl = toAbsoluteUrl(`/manga/${comic.slug}`);
+  const chapterUrl = toAbsoluteUrl(`/manga/${comic.slug}/chapter/${chapter}`);
+  const chapterJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ComicIssue",
+    name: `${comic.name} Chapter ${chapter}`,
+    url: chapterUrl,
+    isPartOf: {
+      "@type": "ComicSeries",
+      name: comic.name,
+      url: mangaUrl,
+    },
+    image: comic.thumb_url?.trim() || undefined,
+    author: (comic.author || []).filter(Boolean).map((name) => ({
+      "@type": "Person",
+      name,
+    })),
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Trang chủ",
+        item: toAbsoluteUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: comic.name,
+        item: mangaUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: `Chapter ${chapter}`,
+        item: chapterUrl,
+      },
+    ],
+  };
+
   return (
-    <ChapterReaderPageClient
-      id={id}
-      chapter={chapter}
-      comic={comic}
-      chapterImages={chapterImages}
-      initialBookmarked={initialBookmarked}
-      initialReadChapterNames={initialReadChapterNames}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(chapterJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <ChapterReaderPageClient
+        id={id}
+        chapter={chapter}
+        comic={comic}
+        chapterImages={chapterImages}
+      />
+    </>
   );
 }

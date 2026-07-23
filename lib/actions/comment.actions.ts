@@ -359,14 +359,6 @@ const buildCommentFeed = async (
   };
 };
 
-export const getCommentViewer = async (): Promise<CommentViewer> => {
-  const user = await getSessionUser();
-  if (!user) return null;
-  const levelMap = await getUserLevelMap([user.id]);
-
-  return toCommentViewer(user, levelMap);
-};
-
 const toCommentViewer = (
   user: Awaited<ReturnType<typeof getSessionUser>>,
   levelMap: Map<string, number>,

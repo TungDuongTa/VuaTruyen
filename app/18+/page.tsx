@@ -1,27 +1,43 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { MangaCardApi } from "@/components/manga-card-api";
-import { Button } from "@/components/ui/button";
+import { PaginationControls } from "@/components/pagination-controls";
 import { getListByTag } from "@/lib/actions/manga-actions";
-import { getVisiblePages } from "@/lib/pagination";
+import {
+  MAX_OFFSET_PAGE,
+  getVisiblePages,
+  toPositiveInt,
+} from "@/lib/pagination";
 import { buildCanonicalPath, withSiteSuffix } from "@/lib/seo";
 
 interface PageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    cursor?: string;
+    dir?: string;
+  }>;
 }
 
-const toSafePageNumber = (value: string | undefined): number => {
-  const parsed = Number.parseInt(value || "1", 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return 1;
-  return parsed;
+const buildHref = (
+  page: number,
+  cursor?: string | null,
+  direction: "next" | "prev" = "next",
+) => {
+  const params = new URLSearchParams();
+  if (page > 1) params.set("page", String(page));
+  if (cursor) {
+    params.set("cursor", cursor);
+    if (direction === "prev") params.set("dir", "prev");
+  }
+  const query = params.toString();
+  return query ? `/18+?${query}` : "/18+";
 };
 
 export async function generateMetadata({
   searchParams,
 }: PageProps): Promise<Metadata> {
   const { page } = await searchParams;
-  const currentPage = toSafePageNumber(page);
+  const currentPage = toPositiveInt(page, 1);
   const canonicalPath = buildCanonicalPath("/18+", {
     page: currentPage > 1 ? currentPage : undefined,
   });
@@ -49,25 +65,47 @@ export async function generateMetadata({
 }
 
 export default async function Manga18Page({ searchParams }: PageProps) {
-  const { page } = await searchParams;
-  const currentPage = toSafePageNumber(page);
+  const params = await searchParams;
+  const requestedPage = toPositiveInt(params.page, 1);
+  const cursor = String(params.cursor || "").trim();
+  const direction = params.dir === "prev" ? "prev" : "next";
 
-  const data = await getListByTag("18+", currentPage);
+  const data = await getListByTag("18+", requestedPage, 24, {
+    cursor: cursor || null,
+    direction,
+  });
   const comics = data?.items || [];
   const pagination = data?.pagination || {
     totalItems: 0,
     totalItemsPerPage: 24,
     currentPage: 1,
+    nextCursor: null,
+    prevCursor: null,
+    hasNextPage: false,
+    hasPrevPage: false,
   };
   const totalPages = Math.max(
     1,
     Math.ceil(pagination.totalItems / pagination.totalItemsPerPage),
   );
   const safeCurrentPage = Math.min(
-    Math.max(1, pagination.currentPage || currentPage),
+    Math.max(1, pagination.currentPage || requestedPage),
     totalPages,
   );
-  const visiblePages = getVisiblePages(safeCurrentPage, totalPages);
+  const visiblePages = getVisiblePages(
+    safeCurrentPage,
+    Math.min(totalPages, Math.max(safeCurrentPage, MAX_OFFSET_PAGE)),
+  );
+  const canGoPrev = Boolean(pagination.hasPrevPage);
+  const canGoNext = Boolean(pagination.hasNextPage);
+
+  // Adjacent pages get a keyset cursor for efficient deep pagination.
+  const getPageHref = (pageNum: number) =>
+    pageNum === safeCurrentPage + 1 && pagination.nextCursor
+      ? buildHref(pageNum, pagination.nextCursor, "next")
+      : pageNum === safeCurrentPage - 1 && pagination.prevCursor
+        ? buildHref(pageNum, pagination.prevCursor, "prev")
+        : buildHref(pageNum);
 
   return (
     <div className="min-h-screen">
@@ -101,48 +139,14 @@ export default async function Manga18Page({ searchParams }: PageProps) {
           </div>
         )}
 
-        {totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-2">
-            {safeCurrentPage > 1 ? (
-              <Link href={`/18+?page=${safeCurrentPage - 1}`}>
-                <Button variant="outline" size="icon">
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              </Link>
-            ) : (
-              <Button variant="outline" size="icon" disabled>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            )}
-
-            <div className="flex items-center gap-1">
-              {visiblePages.map((pageNum) => (
-                <Link key={pageNum} href={`/18+?page=${pageNum}`}>
-                  <Button
-                    variant={
-                      pageNum === safeCurrentPage ? "default" : "outline"
-                    }
-                    size="icon"
-                  >
-                    {pageNum}
-                  </Button>
-                </Link>
-              ))}
-            </div>
-
-            {safeCurrentPage < totalPages ? (
-              <Link href={`/18+?page=${safeCurrentPage + 1}`}>
-                <Button variant="outline" size="icon">
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            ) : (
-              <Button variant="outline" size="icon" disabled>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        )}
+        <PaginationControls
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          visiblePages={visiblePages}
+          hasPrevPage={canGoPrev}
+          hasNextPage={canGoNext}
+          getPageHref={getPageHref}
+        />
       </main>
     </div>
   );

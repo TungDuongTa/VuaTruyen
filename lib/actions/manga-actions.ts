@@ -30,6 +30,11 @@ const toListType = (type: string): MangaListType =>
     ? (type as MangaListType)
     : "truyen-moi";
 
+type ListNavOptions = {
+  cursor?: string | null;
+  direction?: "next" | "prev";
+};
+
 // These actions are also invoked from client components, so never let a DB
 // error propagate to the browser - degrade to null instead.
 async function safeQuery<T>(
@@ -52,9 +57,15 @@ export async function getHomeData(): Promise<OTruyenComic[]> {
 export async function getListByType(
   type: string,
   page: number = 1,
+  options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
   return safeQuery(`list ${type}`, () =>
-    getMangaList({ type: toListType(type), page }),
+    getMangaList({
+      type: toListType(type),
+      page,
+      cursor: options.cursor,
+      direction: options.direction,
+    }),
   );
 }
 
@@ -62,9 +73,17 @@ export async function getListByTag(
   tag: string,
   page: number = 1,
   pageSize: number = 24,
+  options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
   return safeQuery(`list tag ${tag}`, () =>
-    getMangaList({ type: "truyen-moi", tag, page, pageSize }),
+    getMangaList({
+      type: "truyen-moi",
+      tag,
+      page,
+      pageSize,
+      cursor: options.cursor,
+      direction: options.direction,
+    }),
   );
 }
 
@@ -76,8 +95,11 @@ export async function getCategories(): Promise<Category[]> {
 export async function getByCategory(
   slug: string,
   page: number = 1,
+  options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  return safeQuery(`category ${slug}`, () => getMangaByCategory(slug, page));
+  return safeQuery(`category ${slug}`, () =>
+    getMangaByCategory(slug, page, 24, options.cursor, options.direction),
+  );
 }
 
 export async function getComicDetail(
@@ -98,8 +120,11 @@ export async function getChapterData(
 export async function searchComics(
   keyword: string,
   page: number = 1,
+  options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  return safeQuery(`search ${keyword}`, () => searchManga(keyword, page));
+  return safeQuery(`search ${keyword}`, () =>
+    searchManga(keyword, page, 24, options.cursor, options.direction),
+  );
 }
 
 export async function searchComicsQuick(

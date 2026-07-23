@@ -33,6 +33,7 @@ const mangaSchema = new Schema(
 );
 
 mangaSchema.index({ updatedAt: -1 });
+mangaSchema.index({ updatedAt: -1, _id: -1 });
 mangaSchema.index({ status: 1, updatedAt: -1 });
 mangaSchema.index({ tags: 1, updatedAt: -1 });
 mangaSchema.index({ "categories.slug": 1, updatedAt: -1 });

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -9,14 +10,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/sonner";
-import { auth } from "@/lib/better-auth/auth";
-import { headers } from "next/headers";
-import {
-  getBaseUrl,
-  SITE_DESCRIPTION,
-  SITE_NAME,
-  withSiteSuffix,
-} from "@/lib/seo";
+import { getBaseUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,13 +18,14 @@ const inter = Inter({
 });
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || "G-Z65549N1TX";
 
+const DEFAULT_TITLE =
+  "VuaTruyen - Vua Truyện đọc manga, manhwa và manhua online";
+
 export const metadata: Metadata = {
   metadataBase: getBaseUrl(),
   manifest: "/manifest.webmanifest",
   title: {
-    default: withSiteSuffix(
-      "VuaTruyen - Vua Truyện đọc manga, manhwa và manhua online",
-    ),
+    default: DEFAULT_TITLE,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -57,15 +52,18 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icon.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      {
+        url: "/android-chrome-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
     ],
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
-    shortcut: ["/favicon.ico"],
+    shortcut: ["/favicon-32x32.png"],
   },
   robots: {
     index: true,
@@ -83,13 +81,11 @@ export const metadata: Metadata = {
     locale: "vi_VN",
     url: "/",
     siteName: SITE_NAME,
-    title: withSiteSuffix(
-      "VuaTruyen - Vua Truyện đọc manga, manhwa và manhua online",
-    ),
+    title: DEFAULT_TITLE,
     description: SITE_DESCRIPTION,
     images: [
       {
-        url: "/body-bg.jpg",
+        url: "/vuatruyenlogo.png",
         width: 1200,
         height: 630,
         alt: `${SITE_NAME} cover image`,
@@ -98,30 +94,17 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: withSiteSuffix(
-      "VuaTruyen - Vua Truyện đọc manga, manhwa và manhua online",
-    ),
+    title: DEFAULT_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/body-bg.jpg"],
+    images: ["/vuatruyenlogo.png"],
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  const user = session?.user
-    ? {
-        id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image ?? "",
-      }
-    : null;
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
@@ -131,8 +114,10 @@ export default async function RootLayout({
           enableSystem={false}
         >
           <main className="max-w-screen overflow-x-hidden">
-            <ProgressBar />
-            <Header user={user} />
+            <Suspense fallback={null}>
+              <ProgressBar />
+            </Suspense>
+            <Header />
             {children}
             <Toaster />
             <Footer />

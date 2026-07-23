@@ -1,198 +1,84 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { MangaCardApi } from "@/components/manga-card-api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import type { Metadata } from "next";
+import { BrowsePageClient } from "@/components/browse-page-client";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Search,
-  Filter,
-  Grid,
-  List,
-  X,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import {
-  searchComics,
-  getListByType,
   getByCategory,
   getCategories,
+  getListByType,
+  searchComics,
 } from "@/lib/actions/manga-actions";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { getVisiblePages, toPositiveInt } from "@/lib/pagination";
-import { OTruyenComic, Category, Pagination } from "@/types/otruyen-types";
+import {
+  buildBrowseHref,
+  getBrowseListType,
+  parseBrowseFilters,
+  type BrowseSearchParams,
+} from "@/lib/browse-params";
+import { withSiteSuffix } from "@/lib/seo";
 
-const normalizeStatus = (value: string | null) => {
-  if (value === "ongoing" || value === "completed") return value;
-  return "all";
+type BrowsePageProps = {
+  searchParams: Promise<BrowseSearchParams>;
 };
 
-type SearchParamsLike = {
-  get: (key: string) => string | null;
-};
+export async function generateMetadata({
+  searchParams,
+}: BrowsePageProps): Promise<Metadata> {
+  const filters = parseBrowseFilters(await searchParams);
+  const canonicalPath = buildBrowseHref({
+    ...filters,
+    // Keep canonicals stable (no cursor noise) for SEO.
+    cursor: "",
+    direction: "next",
+  });
 
-const getSingleGenreFromParams = (params: SearchParamsLike) =>
-  params.get("genres")?.split(",").filter(Boolean)?.[0] || "";
+  const titleParts = ["Khám phá"];
+  if (filters.query) titleParts.push(`"${filters.query}"`);
+  if (filters.genre) titleParts.push(filters.genre);
+  if (filters.status !== "all") titleParts.push(filters.status);
+  if (filters.page > 1) titleParts.push(`Trang ${filters.page}`);
 
-type BrowseUrlState = {
-  query: string;
-  genre: string;
-  status: string;
-  page: number;
-};
+  const title = titleParts.join(" - ");
+  const description =
+    "Tìm kiếm những bộ truyện tranh manga, manhwa và manhua mới nhất tại VuaTruyen";
 
-export default function BrowsePage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      title: withSiteSuffix(title),
+      description,
+      url: canonicalPath,
+    },
+    twitter: {
+      title: withSiteSuffix(title),
+      description,
+    },
+  };
+}
 
-  const initialQuery = searchParams.get("q") || "";
-  const initialGenre = getSingleGenreFromParams(searchParams);
-  const initialStatus = normalizeStatus(searchParams.get("status"));
-  const initialPage = toPositiveInt(searchParams.get("page"), 1);
-
-  const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [selectedGenre, setSelectedGenre] = useState(initialGenre);
-  const [selectedStatus, setSelectedStatus] = useState<string>(initialStatus);
-  const [currentPage, setCurrentPage] = useState(initialPage);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [showFilters, setShowFilters] = useState(false);
-
-  const [comics, setComics] = useState<OTruyenComic[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const debouncedQuery = useDebouncedValue(searchQuery, 300);
-
-  useEffect(() => {
-    const nextQuery = searchParams.get("q") || "";
-    const nextGenre = getSingleGenreFromParams(searchParams);
-    const nextStatus = normalizeStatus(searchParams.get("status"));
-    const nextPage = toPositiveInt(searchParams.get("page"), 1);
-
-    setSearchQuery((prev) => (prev === nextQuery ? prev : nextQuery));
-    setSelectedStatus((prev) => (prev === nextStatus ? prev : nextStatus));
-    setSelectedGenre((prev) => (prev === nextGenre ? prev : nextGenre));
-    setCurrentPage((prev) => (prev === nextPage ? prev : nextPage));
-  }, [searchParams]);
-  // Fetch categories on mount
-  useEffect(() => {
-    getCategories().then(setCategories);
-  }, []);
-
-  // Fetch comics based on filters
-  useEffect(() => {
-    const fetchComics = async () => {
-      setIsLoading(true);
-
-      try {
-        if (debouncedQuery.trim()) {
-          const data = await searchComics(debouncedQuery, currentPage);
-          if (data) {
-            setComics(data.items);
-            setPagination(data.pagination);
-          }
-        } else if (selectedGenre) {
-          const data = await getByCategory(selectedGenre, currentPage);
-          if (data) {
-            setComics(data.items);
-            setPagination(data.pagination);
-          }
-        } else {
-          let listType = "truyen-moi";
-          if (selectedStatus === "completed") listType = "hoan-thanh";
-          else if (selectedStatus === "ongoing") listType = "dang-phat-hanh";
-
-          const data = await getListByType(listType, currentPage);
-          if (data) {
-            setComics(data.items);
-            setPagination(data.pagination);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch comics:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void fetchComics();
-  }, [debouncedQuery, selectedGenre, selectedStatus, currentPage]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    updateUrl({ page: 1, query: searchQuery });
+export default async function BrowsePage({ searchParams }: BrowsePageProps) {
+  const filters = parseBrowseFilters(await searchParams);
+  const nav = {
+    cursor: filters.cursor || null,
+    direction: filters.direction,
   };
 
-  const updateUrl = (nextState: Partial<BrowseUrlState> = {}) => {
-    const query = nextState.query ?? searchQuery;
-    const genre = nextState.genre ?? selectedGenre;
-    const status = nextState.status ?? selectedStatus;
-    const page = nextState.page ?? currentPage;
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (genre) params.set("genres", genre);
-    if (status !== "all") params.set("status", status);
-    if (page > 1) params.set("page", page.toString());
-    const queryString = params.toString();
-    router.push(queryString ? `/browse?${queryString}` : "/browse");
-  };
+  const [categories, listResult] = await Promise.all([
+    getCategories(),
+    filters.query
+      ? searchComics(filters.query, filters.page, nav)
+      : filters.genre
+        ? getByCategory(filters.genre, filters.page, nav)
+        : getListByType(getBrowseListType(filters.status), filters.page, nav),
+  ]);
 
-  const clearFilters = () => {
-    setSearchQuery("");
-    setSelectedGenre("");
-    setSelectedStatus("all");
-    setCurrentPage(1);
-    updateUrl({ query: "", genre: "", status: "all", page: 1 });
-  };
-
-  const handleGenreToggle = (slug: string) => {
-    const nextGenre = selectedGenre === slug ? "" : slug;
-    setSelectedGenre(nextGenre);
-    setCurrentPage(1);
-    updateUrl({ genre: nextGenre, page: 1 });
-  };
-
-  const removeGenre = () => {
-    setSelectedGenre("");
-    setCurrentPage(1);
-    updateUrl({ genre: "", page: 1 });
-  };
-
-  const handleStatusChange = (status: string) => {
-    setSelectedStatus(status);
-    setCurrentPage(1);
-    updateUrl({ status, page: 1 });
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    updateUrl({ page });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const hasActiveFilters =
-    Boolean(selectedGenre) || selectedStatus !== "all" || debouncedQuery;
-  const totalPages = pagination
-    ? Math.ceil(pagination.totalItems / pagination.totalItemsPerPage)
-    : 1;
-  const visiblePages = getVisiblePages(currentPage, totalPages);
+  const comics = listResult?.items || [];
+  const pagination = listResult?.pagination || null;
 
   return (
     <div className="min-h-screen">
       <main className="mx-auto max-w-7xl px-4 py-8">
-        {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
             Khám phá thư viện truyện tranh
@@ -203,271 +89,12 @@ export default function BrowsePage() {
           </p>
         </div>
 
-        {/* Search and Controls */}
-        <form
-          onSubmit={handleSearch}
-          className="flex flex-col md:flex-row gap-4 mb-6"
-        >
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Tìm theo tên truyện...."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-10 bg-card border-border"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button type="submit">Tìm kiếm</Button>
-
-            <Button
-              type="button"
-              variant={showFilters ? "default" : "outline"}
-              className="gap-2"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="h-4 w-4" />
-              Bộ lọc
-              {selectedGenre && (
-                <span className="ml-1 bg-primary-foreground text-primary rounded-full text-xs w-5 h-5 flex items-center justify-center font-bold">
-                  1
-                </span>
-              )}
-            </Button>
-
-            <div className="flex border border-border rounded-md overflow-hidden">
-              <Button
-                type="button"
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="icon"
-                onClick={() => setViewMode("grid")}
-                className="rounded-none"
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="icon"
-                onClick={() => setViewMode("list")}
-                className="rounded-none"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </form>
-
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="bg-card border border-border rounded-xl p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground">Filters</h3>
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-muted-foreground"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Xóa tất cả
-                </Button>
-              )}
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Trạng thái
-                </label>
-                <Select
-                  value={selectedStatus}
-                  onValueChange={handleStatusChange}
-                >
-                  <SelectTrigger className="bg-secondary border-none">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="ongoing">Ongoing</SelectItem>
-                    <SelectItem value="completed">Hoàn thành</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Genre Tags - multi-select */}
-            <div>
-              <label className="text-sm font-medium text-foreground mb-3 block">
-                Thể loại
-                {selectedGenre && (
-                  <span className="ml-2 text-muted-foreground font-normal">
-                    (đã chọn 1)
-                  </span>
-                )}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category, index) => {
-                  const isActive = selectedGenre === category.slug;
-                  return (
-                    <Badge
-                      key={category.id || index}
-                      variant={isActive ? "default" : "outline"}
-                      className={`cursor-pointer select-none transition-colors ${
-                        isActive
-                          ? "bg-primary text-primary-foreground hover:bg-primary/80"
-                          : "hover:bg-primary/20 hover:border-primary"
-                      }`}
-                      onClick={() => handleGenreToggle(category.slug)}
-                    >
-                      {category.name}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Active Filters */}
-        {hasActiveFilters && (
-          <div className="flex flex-wrap items-center gap-2 mb-6">
-            <span className="text-sm text-muted-foreground">
-              Bộ lọc đang áp dụng:
-            </span>
-            {debouncedQuery && (
-              <Badge
-                variant="secondary"
-                className="gap-1 cursor-pointer hover:bg-destructive/20"
-                onClick={() => {
-                  setSearchQuery("");
-                  setCurrentPage(1);
-                  updateUrl({ query: "", page: 1 });
-                }}
-              >
-                Tìm kiếm: {debouncedQuery}
-                <X className="h-3 w-3" />
-              </Badge>
-            )}
-            {selectedStatus !== "all" && (
-              <Badge
-                variant="secondary"
-                className="gap-1 cursor-pointer hover:bg-destructive/20"
-                onClick={() => {
-                  setSelectedStatus("all");
-                  setCurrentPage(1);
-                  updateUrl({ status: "all", page: 1 });
-                }}
-              >
-                {selectedStatus}
-                <X className="h-3 w-3" />
-              </Badge>
-            )}
-            {selectedGenre && (
-              <Badge
-                variant="secondary"
-                className="gap-1 cursor-pointer hover:bg-destructive/20"
-                onClick={removeGenre}
-              >
-                {categories.find((c) => c.slug === selectedGenre)?.name ||
-                  selectedGenre}
-                <X className="h-3 w-3" />
-              </Badge>
-            )}
-          </div>
-        )}
-
-        {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground">
-            {pagination ? (
-              <>
-                Hiển thị {comics.length} trên {pagination.totalItems} kết quả
-              </>
-            ) : (
-              <>Hiển thị {comics.length} kết quả</>
-            )}
-          </p>
-        </div>
-
-        {/* Loading State */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : comics.length > 0 ? (
-          <>
-            {viewMode === "grid" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 max-w-screen">
-                {comics.map((comic, index) => (
-                  <MangaCardApi key={comic._id || index} comic={comic} />
-                ))}
-              </div>
-            ) : (
-              <div className="grid gap-3 max-w-screen">
-                {comics.map((comic) => (
-                  <MangaCardApi
-                    key={comic._id}
-                    comic={comic}
-                    variant="horizontal"
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-
-                <div className="flex items-center gap-1">
-                  {visiblePages.map((pageNum) => (
-                    <Button
-                      key={pageNum}
-                      variant={pageNum === currentPage ? "default" : "outline"}
-                      size="icon"
-                      onClick={() => handlePageChange(pageNum)}
-                    >
-                      {pageNum}
-                    </Button>
-                  ))}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-16">
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Không tìm thấy truyện
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Hãy thử tìm kiếm lại theo cách khác
-            </p>
-            <Button onClick={clearFilters}>Xóa bộ lọc</Button>
-          </div>
-        )}
+        <BrowsePageClient
+          comics={comics}
+          categories={categories}
+          pagination={pagination}
+          filters={filters}
+        />
       </main>
     </div>
   );

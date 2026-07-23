@@ -153,17 +153,6 @@ export const getCurrentUserReadingExpStats =
     return getUserReadingExpStats(userId);
   };
 
-export const getCurrentUserReadingHistoryCount = async (): Promise<number> => {
-  const userId = await getCurrentUserId();
-  if (!userId) return 0;
-
-  await connectToDatabase();
-  return ReadingProgressModel.countDocuments({
-    userId,
-    readChapters: { $exists: true },
-  });
-};
-
 export const getReadingProgressChapterNames = async (
   comicSlug: string,
 ): Promise<string[]> => {
@@ -227,19 +216,35 @@ export const getCurrentUserReadingHistoryPage = async ({
       readChapters: { $exists: true },
     };
 
-    const totalItems = await ReadingProgressModel.countDocuments(filter);
+    // Count and page fetch in parallel (indexed by userId + lastReadAt).
+    const provisionalSkip = (normalized.page - 1) * normalized.pageSize;
+    const [totalItems, provisionalRowsRaw] = await Promise.all([
+      ReadingProgressModel.countDocuments(filter),
+      ReadingProgressModel.find(filter)
+        .sort({ lastReadAt: -1, _id: -1 })
+        .skip(provisionalSkip)
+        .limit(normalized.pageSize)
+        .select(
+          "comicId comicSlug readChapters lastReadChapter lastReadAt createdAt updatedAt",
+        )
+        .lean(),
+    ]);
+    const provisionalRows = provisionalRowsRaw as ReadingProgressDoc[];
+
     const totalPages = Math.max(1, Math.ceil(totalItems / normalized.pageSize));
     const safePage = Math.min(normalized.page, totalPages);
-    const skip = (safePage - 1) * normalized.pageSize;
 
-    const rows = (await ReadingProgressModel.find(filter)
-      .sort({ lastReadAt: -1, updatedAt: -1 })
-      .skip(skip)
-      .limit(normalized.pageSize)
-      .select(
-        "comicId comicSlug readChapters lastReadChapter lastReadAt createdAt updatedAt",
-      )
-      .lean()) as ReadingProgressDoc[];
+    let rows = provisionalRows;
+    if (safePage !== normalized.page && totalItems > 0) {
+      rows = (await ReadingProgressModel.find(filter)
+        .sort({ lastReadAt: -1, _id: -1 })
+        .skip((safePage - 1) * normalized.pageSize)
+        .limit(normalized.pageSize)
+        .select(
+          "comicId comicSlug readChapters lastReadChapter lastReadAt createdAt updatedAt",
+        )
+        .lean()) as ReadingProgressDoc[];
+    }
 
     if (!rows.length) {
       return {
@@ -260,7 +265,10 @@ export const getCurrentUserReadingHistoryPage = async ({
 
     const items = rows
       .map((row) =>
-        toReadingHistoryComic(row, mangaBySlug.get(normalizeString(row.comicSlug))),
+        toReadingHistoryComic(
+          row,
+          mangaBySlug.get(normalizeString(row.comicSlug)),
+        ),
       )
       .filter((item): item is ReadingHistoryComic => Boolean(item));
 
@@ -283,7 +291,7 @@ export const getCurrentUserReadingHistoryPage = async ({
   }
 };
 
-export const markChapterAsReadProgress = async (
+const markChapterAsReadProgress = async (
   input: MarkChapterAsReadProgressInput,
 ): Promise<MarkChapterAsReadProgressResult> => {
   const userId = await getCurrentUserId();
@@ -340,6 +348,7 @@ export const markChapterAsReadProgress = async (
   if (didInsertNewRead) {
     revalidatePath(`/manga/${comicSlug}`);
     revalidatePath("/bookmarks");
+    revalidatePath("/history");
   }
 
   return { success: true };

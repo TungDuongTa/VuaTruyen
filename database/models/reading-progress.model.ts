@@ -22,6 +22,7 @@ readingProgressSchema.index(
   },
 );
 readingProgressSchema.index({ userId: 1, lastReadAt: -1 });
+readingProgressSchema.index({ userId: 1, lastReadAt: -1, _id: -1 });
 
 export const ReadingProgressModel =
   models.ReadingProgress || model("ReadingProgress", readingProgressSchema);

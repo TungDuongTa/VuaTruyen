@@ -9,7 +9,7 @@ export function Footer() {
       { label: "Manhwa", href: "/browse?type=manhwa" },
       { label: "Manhua", href: "/browse?type=manhua" },
       { label: "18+ ", href: "/18+" },
-      { label: "Khám phá", href: "/latest" },
+      { label: "Khám phá", href: "/browse" },
     ],
     genres: [
       { label: "Action", href: "/browse?genre=action" },

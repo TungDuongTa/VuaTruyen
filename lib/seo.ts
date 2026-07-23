@@ -4,7 +4,7 @@ export const SITE_ALTERNATE_NAME = "Vua Truyện";
 export const SITE_DESCRIPTION =
   "VuaTruyen - Vua Truyện đọc manga, manhwa và manhua online miễn phí, cập nhật hằng ngày, có bảng xếp hạng, theo dõi và tiến độ đọc.";
 
-const FALLBACK_BASE_URL = "https://vuatruyen.vercel.app";
+const FALLBACK_BASE_URL = "https://www.vuatruyen.cc";
 
 const normalizeBaseUrlInput = (value: string): string => {
   const normalized = value.trim().replace(/\/+$/, "");
@@ -59,8 +59,22 @@ export const toAbsoluteUrl = (path: string): string => {
   return new URL(normalizedPath, getBaseUrl()).toString();
 };
 
-export const withSiteSuffix = (title: string): string =>
-  `${title} | ${SITE_NAME}`;
+export const withSiteSuffix = (title: string): string => {
+  const trimmed = title.trim().replace(/\s+/g, " ");
+  if (!trimmed) return SITE_NAME;
+
+  // Avoid "Brand - … | Brand" / "… | Brand | Brand" duplication.
+  if (
+    trimmed === SITE_NAME ||
+    trimmed.endsWith(`| ${SITE_NAME}`) ||
+    trimmed.startsWith(`${SITE_NAME} -`) ||
+    trimmed.startsWith(`${SITE_NAME} `)
+  ) {
+    return trimmed;
+  }
+
+  return `${trimmed} | ${SITE_NAME}`;
+};
 
 export const stripHtml = (value: string): string =>
   value

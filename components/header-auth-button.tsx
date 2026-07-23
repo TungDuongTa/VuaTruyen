@@ -4,29 +4,32 @@ import Link from "next/link";
 import { User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/better-auth/auth-client";
 
-export type HeaderUser = {
-  id: string;
-  name: string;
-  email: string;
-  image: string;
-};
+export function HeaderAuthButton() {
+  // Session is loaded client-side so the layout stays statically renderable.
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
 
-type HeaderAuthButtonProps = {
-  user?: HeaderUser | null;
-};
-
-export function HeaderAuthButton({ user }: HeaderAuthButtonProps) {
-  const userInitial =
-    user?.name?.charAt(0).toUpperCase() ??
-    user?.email?.charAt(0).toUpperCase() ??
-    "U";
+  if (isPending) {
+    return (
+      <div
+        className="h-9 w-9 animate-pulse rounded-full bg-secondary"
+        aria-hidden="true"
+      />
+    );
+  }
 
   if (user) {
+    const userInitial =
+      user.name?.charAt(0).toUpperCase() ??
+      user.email?.charAt(0).toUpperCase() ??
+      "U";
+
     return (
       <Link href="/profile" aria-label="View profile">
         <Avatar className="h-9 w-9 border border-border">
-          <AvatarImage src={user.image} alt={user.name} />
+          <AvatarImage src={user.image ?? ""} alt={user.name} />
           <AvatarFallback>{userInitial}</AvatarFallback>
         </Avatar>
       </Link>

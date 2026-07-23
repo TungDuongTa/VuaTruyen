@@ -16,12 +16,13 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 // Data comes straight from MongoDB now (no fetch cache), so opt into ISR
-// to keep the old "refresh at most every 60s" behavior.
-export const revalidate = 60;
+// to keep a "refresh at most every 1 hour" ISR cache.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title:
-    "VuaTruyen - Vua Truyện đọc manga, manhwa và manhua online",
+  title: {
+    absolute: "VuaTruyen - Vua Truyện đọc manga, manhwa và manhua online",
+  },
   description: SITE_DESCRIPTION,
   alternates: {
     canonical: "/",
@@ -94,7 +95,7 @@ export default async function HomePage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-foreground">Mới cập nhật</h2>
             <Link
-              href="/latest"
+              href="/browse"
               className="flex items-center gap-1 text-sm text-primary hover:underline"
             >
               Xem tất cả <ChevronRight className="h-4 w-4" />

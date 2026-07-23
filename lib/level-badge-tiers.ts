@@ -20,7 +20,7 @@ type LevelUsernameEffect = {
   className: string;
 };
 
-export const LEVEL_BADGE_TIERS: ReadonlyArray<LevelBadgeTier> = [
+const LEVEL_BADGE_TIERS: ReadonlyArray<LevelBadgeTier> = [
   {
     title: "Phàm Nhân",
     className:

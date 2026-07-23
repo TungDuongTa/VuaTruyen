@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { BookmarkModel } from "@/database/models/bookmark.model";
 import { connectToDatabase } from "@/database/mongoose";
 import { normalizePageAndSize } from "@/lib/pagination";
-import { getMangaCardsBySlugs } from "@/lib/services/manga.service";
 import { getCurrentUserId } from "@/lib/server-session";
 import type { OTruyenComic } from "@/types/otruyen-types";
 
@@ -35,18 +34,17 @@ export type PaginatedBookmarksResult = {
 const DEFAULT_BOOKMARKS_PAGE_SIZE = 24;
 const MAX_BOOKMARKS_PAGE_SIZE = 60;
 
-const toTimeMs = (value: unknown): number => {
-  const time = new Date(String(value || "")).getTime();
-  return Number.isFinite(time) ? time : 0;
+type BookmarkAggRow = {
+  slug: string;
+  createdAt?: Date;
+  manga?: Record<string, unknown> | null;
 };
 
 const toBookmarkedComic = (
   manga: OTruyenComic | undefined,
   bookmark: { slug: string; createdAt?: Date | string },
 ): BookmarkedComic => {
-  const bookmarkedAt = new Date(
-    bookmark.createdAt || Date.now(),
-  ).toISOString();
+  const bookmarkedAt = new Date(bookmark.createdAt || Date.now()).toISOString();
 
   if (manga) {
     return {
@@ -69,6 +67,40 @@ const toBookmarkedComic = (
   };
 };
 
+const mangaFromAgg = (
+  slug: string,
+  mangaDoc: Record<string, unknown> | null | undefined,
+): OTruyenComic | undefined => {
+  if (!mangaDoc) return undefined;
+
+  return {
+    _id: String(mangaDoc._id || slug),
+    name: String(mangaDoc.name || slug),
+    slug: String(mangaDoc.slug || slug),
+    origin_name: Array.isArray(mangaDoc.originNames)
+      ? (mangaDoc.originNames as string[])
+      : [],
+    status: String(mangaDoc.status || "ongoing"),
+    thumb_url: String(mangaDoc.thumbUrl || ""),
+    category: Array.isArray(mangaDoc.categories)
+      ? (mangaDoc.categories as OTruyenComic["category"])
+      : [],
+    updatedAt: new Date(
+      (mangaDoc.updatedAt as Date | string | undefined) || Date.now(),
+    ).toISOString(),
+    chaptersLatest: mangaDoc.latestChapterName
+      ? [
+          {
+            filename: "",
+            chapter_name: String(mangaDoc.latestChapterName),
+            chapter_title: "",
+            chapter_api_data: String(mangaDoc.latestChapterName),
+          },
+        ]
+      : [],
+  };
+};
+
 const normalizeBookmarksPagination = (page: number, pageSize: number) => ({
   ...normalizePageAndSize(
     page,
@@ -78,13 +110,49 @@ const normalizeBookmarksPagination = (page: number, pageSize: number) => ({
   ),
 });
 
-export const getCurrentUserBookmarksCount = async (): Promise<number> => {
-  const userId = await getCurrentUserId();
-  if (!userId) return 0;
-
-  await connectToDatabase();
-  return BookmarkModel.countDocuments({ userId });
-};
+const bookmarkListPipeline = (userId: string, skip: number, limit: number) => [
+  { $match: { userId } },
+  {
+    $lookup: {
+      from: "mangas",
+      localField: "slug",
+      foreignField: "slug",
+      as: "manga",
+    },
+  },
+  {
+    $unwind: {
+      path: "$manga",
+      preserveNullAndEmptyArrays: true,
+    },
+  },
+  {
+    $addFields: {
+      sortDate: {
+        $ifNull: ["$manga.updatedAt", "$createdAt"],
+      },
+    },
+  },
+  {
+    $sort: { sortDate: -1 as const, createdAt: -1 as const, _id: -1 as const },
+  },
+  {
+    $facet: {
+      metadata: [{ $count: "total" }],
+      items: [
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $project: {
+            slug: 1,
+            createdAt: 1,
+            manga: 1,
+          },
+        },
+      ],
+    },
+  },
+];
 
 export const getCurrentUserBookmarksPage = async ({
   page = 1,
@@ -108,39 +176,35 @@ export const getCurrentUserBookmarksPage = async ({
 
   await connectToDatabase();
 
-  const bookmarks = await BookmarkModel.find({ userId })
-    .select("slug createdAt")
-    .lean();
+  const runFacet = async (skip: number) => {
+    const [facet] = await BookmarkModel.aggregate<{
+      metadata: Array<{ total: number }>;
+      items: BookmarkAggRow[];
+    }>(bookmarkListPipeline(userId, skip, normalized.pageSize));
 
-  const totalItems = bookmarks.length;
+    return {
+      totalItems: facet?.metadata?.[0]?.total || 0,
+      rows: facet?.items || [],
+    };
+  };
+
+  let { totalItems, rows } = await runFacet(
+    (normalized.page - 1) * normalized.pageSize,
+  );
   const totalPages = Math.max(1, Math.ceil(totalItems / normalized.pageSize));
   const safePage = Math.min(normalized.page, totalPages);
-  const mangaBySlug = await getMangaCardsBySlugs(
-    bookmarks.map((bookmark) => String(bookmark.slug || "")),
-  );
 
-  const sortedBookmarks = bookmarks
-    .map((bookmark) => {
-      const slug = String(bookmark.slug || "").trim();
-      const manga = mangaBySlug.get(slug);
-      return {
-        bookmark,
-        slug,
-        manga,
-        sortUpdatedAt: manga?.updatedAt || bookmark.createdAt,
-      };
-    })
-    .sort((a, b) => {
-      const updatedDiff = toTimeMs(b.sortUpdatedAt) - toTimeMs(a.sortUpdatedAt);
-      if (updatedDiff !== 0) return updatedDiff;
+  if (safePage !== normalized.page && totalItems > 0) {
+    ({ rows } = await runFacet((safePage - 1) * normalized.pageSize));
+  }
 
-      return toTimeMs(b.bookmark.createdAt) - toTimeMs(a.bookmark.createdAt);
+  const items = rows.map((row) => {
+    const slug = String(row.slug || "").trim();
+    return toBookmarkedComic(mangaFromAgg(slug, row.manga), {
+      slug,
+      createdAt: row.createdAt,
     });
-
-  const skip = (safePage - 1) * normalized.pageSize;
-  const items = sortedBookmarks
-    .slice(skip, skip + normalized.pageSize)
-    .map(({ bookmark, manga }) => toBookmarkedComic(manga, bookmark));
+  });
 
   return {
     items,

@@ -3,11 +3,25 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MangaDetailPageClient } from "@/components/manga-detail-page-client";
-import { isMangaBookmarked } from "@/lib/actions/bookmark.actions";
 import { getMangaViewStats } from "@/lib/actions/manga-view.actions";
 import { getComicDetail } from "@/lib/actions/manga-actions";
-import { getReadingProgressChapterNames } from "@/lib/actions/reading-progress.actions";
-import { stripHtml, truncateText, withSiteSuffix } from "@/lib/seo";
+import {
+  stripHtml,
+  toAbsoluteUrl,
+  truncateText,
+  withSiteSuffix,
+} from "@/lib/seo";
+
+// Public manga pages: cache at the edge and refresh at most every 1 hour.
+// Per-user bookmark/progress is loaded client-side so this stays ISR-eligible.
+export const revalidate = 3600;
+export const dynamic = "force-static";
+export const dynamicParams = true;
+
+// Empty = generate none at build time; unknown slugs are still ISR'd on first request.
+export async function generateStaticParams() {
+  return [] as Array<{ id: string }>;
+}
 
 type MangaDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -31,15 +45,19 @@ export async function generateMetadata({
       alternates: {
         canonical: canonicalPath,
       },
+      robots: {
+        index: false,
+        follow: true,
+      },
     };
   }
 
-  const fallbackDescription = `Đọc truyện ${comic.name} mới nhất được cập nhật tại VuaTruyen `;
+  const fallbackDescription = `Đọc truyện ${comic.name} mới nhất được cập nhật tại VuaTruyen`;
   const description = truncateText(
     stripHtml(comic.content || "") || fallbackDescription,
     160,
   );
-  const title = `Truyện tranh ${comic.name} `;
+  const title = `Truyện tranh ${comic.name}`;
   const coverImage = comic.thumb_url?.trim() ? comic.thumb_url : "";
 
   return {
@@ -75,13 +93,10 @@ export default async function MangaDetailPage({
 }: MangaDetailPageProps) {
   const { id } = await params;
 
-  const [detailResult, bookmarkResult, readResult, viewResult] =
-    await Promise.allSettled([
-      getComicDetailCached(id),
-      isMangaBookmarked(id),
-      getReadingProgressChapterNames(id),
-      getMangaViewStats(id),
-    ]);
+  const [detailResult, viewResult] = await Promise.allSettled([
+    getComicDetailCached(id),
+    getMangaViewStats(id),
+  ]);
 
   const comic = detailResult.status === "fulfilled" ? detailResult.value : null;
 
@@ -100,20 +115,67 @@ export default async function MangaDetailPage({
     );
   }
 
-  const initialBookmarked =
-    bookmarkResult.status === "fulfilled" ? bookmarkResult.value : false;
-  const initialReadChapterNames =
-    readResult.status === "fulfilled" ? readResult.value : [];
   const initialTotalViews =
     viewResult.status === "fulfilled" ? viewResult.value.totalViews : 0;
 
+  const mangaUrl = toAbsoluteUrl(`/manga/${comic.slug}`);
+  const description = truncateText(
+    stripHtml(comic.content || "") ||
+      `Đọc truyện ${comic.name} mới nhất được cập nhật tại VuaTruyen`,
+    300,
+  );
+  const chapterCount = comic.chapters?.[0]?.server_data?.length || 0;
+  const comicJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ComicSeries",
+    name: comic.name,
+    alternateName: (comic.origin_name || []).filter(Boolean),
+    url: mangaUrl,
+    description,
+    image: comic.thumb_url?.trim() || undefined,
+    inLanguage: "vi",
+    genre: (comic.category || []).map((item) => item.name).filter(Boolean),
+    author: (comic.author || []).filter(Boolean).map((name) => ({
+      "@type": "Person",
+      name,
+    })),
+    numberOfIssues: chapterCount || undefined,
+    creativeWorkStatus: comic.status || undefined,
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Trang chủ",
+        item: toAbsoluteUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: comic.name,
+        item: mangaUrl,
+      },
+    ],
+  };
+
   return (
-    <MangaDetailPageClient
-      id={id}
-      comic={comic}
-      initialBookmarked={initialBookmarked}
-      initialReadChapterNames={initialReadChapterNames}
-      initialTotalViews={initialTotalViews}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(comicJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <MangaDetailPageClient
+        id={id}
+        comic={comic}
+        initialTotalViews={initialTotalViews}
+      />
+    </>
   );
 }
