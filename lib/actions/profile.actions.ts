@@ -1,10 +1,8 @@
 "use server";
-import { auth } from "../better-auth/auth";
+
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { normalizeCallbackUrl } from "../view-utils";
-import type { SignInFormData, SignUpFormData } from "../zod/auth.schema";
+import { auth } from "@/lib/better-auth/auth";
 import {
   deleteAvatarByUrl,
   uploadUserAvatar,
@@ -17,31 +15,6 @@ const ALLOWED_AVATAR_MIME = new Set([
   "image/webp",
   "image/gif",
 ]);
-
-export const signUpWithEmail = async (data: SignUpFormData) => {
-  try {
-    await auth.api.signUpEmail({
-      body: {
-        name: data.userName,
-        email: data.email,
-        password: data.password,
-      },
-    });
-    return { success: true, message: "Sign-up successful" };
-  } catch (error) {
-    console.error("Sign-up error:", error);
-    return { success: false, message: "Sign-up failed" };
-  }
-};
-
-export const signOut = async () => {
-  try {
-    await auth.api.signOut({ headers: await headers() });
-  } catch (error) {
-    console.error("Sign-out error:", error);
-    return { success: false, message: "Sign-out failed" };
-  }
-};
 
 type UpdateUserProfileResult = {
   success: boolean;
@@ -130,43 +103,4 @@ export const updateUserProfile = async (
     console.error("Update profile error:", error);
     return { success: false, message: "Failed to update profile." };
   }
-};
-
-export const signInWithEmail = async (data: SignInFormData) => {
-  try {
-    await auth.api.signInEmail({
-      body: {
-        email: data.email,
-        password: data.password,
-      },
-    });
-    return { success: true, message: "Sign-in successful" };
-  } catch (error) {
-    console.error("Sign-in error:", error);
-    return {
-      success: false,
-      message: "Email hoặc mật khẩu không đúng. Vui lòng thử lại",
-    };
-  }
-};
-
-export const signInWithGoogle = async (formData?: FormData) => {
-  const callbackUrlInput = formData?.get("callbackUrl");
-  const callbackURL = normalizeCallbackUrl(
-    typeof callbackUrlInput === "string" ? callbackUrlInput : null,
-  );
-
-  const response = await auth.api.signInSocial({
-    body: {
-      provider: "google",
-      callbackURL,
-      disableRedirect: true,
-    },
-  });
-
-  if (!response.url) {
-    throw new Error("Failed to create Google sign-in URL");
-  }
-
-  redirect(response.url);
 };

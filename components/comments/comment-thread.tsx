@@ -2,7 +2,7 @@
 
 import { CornerDownRight } from "lucide-react";
 import type { CommentFeedItem } from "@/lib/actions/comment.actions";
-import { COMMENT_MAX_DEPTH } from "@/lib/comment-limits";
+import { COMMENT_MAX_DEPTH } from "@/lib/comments/limits";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CommentReplyComposer } from "@/components/comments/comment-reply-composer";

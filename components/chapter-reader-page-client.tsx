@@ -19,10 +19,7 @@ import {
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
 import { useMangaPersonalState } from "@/hooks/use-manga-personal-state";
 import { recordChapterVisit } from "@/lib/actions/reading-progress.actions";
-import {
-  type ChapterImage,
-  type ComicDetailItem,
-} from "@/types/otruyen-types";
+import { type ChapterImage, type ComicDetailItem } from "@/types/manga-types";
 
 type ChapterReaderPageClientProps = {
   id: string;

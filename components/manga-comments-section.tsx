@@ -13,7 +13,7 @@ import {
   type CommentFeedPagination,
   type CommentViewer,
 } from "@/lib/actions/comment.actions";
-import { COMMENT_MAX_DEPTH } from "@/lib/comment-limits";
+import { COMMENT_MAX_DEPTH } from "@/lib/comments/limits";
 import { getVisiblePages } from "@/lib/pagination";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";

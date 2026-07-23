@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ChapterData } from "@/types/otruyen-types";
+import { ChapterData } from "@/types/manga-types";
 
 type ChapterBottomNavProps = {
   comicSlug: string;

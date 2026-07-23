@@ -3,13 +3,17 @@
 import {
   getHomeMangaData,
   getMangaByCategory,
-  getMangaCategories,
   getMangaChapter,
   getMangaDetail,
   getMangaList,
   searchManga,
   type MangaListType,
 } from "@/lib/services/manga.service";
+import {
+  getCachedAdultListPage1,
+  getCachedBrowseListPage1,
+  getCachedCategories,
+} from "@/lib/server/manga-cache";
 import type {
   Category,
   ChapterItem,
@@ -59,11 +63,21 @@ export async function getListByType(
   page: number = 1,
   options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  return safeQuery(`list ${type}`, () =>
+  const listType = toListType(type);
+  const cursor = options.cursor || null;
+
+  // Hot path: first page, no cursor — shared Data Cache across requests.
+  if (page === 1 && !cursor) {
+    return safeQuery(`cached list ${listType}`, () =>
+      getCachedBrowseListPage1(listType),
+    );
+  }
+
+  return safeQuery(`list ${listType}`, () =>
     getMangaList({
-      type: toListType(type),
+      type: listType,
       page,
-      cursor: options.cursor,
+      cursor,
       direction: options.direction,
     }),
   );
@@ -75,20 +89,26 @@ export async function getListByTag(
   pageSize: number = 24,
   options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
+  const cursor = options.cursor || null;
+
+  if (tag === "18+" && page === 1 && !cursor && pageSize === 24) {
+    return safeQuery("cached list tag 18+", () => getCachedAdultListPage1());
+  }
+
   return safeQuery(`list tag ${tag}`, () =>
     getMangaList({
       type: "truyen-moi",
       tag,
       page,
       pageSize,
-      cursor: options.cursor,
+      cursor,
       direction: options.direction,
     }),
   );
 }
 
 export async function getCategories(): Promise<Category[]> {
-  const items = await safeQuery("categories", () => getMangaCategories());
+  const items = await safeQuery("categories", () => getCachedCategories());
   return items || [];
 }
 

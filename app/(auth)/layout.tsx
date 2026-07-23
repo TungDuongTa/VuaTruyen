@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-import { getSessionUser } from "@/lib/server-session";
+import { getSessionUser } from "@/lib/server/session";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {

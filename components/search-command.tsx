@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { searchComicsQuick } from "@/lib/actions/manga-actions";
 import { formatRelativeTime } from "@/lib/date-time";
-import { OTruyenComic } from "@/types/otruyen-types";
+import { OTruyenComic } from "@/types/manga-types";
 
 interface SearchCommandProps {
   open: boolean;

@@ -18,7 +18,7 @@ import {
   type MangaRankingPeriod,
 } from "@/lib/actions/manga-view.actions";
 import { getVisiblePages } from "@/lib/pagination";
-import { formatViewCount } from "@/lib/view-utils";
+import { formatViewCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const MAX_ITEMS_PER_TAB = 120;

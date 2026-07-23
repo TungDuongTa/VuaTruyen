@@ -2,18 +2,18 @@
 import InputField from "@/components/forms/InputField";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signInSchema, type SignInFormData } from "@/lib/zod/auth.schema";
-import { signInWithEmail } from "@/lib/actions/auth.actions";
+import { signInSchema, type SignInFormData } from "@/lib/better-auth/auth.schema";
+import { authClient } from "@/lib/better-auth/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import SocialButton from "@/components/social-button";
+import SocialButton from "@/components/auth/social-button";
 import Image from "next/image";
-import { normalizeCallbackUrl } from "@/lib/view-utils";
+import { normalizeCallbackUrl } from "@/lib/better-auth/callback-url";
 
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -35,14 +35,21 @@ const SignIn = () => {
   });
   const onSubmit = async (data: SignInFormData) => {
     try {
-      const result = await signInWithEmail(data);
-      if (result?.success) {
-        router.replace(callbackUrl);
-      } else {
-        const message = result.message ?? "Invalid email or password";
+      const { error } = await authClient.signIn.email({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) {
+        const message =
+          error.message || "Email hoặc mật khẩu không đúng. Vui lòng thử lại";
         setError("password", { type: "manual", message });
         toast.error(message);
+        return;
       }
+
+      router.replace(callbackUrl);
+      router.refresh();
     } catch (error) {
       console.error("Sign-in error:", error);
       toast.error("Đăng nhập thất bại. Vui lòng thử lại", {
@@ -113,8 +120,12 @@ const SignIn = () => {
                   Quên mật khẩu?
                 </Link>
               </div>
-              <Button type="submit" className="w-full">
-                Đăng nhập
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
             </form>
 

@@ -12,10 +12,10 @@ import {
   COMMENT_LIKE_RATE,
   COMMENT_MAX_DEPTH,
   COMMENT_MAX_LENGTH,
-} from "@/lib/comment-limits";
+} from "@/lib/comments/limits";
 import { normalizePageAndSize } from "@/lib/pagination";
 import { getUserLevelMap } from "@/lib/server/user-level";
-import { getSessionUser } from "@/lib/server-session";
+import { getSessionUser } from "@/lib/server/session";
 
 export type CommentViewer = {
   id: string;
@@ -321,9 +321,7 @@ const toFeedItem = (
     likeCount: Number.isFinite(doc.likeCount) ? doc.likeCount : 0,
     likedByViewer:
       Boolean(viewerId) && Boolean(likedCommentIds?.has(String(doc._id))),
-    createdAt: new Date(
-      doc.createdAt || doc.updatedAt || Date.now(),
-    ).toISOString(),
+    createdAt: new Date(doc.createdAt || doc.updatedAt).toISOString(),
   };
 };
 
@@ -579,14 +577,12 @@ export const getRecentTopLevelComments = async (
         userName: authorProfile?.name || DEFAULT_COMMENT_AUTHOR_NAME,
         userImage: authorProfile?.image || "",
         userLevel: levelMap.get(userId) ?? 1,
-        content: doc.content || "",
+        content: String(doc.content),
         comicSlug,
         comicName,
         chapterName: doc.chapterName || null,
         likeCount: Number.isFinite(doc.likeCount) ? doc.likeCount : 0,
-        createdAt: new Date(
-          doc.createdAt || doc.updatedAt || Date.now(),
-        ).toISOString(),
+        createdAt: new Date(doc.createdAt || doc.updatedAt).toISOString(),
       };
     });
   } catch (error) {

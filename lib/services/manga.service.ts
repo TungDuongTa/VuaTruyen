@@ -79,15 +79,15 @@ const buildListFilter = (query: MangaListQuery) => {
 };
 
 const toMangaCard = (doc: Record<string, unknown>): OTruyenComic => {
-  const slug = String(doc.slug || "");
+  const slug = String(doc.slug);
   const latestChapterName = String(doc.latestChapterName || "");
   const categories = Array.isArray(doc.categories)
     ? (doc.categories as Category[])
     : [];
 
   return {
-    _id: String(doc._id || slug),
-    name: String(doc.name || slug),
+    _id: String(doc._id),
+    name: String(doc.name),
     slug,
     origin_name: Array.isArray(doc.originNames)
       ? (doc.originNames as string[])
@@ -95,9 +95,7 @@ const toMangaCard = (doc: Record<string, unknown>): OTruyenComic => {
     status: String(doc.status || "ongoing"),
     thumb_url: String(doc.thumbUrl || ""),
     category: categories,
-    updatedAt: new Date(
-      (doc.updatedAt as Date | string | undefined) || Date.now(),
-    ).toISOString(),
+    updatedAt: new Date(doc.updatedAt as Date | string).toISOString(),
     chaptersLatest: latestChapterName
       ? [
           {
@@ -113,24 +111,24 @@ const toMangaCard = (doc: Record<string, unknown>): OTruyenComic => {
 
 const cursorFromDoc = (doc: Record<string, unknown>): string =>
   encodeKeysetCursor(
-    (doc.updatedAt as Date | string | undefined) || new Date(),
-    String(doc._id || ""),
+    doc.updatedAt as Date | string,
+    String(doc._id),
   );
 
 const toChapterData = (doc: Record<string, unknown>): ChapterData => ({
   filename: "",
-  chapter_name: String(doc.chapterName || ""),
+  chapter_name: String(doc.chapterName),
   chapter_title: String(doc.chapterTitle || ""),
-  chapter_api_data: String(doc.chapterName || ""),
+  chapter_api_data: String(doc.chapterName),
 });
 
 const toComicDetail = (
   manga: Record<string, unknown>,
   chapters: Record<string, unknown>[],
 ): ComicDetailItem => ({
-  _id: String(manga._id || manga.slug || ""),
-  name: String(manga.name || manga.slug || ""),
-  slug: String(manga.slug || ""),
+  _id: String(manga._id),
+  name: String(manga.name),
+  slug: String(manga.slug),
   origin_name: Array.isArray(manga.originNames)
     ? (manga.originNames as string[])
     : [],
@@ -147,9 +145,7 @@ const toComicDetail = (
       server_data: chapters.map(toChapterData),
     } satisfies ChapterGroup,
   ],
-  updatedAt: new Date(
-    (manga.updatedAt as Date | string | undefined) || Date.now(),
-  ).toISOString(),
+  updatedAt: new Date(manga.updatedAt as Date | string).toISOString(),
 });
 
 const queryMangaList = async (
@@ -350,7 +346,7 @@ export const getMangaChapter = async (
 
   if (!manga || !chapter) return null;
 
-  const chapterImages: ChapterImage[] = (chapter.pages || [])
+  const chapterImages: ChapterImage[] = (chapter.pages ?? [])
     .map((page: Record<string, unknown>) => ({
       image_page: Number(page.index),
       image_file: String(page.imageUrl),
@@ -424,15 +420,13 @@ export const getMangaSitemapEntries = async (): Promise<
 
   return docs
     .map((doc) => {
-      const slug = String(doc.slug || "").trim();
+      const slug = String(doc.slug);
       if (!slug) return null;
 
       return {
         slug,
-        latestChapterName: String(doc.latestChapterName || "").trim(),
-        updatedAt: new Date(
-          (doc.updatedAt as Date | string | undefined) || Date.now(),
-        ),
+        latestChapterName: String(doc.latestChapterName || ""),
+        updatedAt: new Date(doc.updatedAt as Date | string),
       };
     })
     .filter((entry): entry is MangaSitemapEntry => entry !== null);

@@ -10,9 +10,9 @@ import {
   getUserReadingExpStats,
   incrementUserReadingStatsForNewChapter,
 } from "@/lib/server/user-level";
-import { getCurrentUserId } from "@/lib/server-session";
+import { getCurrentUserId } from "@/lib/server/session";
 import type { ReadingExpStats } from "@/lib/user-level";
-import type { OTruyenComic } from "@/types/otruyen-types";
+import type { OTruyenComic } from "@/types/manga-types";
 
 type MarkChapterAsReadProgressInput = {
   comicId?: string;
@@ -94,12 +94,12 @@ const toReadingHistoryComic = (
   doc: ReadingProgressDoc,
   manga: OTruyenComic | undefined,
 ): ReadingHistoryComic | null => {
-  const comicSlug = normalizeString(doc.comicSlug);
+  const comicSlug = String(doc.comicSlug || "");
   if (!comicSlug) return null;
 
   const readChapters = uniqueChapterNames(doc.readChapters);
   const latestReadChapterName =
-    normalizeString(doc.lastReadChapter) || readChapters[0] || "";
+    String(doc.lastReadChapter || "").trim() || readChapters[0] || "";
   const latestReadAt = toIsoDateString(
     doc.lastReadAt,
     doc.updatedAt,
@@ -115,7 +115,7 @@ const toReadingHistoryComic = (
   }
 
   return {
-    _id: normalizeString(doc.comicId) || comicSlug,
+    _id: String(doc.comicId || comicSlug),
     name: comicSlug,
     slug: comicSlug,
     origin_name: [],
@@ -175,7 +175,7 @@ export const getReadingProgressChapterNames = async (
     if (!row) return [];
 
     const readChapters = uniqueChapterNames(row.readChapters);
-    const lastReadChapter = normalizeString(row.lastReadChapter);
+    const lastReadChapter = String(row.lastReadChapter || "").trim();
 
     if (lastReadChapter && !readChapters.includes(lastReadChapter)) {
       return [lastReadChapter, ...readChapters];
@@ -257,9 +257,7 @@ export const getCurrentUserReadingHistoryPage = async ({
     }
 
     const slugs = Array.from(
-      new Set(
-        rows.map((row) => normalizeString(row.comicSlug)).filter(Boolean),
-      ),
+      new Set(rows.map((row) => String(row.comicSlug || "")).filter(Boolean)),
     );
     const mangaBySlug = await getMangaCardsBySlugs(slugs);
 
@@ -267,7 +265,7 @@ export const getCurrentUserReadingHistoryPage = async ({
       .map((row) =>
         toReadingHistoryComic(
           row,
-          mangaBySlug.get(normalizeString(row.comicSlug)),
+          mangaBySlug.get(String(row.comicSlug || "")),
         ),
       )
       .filter((item): item is ReadingHistoryComic => Boolean(item));

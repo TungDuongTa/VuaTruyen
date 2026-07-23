@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { connectToDatabase } from "@/database/mongoose";
 import { nextCookies } from "better-auth/next-js";
-import type { Auth } from "better-auth";
+
 let authInstance: any = null;
 export const getAuth = async () => {
   if (authInstance) {

@@ -9,7 +9,7 @@ import {
   type MangaRankingItem,
   type MangaRankingPeriod,
 } from "@/lib/actions/manga-view.actions";
-import { formatViewCount } from "@/lib/view-utils";
+import { formatViewCount } from "@/lib/format";
 
 const FALLBACK_COVER =
   "https://placehold.co/200x300/111827/9CA3AF?text=No+Cover";

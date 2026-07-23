@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SearchCommand, SearchTrigger } from "@/components/search-command";
 import { cn } from "@/lib/utils";
-import { HeaderAuthButton } from "@/components/header-auth-button";
+import { HeaderAuthButton } from "@/components/auth/header-auth-button";
 
 export function Header() {
   const pathname = usePathname();

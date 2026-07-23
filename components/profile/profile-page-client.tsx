@@ -17,7 +17,8 @@ import {
   Upload,
   UserRound,
 } from "lucide-react";
-import { signOut, updateUserProfile } from "@/lib/actions/auth.actions";
+import { updateUserProfile } from "@/lib/actions/profile.actions";
+import { authClient } from "@/lib/better-auth/auth-client";
 import {
   getLevelBadgeTier,
   getLevelUsernameEffect,
@@ -174,10 +175,13 @@ export function ProfilePageClient({
   const handleSignOut = () => {
     setNotice(null);
     startSigningOut(async () => {
-      const result = await signOut();
+      const { error } = await authClient.signOut();
 
-      if (result && !result.success) {
-        setNotice({ type: "error", message: result.message });
+      if (error) {
+        setNotice({
+          type: "error",
+          message: error.message || "Sign-out failed",
+        });
         return;
       }
 

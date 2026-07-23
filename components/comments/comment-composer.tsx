@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Loader2, LogIn, Send } from "lucide-react";
 import type { CommentViewer } from "@/lib/actions/comment.actions";
-import { COMMENT_MAX_LENGTH } from "@/lib/comment-limits";
+import { COMMENT_MAX_LENGTH } from "@/lib/comments/limits";
 import {
   getLevelBadgeTier,
   getLevelUsernameEffect,

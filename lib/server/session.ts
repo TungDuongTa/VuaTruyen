@@ -14,4 +14,3 @@ export const getCurrentUserId = async (): Promise<string | null> => {
   const user = await getSessionUser();
   return user?.id ?? null;
 };
-

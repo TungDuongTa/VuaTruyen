@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toPositiveInt } from "@/lib/pagination";
 import { formatShortDate } from "@/lib/date-time";
 import { getCurrentUserReadingHistoryPage } from "@/lib/actions/reading-progress.actions";
-import { getSessionUser } from "@/lib/server-session";
+import { getSessionUser } from "@/lib/server/session";
 import { withSiteSuffix } from "@/lib/seo";
 
 const ITEMS_PER_PAGE = 24;

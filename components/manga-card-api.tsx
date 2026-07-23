@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatRelativeTime } from "@/lib/date-time";
-import { OTruyenComic } from "@/types/otruyen-types";
+import { OTruyenComic } from "@/types/manga-types";
 
 const FALLBACK_COVER =
   "https://placehold.co/300x450/111827/9CA3AF?text=No+Cover";

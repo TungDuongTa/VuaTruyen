@@ -6,7 +6,7 @@ import Image from "next/image";
 import { BookOpen, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { OTruyenComic, formatStatus } from "@/types/otruyen-types";
+import { OTruyenComic, formatStatus } from "@/types/manga-types";
 
 interface HeroSectionApiProps {
   featuredComics: OTruyenComic[];

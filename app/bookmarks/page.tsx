@@ -12,7 +12,7 @@ import {
   getCurrentUserBookmarksPage,
   removeMangaBookmark,
 } from "@/lib/actions/bookmark.actions";
-import { getSessionUser } from "@/lib/server-session";
+import { getSessionUser } from "@/lib/server/session";
 import { withSiteSuffix } from "@/lib/seo";
 import { redirect } from "next/navigation";
 

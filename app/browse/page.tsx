@@ -14,6 +14,10 @@ import {
 } from "@/lib/browse-params";
 import { withSiteSuffix } from "@/lib/seo";
 
+// Data Cache covers default lists/categories; this also marks the route for ISR
+// where Next can apply it (filtered searchParams stay on-demand).
+export const revalidate = 3600;
+
 type BrowsePageProps = {
   searchParams: Promise<BrowseSearchParams>;
 };

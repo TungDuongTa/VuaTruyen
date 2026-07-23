@@ -1,10 +1,10 @@
 "use client";
 import InputField from "@/components/forms/InputField";
-import SocialButton from "@/components/social-button";
+import SocialButton from "@/components/auth/social-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { signUpWithEmail } from "@/lib/actions/auth.actions";
-import { signUpSchema, type SignUpFormData } from "@/lib/zod/auth.schema";
+import { authClient } from "@/lib/better-auth/auth-client";
+import { signUpSchema, type SignUpFormData } from "@/lib/better-auth/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import Image from "next/image";
@@ -32,11 +32,19 @@ const SignUp = () => {
   });
   const onSubmit = async (data: SignUpFormData) => {
     try {
-      const result = await signUpWithEmail(data);
-      if (result.success) {
-        router.replace("/");
-        console.log("success");
+      const { error } = await authClient.signUp.email({
+        name: data.userName,
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) {
+        toast.error(error.message || "Đăng kí thất bại. Vui lòng thử lại.");
+        return;
       }
+
+      router.replace("/");
+      router.refresh();
     } catch (error) {
       console.error("Sign-up error:", error);
       toast.error("Đăng kí thất bại. Vui lòng thử lại.", {
@@ -128,7 +136,7 @@ const SignUp = () => {
               <p className="text-center text-sm text-muted-foreground mb-4">
                 Hoặc đăng nhập với
               </p>
-              <SocialButton />
+              <SocialButton callbackUrl="/" />
             </div>
           </CardContent>
         </Card>

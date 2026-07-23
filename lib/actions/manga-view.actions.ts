@@ -3,7 +3,7 @@
 import { connectToDatabase } from "@/database/mongoose";
 import { MangaViewModel } from "@/database/models/manga-view.model";
 import { MangaViewStatModel } from "@/database/models/manga-view-stat.model";
-import type { OTruyenComic } from "@/types/otruyen-types";
+import type { OTruyenComic } from "@/types/manga-types";
 
 type TrackMangaChapterViewInput = {
   comicId?: string;
@@ -64,7 +64,7 @@ const toRankingItem = (
   periodViews: number,
 ): MangaRankingItem => {
   const totalViews = Number(doc.totalViews || 0);
-  const comicSlug = String(doc.comicSlug || "");
+  const comicSlug = String(doc.comicSlug);
   const latestChapterName = String(doc.latestChapterName || "").trim();
 
   return {
@@ -77,7 +77,7 @@ const toRankingItem = (
     category: [],
     updatedAt:
       doc.comicUpdatedAt ||
-      new Date(doc.updatedAt || doc.createdAt || Date.now()).toISOString(),
+      new Date(doc.updatedAt || doc.createdAt).toISOString(),
     chaptersLatest: [],
     latestChapterName: latestChapterName || null,
     totalViews,
@@ -265,7 +265,7 @@ export const getMangaViewStats = async (
     }
 
     return {
-      comicSlug: doc.comicSlug || normalizedSlug,
+      comicSlug: String(doc.comicSlug),
       totalViews: Number(doc.totalViews || 0),
       lastViewedAt: doc.lastViewedAt
         ? new Date(doc.lastViewedAt).toISOString()

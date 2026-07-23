@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { BookmarkModel } from "@/database/models/bookmark.model";
 import { connectToDatabase } from "@/database/mongoose";
 import { normalizePageAndSize } from "@/lib/pagination";
-import { getCurrentUserId } from "@/lib/server-session";
-import type { OTruyenComic } from "@/types/otruyen-types";
+import { getCurrentUserId } from "@/lib/server/session";
+import type { OTruyenComic } from "@/types/manga-types";
 
 type ToggleBookmarkInput = {
   slug: string;
@@ -68,15 +68,15 @@ const toBookmarkedComic = (
 };
 
 const mangaFromAgg = (
-  slug: string,
+  _slug: string,
   mangaDoc: Record<string, unknown> | null | undefined,
 ): OTruyenComic | undefined => {
   if (!mangaDoc) return undefined;
 
   return {
-    _id: String(mangaDoc._id || slug),
-    name: String(mangaDoc.name || slug),
-    slug: String(mangaDoc.slug || slug),
+    _id: String(mangaDoc._id),
+    name: String(mangaDoc.name),
+    slug: String(mangaDoc.slug),
     origin_name: Array.isArray(mangaDoc.originNames)
       ? (mangaDoc.originNames as string[])
       : [],
@@ -85,9 +85,7 @@ const mangaFromAgg = (
     category: Array.isArray(mangaDoc.categories)
       ? (mangaDoc.categories as OTruyenComic["category"])
       : [],
-    updatedAt: new Date(
-      (mangaDoc.updatedAt as Date | string | undefined) || Date.now(),
-    ).toISOString(),
+    updatedAt: new Date(mangaDoc.updatedAt as Date | string).toISOString(),
     chaptersLatest: mangaDoc.latestChapterName
       ? [
           {

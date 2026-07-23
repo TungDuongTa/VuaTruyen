@@ -23,12 +23,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
 import { useMangaPersonalState } from "@/hooks/use-manga-personal-state";
 import { formatRelativeTime } from "@/lib/date-time";
-import { formatViewCount } from "@/lib/view-utils";
+import { formatViewCount } from "@/lib/format";
 import { toast } from "sonner";
 import {
   type ComicDetailItem,
   formatStatus,
-} from "@/types/otruyen-types";
+} from "@/types/manga-types";
 
 type MangaDetailPageClientProps = {
   id: string;
