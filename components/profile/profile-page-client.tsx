@@ -250,7 +250,7 @@ export function ProfilePageClient({
             <div className="space-y-2">
               <Label>Ảnh đại diện</Label>
               <p className="text-xs text-muted-foreground">
-                JPEG, PNG, WebP hoặc GIF · tối đa 1MB
+                JPEG, PNG, WebP hoặc GIF
               </p>
               {(pendingFile || clearAvatar) && (
                 <p className="text-xs text-primary">
