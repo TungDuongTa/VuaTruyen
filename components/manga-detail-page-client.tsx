@@ -130,7 +130,6 @@ export function MangaDetailPageClient({
                   fill
                   sizes="(max-width: 768px) 192px, 224px"
                   className="object-cover"
-                  priority
                   loading="lazy"
                 />
               </div>
