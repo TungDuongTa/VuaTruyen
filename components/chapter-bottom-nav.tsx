@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   BookOpen,
   Bookmark,
@@ -49,9 +48,8 @@ export default function ChapterBottomNav({
   isBookmarkLoading,
   onToggleBookmark,
 }: ChapterBottomNavProps) {
-  const router = useRouter();
   const chapterListContainerRef = useRef<HTMLDivElement | null>(null);
-  const currentChapterButtonRef = useRef<HTMLButtonElement | null>(null);
+  const currentChapterButtonRef = useRef<HTMLAnchorElement | null>(null);
   const lastScrollYRef = useRef(0);
   const [isNavVisible, setIsNavVisible] = useState(true);
 
@@ -230,22 +228,19 @@ export default function ChapterBottomNav({
                 const isRead = readChapterNames.includes(ch.chapter_name);
 
                 return (
-                  <button
+                  <Link
                     key={`${ch.chapter_name}-${index}`}
                     ref={isCurrent ? currentChapterButtonRef : undefined}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                    href={`/manga/${comicSlug}/chapter/${ch.chapter_name}`}
+                    className={`block w-full text-left px-4 py-2.5 text-sm transition-colors ${
                       isCurrent
                         ? "text-primary font-semibold bg-primary/10"
                         : isRead
                           ? "text-primary bg-primary/5 hover:bg-primary/10"
                           : "text-foreground hover:bg-secondary/60"
                     }`}
-                    onClick={() => {
-                      onCloseChapterList();
-                      router.push(
-                        `/manga/${comicSlug}/chapter/${ch.chapter_name}`,
-                      );
-                    }}
+                    onClick={onCloseChapterList}
+                    aria-current={isCurrent ? "page" : undefined}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="truncate">
@@ -259,7 +254,7 @@ export default function ChapterBottomNav({
                         </span>
                       )}
                     </div>
-                  </button>
+                  </Link>
                 );
               })}
             </div>

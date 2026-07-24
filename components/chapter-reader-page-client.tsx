@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
 import { recordChapterVisit } from "@/lib/actions/reading-progress.actions";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 import { type ChapterImage, type ComicDetailItem } from "@/types/manga-types";
 
 type ChapterReaderPageClientProps = {
@@ -150,6 +151,7 @@ export function ChapterReaderPageClient({
       if (e.key === "ArrowLeft") {
         if (prevChapter) {
           e.preventDefault();
+          startNavigationProgress();
           router.push(`${comicRouteHref}/chapter/${prevChapter.chapter_name}`);
         }
         return;
@@ -158,6 +160,7 @@ export function ChapterReaderPageClient({
       if (e.key === "ArrowRight") {
         if (nextChapter) {
           e.preventDefault();
+          startNavigationProgress();
           router.push(`${comicRouteHref}/chapter/${nextChapter.chapter_name}`);
         }
       }
