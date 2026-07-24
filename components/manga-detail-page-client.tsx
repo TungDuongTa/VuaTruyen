@@ -24,10 +24,7 @@ import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
 import { formatRelativeTime } from "@/lib/date-time";
 import { formatViewCount } from "@/lib/format";
 import { toast } from "sonner";
-import {
-  type ComicDetailItem,
-  formatStatus,
-} from "@/types/manga-types";
+import { type ComicDetailItem, formatStatus } from "@/types/manga-types";
 
 type MangaDetailPageClientProps = {
   id: string;
@@ -118,7 +115,7 @@ export function MangaDetailPageClient({
             fill
             sizes="100vw"
             className="scale-110 object-cover blur-sm"
-            unoptimized
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
         </div>
@@ -134,7 +131,7 @@ export function MangaDetailPageClient({
                   sizes="(max-width: 768px) 192px, 224px"
                   className="object-cover"
                   priority
-                  unoptimized
+                  loading="lazy"
                 />
               </div>
             </div>

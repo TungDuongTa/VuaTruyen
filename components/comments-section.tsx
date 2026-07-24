@@ -3,7 +3,7 @@ import { MessageCircle, ThumbsUp } from "lucide-react";
 import type { HomeRecentCommentItem } from "@/lib/actions/comment.actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { formatRelativeTime } from "@/lib/date-time";
+import { RelativeTime } from "@/components/relative-time";
 import { cn } from "@/lib/utils";
 import {
   getLevelBadgeTier,
@@ -119,7 +119,7 @@ export function CommentsSection({ comments }: CommentsSectionProps) {
                       </div>
 
                       <span className="shrink-0 text-xs text-muted-foreground">
-                        {formatRelativeTime(comment.createdAt)}
+                        <RelativeTime value={comment.createdAt} />
                       </span>
                     </div>
                   </div>

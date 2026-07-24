@@ -4,7 +4,10 @@ import SocialButton from "@/components/auth/social-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { authClient } from "@/lib/better-auth/auth-client";
-import { signUpSchema, type SignUpFormData } from "@/lib/better-auth/auth.schema";
+import {
+  signUpSchema,
+  type SignUpFormData,
+} from "@/lib/better-auth/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import Image from "next/image";
@@ -65,6 +68,7 @@ const SignUp = () => {
             width={1415}
             height={485}
             className="w-full h-full object-contain"
+            loading="lazy"
           />
           <p className="text-muted-foreground">
             Hãy đăng kí để lưu danh sách theo dõi và lịch sử đọc của bạn

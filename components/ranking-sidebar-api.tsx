@@ -146,12 +146,14 @@ export function RankingSidebarApi({
 
               <div className="relative w-10 h-14 shrink-0 overflow-hidden rounded-md bg-muted">
                 <Image
-                  src={comic.thumb_url?.trim() ? comic.thumb_url : FALLBACK_COVER}
+                  src={
+                    comic.thumb_url?.trim() ? comic.thumb_url : FALLBACK_COVER
+                  }
                   alt={comic.name}
                   fill
                   sizes="40px"
                   className="object-cover"
-                  unoptimized
+                  loading="lazy"
                 />
               </div>
 

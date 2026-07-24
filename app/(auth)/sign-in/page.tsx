@@ -7,7 +7,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signInSchema, type SignInFormData } from "@/lib/better-auth/auth.schema";
+import {
+  signInSchema,
+  type SignInFormData,
+} from "@/lib/better-auth/auth.schema";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -68,6 +71,7 @@ const SignIn = () => {
             width={1415}
             height={485}
             className="w-full h-full object-contain"
+            loading="lazy"
           />
           <p className="text-muted-foreground">
             Hãy đăng nhập để lưu danh sách theo dõi và lịch sử đọc của bạn
@@ -120,11 +124,7 @@ const SignIn = () => {
                   Quên mật khẩu?
                 </Link>
               </div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
             </form>

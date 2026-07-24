@@ -6,6 +6,14 @@ import {
   getMangaList,
   type MangaListType,
 } from "@/lib/services/manga.service";
+import {
+  fetchMangaRankings,
+  type MangaRankings,
+} from "@/lib/server/manga-rankings";
+import {
+  getRecentTopLevelComments,
+  type HomeRecentCommentItem,
+} from "@/lib/actions/comment.actions";
 import { CACHE_TAGS, mangaTag } from "@/lib/server/cache-tags";
 import type {
   Category,
@@ -14,18 +22,25 @@ import type {
   OTruyenComic,
 } from "@/types/manga-types";
 
-/** Matches previous unstable_cache list TTL (~15m revalidate). */
+/** (~15m revalidate). */
 const MANGA_LISTS_LIFE = {
   stale: 300,
   revalidate: 900,
   expire: 3600,
 } as const;
 
-/** Matches previous categories TTL (~24h revalidate). */
+/**  (~24h revalidate). */
 const MANGA_CATEGORIES_LIFE = {
   stale: 3600,
   revalidate: 86_400,
   expire: 604_800,
+} as const;
+
+/** Short TTL: ranking windows use Date at fill time; views change often. */
+const HOME_SIDEBAR_LIFE = {
+  stale: 60,
+  revalidate: 300,
+  expire: 3600,
 } as const;
 
 /** Genre list rarely changes. */
@@ -80,4 +95,24 @@ export async function getCachedMangaDetail(
   cacheTag(CACHE_TAGS.mangaLists);
   cacheTag(mangaTag(slug));
   return getMangaDetail(slug);
+}
+
+/** Home sidebar rankings (daily/weekly/monthly/all-time). */
+export async function getCachedMangaRankings(
+  limit = 10,
+): Promise<MangaRankings> {
+  "use cache";
+  cacheLife(HOME_SIDEBAR_LIFE);
+  cacheTag(CACHE_TAGS.mangaRankings);
+  return fetchMangaRankings(limit);
+}
+
+/** Home sidebar recent top-level comments. */
+export async function getCachedRecentHomeComments(
+  limit = 10,
+): Promise<HomeRecentCommentItem[]> {
+  "use cache";
+  cacheLife(HOME_SIDEBAR_LIFE);
+  cacheTag(CACHE_TAGS.homeComments);
+  return getRecentTopLevelComments(limit);
 }

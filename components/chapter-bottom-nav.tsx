@@ -153,7 +153,6 @@ export default function ChapterBottomNav({
             className="flex-1 min-w-0 flex items-center justify-center gap-1.5 h-10 bg-secondary hover:bg-secondary/70 rounded-lg px-3 transition-colors"
             onClick={onToggleChapterList}
           >
-            <BookOpen className="h-4 w-4 text-primary shrink-0" />
             <span className="text-sm font-semibold text-foreground truncate">
               Chapter {chapter}
             </span>

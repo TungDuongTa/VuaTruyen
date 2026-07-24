@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { connection } from "next/server";
+import { Suspense } from "react";
 import { HeroSectionApi } from "@/components/hero-section-api";
-import { RankingSidebarApi } from "@/components/ranking-sidebar-api";
-import { CommentsSection } from "@/components/comments-section";
+import {
+  HomeSidebar,
+  HomeSidebarSkeleton,
+} from "@/components/home-sidebar";
 import { MangaCardApi } from "@/components/manga-card-api";
 import { getHomeData, getListByType } from "@/lib/actions/manga-actions";
-import { getRecentTopLevelComments } from "@/lib/actions/comment.actions";
-import { getMangaRankings } from "@/lib/actions/manga-view.actions";
 import {
   SITE_ALTERNATE_NAME,
   SITE_DESCRIPTION,
@@ -16,8 +16,8 @@ import {
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-// With cacheComponents, rankings/comments stay request-time (see connection()).
-// Manga lists use "use cache" in manga-cache.ts.
+// Manga lists + sidebar use "use cache" in manga-cache.ts.
+// Sidebar streams separately so rankings/comments never block hero/grids.
 
 export const metadata: Metadata = {
   title: {
@@ -30,24 +30,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  // Opt into request time so ranking windows can use Date safely.
-  await connection();
-
-  // Fetch data in parallel
-  const [
-    homeData,
-    latestData,
-    completedData,
-    ongoingData,
-    recentComments,
-    rankings,
-  ] = await Promise.all([
+  const [homeData, latestData, completedData, ongoingData] = await Promise.all([
     getHomeData(),
     getListByType("truyen-moi", 1),
     getListByType("hoan-thanh", 1),
     getListByType("dang-phat-hanh", 1),
-    getRecentTopLevelComments(10),
-    getMangaRankings(10),
   ]);
 
   const featuredComics = homeData;
@@ -111,26 +98,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Popular This Week Grid Section */}
-        {/* <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-foreground">
-              Popular This Week
-            </h2>
-            <Link
-              href="/browse?sort=popular"
-              className="flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              View All <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-            {featuredComics.slice(0, 6).map((comic) => (
-              <MangaCardApi key={comic._id} comic={comic} />
-            ))}
-          </div>
-        </section> */}
-
         {/* Main Content with Sidebar Section */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Left Side - Manga List */}
@@ -145,11 +112,10 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Right Side - Rankings & Comments */}
-          <div className="space-y-6">
-            <RankingSidebarApi initialRankings={rankings} />
-            <CommentsSection comments={recentComments} />
-          </div>
+          {/* Right Side - Rankings & Comments (streamed) */}
+          <Suspense fallback={<HomeSidebarSkeleton />}>
+            <HomeSidebar />
+          </Suspense>
         </section>
 
         {/* Completed Manga Section */}

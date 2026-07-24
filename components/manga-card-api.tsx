@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatRelativeTime } from "@/lib/date-time";
+import { RelativeTime } from "@/components/relative-time";
 import { OTruyenComic } from "@/types/manga-types";
 
 const FALLBACK_COVER =
@@ -36,6 +36,7 @@ export function MangaCardApi({
               fill
               sizes="64px"
               className="object-cover transition-transform group-hover:scale-105"
+              loading="lazy"
             />
           </div>
           <div className="flex-1 min-w-0 flex-col">
@@ -47,7 +48,7 @@ export function MangaCardApi({
               className="mt-1 inline-flex w-fit items-center gap-1 text-xs"
             >
               <Clock className="h-3 w-3" />
-              {formatRelativeTime(comic.updatedAt)}
+              <RelativeTime value={comic.updatedAt} />
             </Badge>
             {showLatestChapter && (
               <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
@@ -73,6 +74,7 @@ export function MangaCardApi({
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
             className="object-cover transition-transform group-hover:scale-105"
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-2">
@@ -94,6 +96,7 @@ export function MangaCardApi({
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -102,7 +105,7 @@ export function MangaCardApi({
           className="absolute top-2 left-2 inline-flex items-center gap-1 border-white/35 bg-black/60 text-xs text-white backdrop-blur-sm"
         >
           <Clock className="h-3 w-3" />
-          {formatRelativeTime(comic.updatedAt)}
+          <RelativeTime value={comic.updatedAt} />
         </Badge>
       </div>
 
