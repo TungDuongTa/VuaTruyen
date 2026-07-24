@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
+  // Static under Cache Components prerender (no request-time Date).
+  const currentYear = 2026;
 
   const footerLinks = {
     browse: [

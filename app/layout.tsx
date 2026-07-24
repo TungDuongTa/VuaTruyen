@@ -117,8 +117,10 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <ProgressBar />
             </Suspense>
-            <Header />
-            {children}
+            <Suspense fallback={null}>
+              <Header />
+            </Suspense>
+            <Suspense fallback={null}>{children}</Suspense>
             <Toaster />
             <Footer />
           </main>

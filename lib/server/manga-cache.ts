@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import {
   getHomeMangaData,
   getMangaCategories,
@@ -14,68 +14,70 @@ import type {
   OTruyenComic,
 } from "@/types/manga-types";
 
-const CATEGORIES_REVALIDATE_SECONDS = 86_400; // 24h
-/** Lists + public detail share this window so cards and /manga/[id] stay aligned. */
-const MANGA_LIST_REVALIDATE_SECONDS = 900; // 15m
+/** Matches previous unstable_cache list TTL (~15m revalidate). */
+const MANGA_LISTS_LIFE = {
+  stale: 300,
+  revalidate: 900,
+  expire: 3600,
+} as const;
+
+/** Matches previous categories TTL (~24h revalidate). */
+const MANGA_CATEGORIES_LIFE = {
+  stale: 3600,
+  revalidate: 86_400,
+  expire: 604_800,
+} as const;
 
 /** Genre list rarely changes. */
-export const getCachedCategories = unstable_cache(
-  async (): Promise<Category[]> => getMangaCategories(),
-  ["manga-categories"],
-  {
-    revalidate: CATEGORIES_REVALIDATE_SECONDS,
-    tags: [CACHE_TAGS.categories],
-  },
-);
+export async function getCachedCategories(): Promise<Category[]> {
+  "use cache";
+  cacheLife(MANGA_CATEGORIES_LIFE);
+  cacheTag(CACHE_TAGS.categories);
+  return getMangaCategories();
+}
 
 /** Homepage featured / fallback carousel. */
-export const getCachedHomeData = unstable_cache(
-  async (): Promise<OTruyenComic[]> => getHomeMangaData(),
-  ["home-manga"],
-  {
-    revalidate: MANGA_LIST_REVALIDATE_SECONDS,
-    tags: [CACHE_TAGS.mangaLists],
-  },
-);
+export async function getCachedHomeData(): Promise<OTruyenComic[]> {
+  "use cache";
+  cacheLife(MANGA_LISTS_LIFE);
+  cacheTag(CACHE_TAGS.mangaLists);
+  return getHomeMangaData();
+}
 
 /** Browse / home list first page (no cursor). */
-export const getCachedBrowseListPage1 = (
+export async function getCachedBrowseListPage1(
   type: MangaListType,
-): Promise<MangaListResult> =>
-  unstable_cache(
-    async () => getMangaList({ type, page: 1 }),
-    ["browse-list-page1", type],
-    {
-      revalidate: MANGA_LIST_REVALIDATE_SECONDS,
-      tags: [CACHE_TAGS.mangaLists],
-    },
-  )();
+): Promise<MangaListResult> {
+  "use cache";
+  cacheLife(MANGA_LISTS_LIFE);
+  cacheTag(CACHE_TAGS.mangaLists);
+  return getMangaList({ type, page: 1 });
+}
 
 /** Default /18+ first page. */
-export const getCachedAdultListPage1 = unstable_cache(
-  async (): Promise<MangaListResult> =>
-    getMangaList({
-      type: "truyen-moi",
-      tag: "18+",
-      page: 1,
-      pageSize: 24,
-    }),
-  ["adult-list-page1"],
-  {
-    revalidate: MANGA_LIST_REVALIDATE_SECONDS,
-    tags: [CACHE_TAGS.mangaLists],
-  },
-);
+export async function getCachedAdultListPage1(): Promise<MangaListResult> {
+  "use cache";
+  cacheLife(MANGA_LISTS_LIFE);
+  cacheTag(CACHE_TAGS.mangaLists);
+  return getMangaList({
+    type: "truyen-moi",
+    tag: "18+",
+    page: 1,
+    pageSize: 24,
+  });
+}
 
 /**
  * Public manga detail + chapter list.
- * Same list tag as cards so TTL stays in the same ballpark.
+ * Same list profile/tag as cards so TTL stays aligned.
  * Personal state (bookmark / read) is never cached here.
  */
-export const getCachedMangaDetail = (
+export async function getCachedMangaDetail(
   slug: string,
-): Promise<ComicDetailItem | null> =>
-  unstable_cache(async () => getMangaDetail(slug), ["manga-detail", slug], {
-    revalidate: MANGA_LIST_REVALIDATE_SECONDS,
-    tags: [CACHE_TAGS.mangaLists, mangaTag(slug)],
-  })();
+): Promise<ComicDetailItem | null> {
+  "use cache";
+  cacheLife(MANGA_LISTS_LIFE);
+  cacheTag(CACHE_TAGS.mangaLists);
+  cacheTag(mangaTag(slug));
+  return getMangaDetail(slug);
+}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { HeroSectionApi } from "@/components/hero-section-api";
 import { RankingSidebarApi } from "@/components/ranking-sidebar-api";
 import { CommentsSection } from "@/components/comments-section";
@@ -15,9 +16,8 @@ import {
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-// Keep rankings + home comments fresh every request. Manga lists still use
-// unstable_cache in manga-actions / manga-cache.
-export const dynamic = "force-dynamic";
+// With cacheComponents, rankings/comments stay request-time (see connection()).
+// Manga lists use "use cache" in manga-cache.ts.
 
 export const metadata: Metadata = {
   title: {
@@ -30,6 +30,9 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
+  // Opt into request time so ranking windows can use Date safely.
+  await connection();
+
   // Fetch data in parallel
   const [
     homeData,
