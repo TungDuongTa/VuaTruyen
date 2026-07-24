@@ -15,6 +15,10 @@ import {
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
+// Keep rankings + home comments fresh every request. Manga lists still use
+// unstable_cache in manga-actions / manga-cache.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: {
     absolute: "VuaTruyen - Vua Truyện đọc manga, manhwa và manhua online",

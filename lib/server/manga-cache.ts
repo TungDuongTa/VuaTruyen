@@ -75,11 +75,7 @@ export const getCachedAdultListPage1 = unstable_cache(
 export const getCachedMangaDetail = (
   slug: string,
 ): Promise<ComicDetailItem | null> =>
-  unstable_cache(
-    async () => getMangaDetail(slug),
-    ["manga-detail", slug],
-    {
-      revalidate: MANGA_LIST_REVALIDATE_SECONDS,
-      tags: [CACHE_TAGS.mangaLists, mangaTag(slug)],
-    },
-  )();
+  unstable_cache(async () => getMangaDetail(slug), ["manga-detail", slug], {
+    revalidate: MANGA_LIST_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.mangaLists, mangaTag(slug)],
+  })();
