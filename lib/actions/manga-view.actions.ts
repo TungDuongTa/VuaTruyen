@@ -5,12 +5,8 @@ import { MangaViewModel } from "@/database/models/manga-view.model";
 import { MangaViewStatModel } from "@/database/models/manga-view-stat.model";
 import {
   fetchMangaRankings,
-  type MangaRankingItem,
-  type MangaRankingPeriod,
   type MangaRankings,
 } from "@/lib/server/manga-rankings";
-
-export type { MangaRankingItem, MangaRankingPeriod, MangaRankings };
 
 type TrackMangaChapterViewInput = {
   comicId?: string;

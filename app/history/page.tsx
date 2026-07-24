@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toPositiveInt } from "@/lib/pagination";
 import { formatShortDate } from "@/lib/date-time";
-import { getCurrentUserReadingHistoryPage } from "@/lib/actions/reading-progress.actions";
+import { getReadingHistoryPageForUser } from "@/lib/actions/reading-progress.actions";
 import { getSessionUser } from "@/lib/server/session";
 import { withSiteSuffix } from "@/lib/seo";
 
@@ -55,7 +55,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   }
 
   const requestedPage = toPositiveInt(params.page, 1);
-  const historyResult = await getCurrentUserReadingHistoryPage({
+  const historyResult = await getReadingHistoryPageForUser(sessionUser.id, {
     page: requestedPage,
     pageSize: ITEMS_PER_PAGE,
   });

@@ -6,7 +6,6 @@ import { BookmarkModel } from "@/database/models/bookmark.model";
 import { ReadingProgressModel } from "@/database/models/reading-progress.model";
 import { trackMangaChapterView } from "@/lib/actions/manga-view.actions";
 import { normalizePageAndSize } from "@/lib/pagination";
-import { getMangaCardsBySlugs } from "@/lib/services/manga.service";
 import {
   getUserReadingExpStats,
   incrementUserReadingStatsForNewChapter,
@@ -66,6 +65,10 @@ type ReadingProgressDoc = {
   updatedAt?: Date | string | null;
 };
 
+type HistoryAggRow = ReadingProgressDoc & {
+  manga?: Record<string, unknown> | null;
+};
+
 const DEFAULT_READING_HISTORY_PAGE_SIZE = 24;
 const MAX_READING_HISTORY_PAGE_SIZE = 60;
 
@@ -91,9 +94,39 @@ const toIsoDateString = (
   return new Date().toISOString();
 };
 
+const mangaFromAgg = (
+  mangaDoc: Record<string, unknown> | null | undefined,
+): OTruyenComic | undefined => {
+  if (!mangaDoc) return undefined;
+
+  return {
+    _id: String(mangaDoc._id),
+    name: String(mangaDoc.name),
+    slug: String(mangaDoc.slug),
+    origin_name: Array.isArray(mangaDoc.originNames)
+      ? (mangaDoc.originNames as string[])
+      : [],
+    status: String(mangaDoc.status || "ongoing"),
+    thumb_url: String(mangaDoc.thumbUrl || ""),
+    category: Array.isArray(mangaDoc.categories)
+      ? (mangaDoc.categories as OTruyenComic["category"])
+      : [],
+    updatedAt: new Date(mangaDoc.updatedAt as Date | string).toISOString(),
+    chaptersLatest: mangaDoc.latestChapterName
+      ? [
+          {
+            filename: "",
+            chapter_name: String(mangaDoc.latestChapterName),
+            chapter_title: "",
+            chapter_api_data: String(mangaDoc.latestChapterName),
+          },
+        ]
+      : [],
+  };
+};
+
 const toReadingHistoryComic = (
-  doc: ReadingProgressDoc,
-  manga: OTruyenComic | undefined,
+  doc: HistoryAggRow,
 ): ReadingHistoryComic | null => {
   const comicSlug = String(doc.comicSlug || "");
   if (!comicSlug) return null;
@@ -106,6 +139,7 @@ const toReadingHistoryComic = (
     doc.updatedAt,
     doc.createdAt,
   );
+  const manga = mangaFromAgg(doc.manga);
 
   if (manga) {
     return {
@@ -147,6 +181,52 @@ const normalizeHistoryPagination = (page: number, pageSize: number) => ({
     MAX_READING_HISTORY_PAGE_SIZE,
   ),
 });
+
+/** Sort on progress index, then $lookup only the page slice. */
+const historyListPipeline = (userId: string, skip: number, limit: number) => [
+  {
+    $match: {
+      userId,
+      readChapters: { $exists: true },
+    },
+  },
+  { $sort: { lastReadAt: -1 as const, _id: -1 as const } },
+  {
+    $facet: {
+      metadata: [{ $count: "total" }],
+      items: [
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: "mangas",
+            localField: "comicSlug",
+            foreignField: "slug",
+            as: "manga",
+          },
+        },
+        {
+          $unwind: {
+            path: "$manga",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            comicId: 1,
+            comicSlug: 1,
+            readChapters: 1,
+            lastReadChapter: 1,
+            lastReadAt: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            manga: 1,
+          },
+        },
+      ],
+    },
+  },
+];
 
 export const getCurrentUserReadingExpStats =
   async (): Promise<ReadingExpStats> => {
@@ -210,22 +290,17 @@ export const getMangaPersonalState = async (
   }
 };
 
-export const getReadingProgressChapterNames = async (
-  comicSlug: string,
-): Promise<string[]> => {
-  const state = await getMangaPersonalState(comicSlug);
-  return state.readChapterNames;
-};
-
-export const getCurrentUserReadingHistoryPage = async ({
-  page = 1,
-  pageSize = DEFAULT_READING_HISTORY_PAGE_SIZE,
-}: {
-  page?: number;
-  pageSize?: number;
-} = {}): Promise<PaginatedReadingHistoryResult> => {
+export const getReadingHistoryPageForUser = async (
+  userId: string,
+  {
+    page = 1,
+    pageSize = DEFAULT_READING_HISTORY_PAGE_SIZE,
+  }: {
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<PaginatedReadingHistoryResult> => {
   try {
-    const userId = await getCurrentUserId();
     const normalized = normalizeHistoryPagination(page, pageSize);
 
     if (!userId) {
@@ -240,63 +315,30 @@ export const getCurrentUserReadingHistoryPage = async ({
 
     await connectToDatabase();
 
-    const filter = {
-      userId,
-      readChapters: { $exists: true },
+    const runFacet = async (skip: number) => {
+      const [facet] = await ReadingProgressModel.aggregate<{
+        metadata: Array<{ total: number }>;
+        items: HistoryAggRow[];
+      }>(historyListPipeline(userId, skip, normalized.pageSize));
+
+      return {
+        totalItems: facet?.metadata?.[0]?.total || 0,
+        rows: facet?.items || [],
+      };
     };
 
-    // Count and page fetch in parallel (indexed by userId + lastReadAt).
-    const provisionalSkip = (normalized.page - 1) * normalized.pageSize;
-    const [totalItems, provisionalRowsRaw] = await Promise.all([
-      ReadingProgressModel.countDocuments(filter),
-      ReadingProgressModel.find(filter)
-        .sort({ lastReadAt: -1, _id: -1 })
-        .skip(provisionalSkip)
-        .limit(normalized.pageSize)
-        .select(
-          "comicId comicSlug readChapters lastReadChapter lastReadAt createdAt updatedAt",
-        )
-        .lean(),
-    ]);
-    const provisionalRows = provisionalRowsRaw as ReadingProgressDoc[];
-
+    let { totalItems, rows } = await runFacet(
+      (normalized.page - 1) * normalized.pageSize,
+    );
     const totalPages = Math.max(1, Math.ceil(totalItems / normalized.pageSize));
     const safePage = Math.min(normalized.page, totalPages);
 
-    let rows = provisionalRows;
     if (safePage !== normalized.page && totalItems > 0) {
-      rows = (await ReadingProgressModel.find(filter)
-        .sort({ lastReadAt: -1, _id: -1 })
-        .skip((safePage - 1) * normalized.pageSize)
-        .limit(normalized.pageSize)
-        .select(
-          "comicId comicSlug readChapters lastReadChapter lastReadAt createdAt updatedAt",
-        )
-        .lean()) as ReadingProgressDoc[];
+      ({ rows } = await runFacet((safePage - 1) * normalized.pageSize));
     }
-
-    if (!rows.length) {
-      return {
-        items: [],
-        page: safePage,
-        pageSize: normalized.pageSize,
-        totalItems,
-        totalPages,
-      };
-    }
-
-    const slugs = Array.from(
-      new Set(rows.map((row) => String(row.comicSlug || "")).filter(Boolean)),
-    );
-    const mangaBySlug = await getMangaCardsBySlugs(slugs);
 
     const items = rows
-      .map((row) =>
-        toReadingHistoryComic(
-          row,
-          mangaBySlug.get(String(row.comicSlug || "")),
-        ),
-      )
+      .map((row) => toReadingHistoryComic(row))
       .filter((item): item is ReadingHistoryComic => Boolean(item));
 
     return {

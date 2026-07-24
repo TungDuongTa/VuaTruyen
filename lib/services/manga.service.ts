@@ -379,31 +379,6 @@ export const searchManga = async (
   );
 };
 
-export const getMangaCardsBySlugs = async (
-  slugs: string[],
-): Promise<Map<string, OTruyenComic>> => {
-  await connectToDatabase();
-
-  const normalized = Array.from(
-    new Set(slugs.map((slug) => String(slug || "").trim()).filter(Boolean)),
-  );
-  if (!normalized.length) {
-    return new Map();
-  }
-
-  const docs = await MangaModel.find({ slug: { $in: normalized } })
-    .select(MANGA_CARD_FIELDS)
-    .lean();
-  const cards = new Map<string, OTruyenComic>();
-
-  for (const doc of docs) {
-    const card = toMangaCard(doc as Record<string, unknown>);
-    cards.set(card.slug, card);
-  }
-
-  return cards;
-};
-
 export type MangaSitemapEntry = {
   slug: string;
   latestChapterName: string;

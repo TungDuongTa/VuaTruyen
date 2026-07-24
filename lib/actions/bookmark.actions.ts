@@ -152,14 +152,16 @@ const bookmarkListPipeline = (userId: string, skip: number, limit: number) => [
   },
 ];
 
-export const getCurrentUserBookmarksPage = async ({
-  page = 1,
-  pageSize = DEFAULT_BOOKMARKS_PAGE_SIZE,
-}: {
-  page?: number;
-  pageSize?: number;
-} = {}): Promise<PaginatedBookmarksResult> => {
-  const userId = await getCurrentUserId();
+export const getBookmarksPageForUser = async (
+  userId: string,
+  {
+    page = 1,
+    pageSize = DEFAULT_BOOKMARKS_PAGE_SIZE,
+  }: {
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<PaginatedBookmarksResult> => {
   const normalized = normalizeBookmarksPagination(page, pageSize);
 
   if (!userId) {
@@ -211,17 +213,6 @@ export const getCurrentUserBookmarksPage = async ({
     totalItems,
     totalPages,
   };
-};
-
-export const isMangaBookmarked = async (slug: string): Promise<boolean> => {
-  const userId = await getCurrentUserId();
-  if (!userId) {
-    return false;
-  }
-
-  await connectToDatabase();
-  const existing = await BookmarkModel.findOne({ userId, slug }).select("_id");
-  return Boolean(existing);
 };
 
 export const toggleMangaBookmark = async (

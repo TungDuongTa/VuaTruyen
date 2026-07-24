@@ -15,8 +15,8 @@ import {
 import { buildCanonicalPath, withSiteSuffix } from "@/lib/seo";
 import {
   getMangaRankings,
-  type MangaRankingPeriod,
 } from "@/lib/actions/manga-view.actions";
+import type { MangaRankingPeriod } from "@/lib/server/manga-rankings";
 import { getVisiblePages } from "@/lib/pagination";
 import { formatViewCount } from "@/lib/format";
 import { cn } from "@/lib/utils";

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toPositiveInt } from "@/lib/pagination";
 import { formatShortDate } from "@/lib/date-time";
 import {
-  getCurrentUserBookmarksPage,
+  getBookmarksPageForUser,
   removeMangaBookmark,
 } from "@/lib/actions/bookmark.actions";
 import { getSessionUser } from "@/lib/server/session";
@@ -70,7 +70,7 @@ export default async function BookmarksPage({
   }
 
   const requestedPage = toPositiveInt(params.page, 1);
-  const bookmarkResult = await getCurrentUserBookmarksPage({
+  const bookmarkResult = await getBookmarksPageForUser(sessionUser.id, {
     page: requestedPage,
     pageSize: ITEMS_PER_PAGE,
   });

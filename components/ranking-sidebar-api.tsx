@@ -1,30 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Trophy, TrendingUp, Clock, Flame, Loader2, Eye } from "lucide-react";
-import {
-  getMangaRankings,
-  type MangaRankingItem,
-  type MangaRankingPeriod,
-} from "@/lib/actions/manga-view.actions";
+import { Trophy, TrendingUp, Clock, Flame, Eye } from "lucide-react";
+import type {
+  MangaRankingItem,
+  MangaRankingPeriod,
+  MangaRankings,
+} from "@/lib/server/manga-rankings";
 import { formatViewCount } from "@/lib/format";
 
 const FALLBACK_COVER =
   "https://placehold.co/200x300/111827/9CA3AF?text=No+Cover";
 
 interface RankingSidebarApiProps {
-  limit?: number;
-  initialRankings?: Record<MangaRankingPeriod, MangaRankingItem[]>;
+  initialRankings: MangaRankings;
 }
-
-const EMPTY_RANKINGS: Record<MangaRankingPeriod, MangaRankingItem[]> = {
-  daily: [],
-  weekly: [],
-  monthly: [],
-  allTime: [],
-};
 
 const getMedalClassName = (index: number) => {
   if (index === 0) return "bg-chart-3 text-background";
@@ -53,48 +45,9 @@ const formatLatestChapter = (chapterName?: string | null) => {
     : `Chapter ${normalized}`;
 };
 
-export function RankingSidebarApi({
-  limit = 10,
-  initialRankings,
-}: RankingSidebarApiProps) {
+export function RankingSidebarApi({ initialRankings }: RankingSidebarApiProps) {
   const [activeTab, setActiveTab] = useState<MangaRankingPeriod>("daily");
-  const [rankings, setRankings] = useState<
-    Record<MangaRankingPeriod, MangaRankingItem[]>
-  >(initialRankings || EMPTY_RANKINGS);
-  const [isLoading, setIsLoading] = useState(!initialRankings);
-
-  useEffect(() => {
-    if (initialRankings) {
-      setRankings(initialRankings);
-      setIsLoading(false);
-      return;
-    }
-
-    let mounted = true;
-
-    const fetchRankings = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getMangaRankings(limit);
-        if (!mounted) return;
-        setRankings(data);
-      } catch (error) {
-        console.error("Failed to fetch rankings:", error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchRankings();
-
-    return () => {
-      mounted = false;
-    };
-  }, [limit, initialRankings]);
-
-  const rankedComics = rankings[activeTab] || [];
+  const rankedComics: MangaRankingItem[] = initialRankings[activeTab] || [];
 
   return (
     <div className="bg-card border border-border rounded-xl p-4">
@@ -123,11 +76,7 @@ export function RankingSidebarApi({
       </div>
 
       <div className="space-y-3">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          </div>
-        ) : rankedComics.length === 0 ? (
+        {rankedComics.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
             Chưa có dữ liệu lượt xem.
           </div>
