@@ -19,7 +19,6 @@ import {
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
 import { recordChapterVisit } from "@/lib/actions/reading-progress.actions";
 import { startNavigationProgress } from "@/lib/navigation-progress";
-import { prefetchHistoryRoute } from "@/lib/prefetch-history";
 import { type ChapterImage, type ComicDetailItem } from "@/types/manga-types";
 
 type ChapterReaderPageClientProps = {
@@ -117,10 +116,6 @@ export function ChapterReaderPageClient({
         setReadChapterNames((prev) =>
           prev.includes(chapter) ? prev : [chapter, ...prev],
         );
-        // Warm /history in the background after a successful progress write.
-        prefetchHistoryRoute((href) => {
-          router.prefetch(href);
-        }, { force: true });
       }
 
       inFlightVisitKeysRef.current.delete(visitKey);
@@ -131,12 +126,8 @@ export function ChapterReaderPageClient({
     chapter,
     comic._id,
     comic.slug,
-    comic.name,
-    comic.thumb_url,
-    comic.updatedAt,
     currentChapterInfo,
     latestChapter?.chapter_name,
-    router,
   ]);
 
   useEffect(() => {
