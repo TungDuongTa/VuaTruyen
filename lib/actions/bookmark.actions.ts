@@ -291,15 +291,41 @@ export const toggleMangaBookmark = async (
   }
 };
 
-export const removeMangaBookmark = async (slug: string): Promise<void> => {
+export const removeMangaBookmark = async (
+  slug: string,
+): Promise<{ success: boolean; message: string }> => {
   const userId = await getCurrentUserId();
   if (!userId) {
-    return;
+    return {
+      success: false,
+      message: "Vui lòng đăng nhập để quản lý danh sách theo dõi.",
+    };
   }
 
-  await connectToDatabase();
-  await BookmarkModel.deleteOne({ userId, slug });
-  revalidatePath("/bookmarks");
-  revalidatePath(`/manga/${slug}`);
-  revalidatePath(`/18+/${slug}`);
+  const normalizedSlug = String(slug || "").trim();
+  if (!normalizedSlug) {
+    return {
+      success: false,
+      message: "Không thể xóa khỏi danh sách theo dõi. Vui lòng thử lại.",
+    };
+  }
+
+  try {
+    await connectToDatabase();
+    await BookmarkModel.deleteOne({ userId, slug: normalizedSlug });
+    revalidatePath("/bookmarks");
+    revalidatePath(`/manga/${normalizedSlug}`);
+    revalidatePath(`/18+/${normalizedSlug}`);
+
+    return {
+      success: true,
+      message: "Đã xóa khỏi danh sách theo dõi",
+    };
+  } catch (error) {
+    console.error("Failed to remove bookmark:", error);
+    return {
+      success: false,
+      message: "Không thể xóa khỏi danh sách theo dõi. Vui lòng thử lại.",
+    };
+  }
 };

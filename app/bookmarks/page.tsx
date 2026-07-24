@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bookmark, Trash2 } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import { MangaCardApi } from "@/components/manga-card-api";
 import { LoginWall } from "@/components/login-wall";
 import { PaginationControls } from "@/components/pagination-controls";
+import { RemoveBookmarkButton } from "@/components/remove-bookmark-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toPositiveInt } from "@/lib/pagination";
 import { formatShortDate } from "@/lib/date-time";
-import {
-  getBookmarksPageForUser,
-  removeMangaBookmark,
-} from "@/lib/actions/bookmark.actions";
+import { getBookmarksPageForUser } from "@/lib/actions/bookmark.actions";
 import { getSessionUser } from "@/lib/server/session";
 import { withSiteSuffix } from "@/lib/seo";
 import { redirect } from "next/navigation";
@@ -104,32 +102,21 @@ export default async function BookmarksPage({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-              {bookmarkedManga.map((manga) => {
-                const removeAction = removeMangaBookmark.bind(null, manga.slug);
-
-                return (
-                  <div key={manga.slug}>
-                    <MangaCardApi comic={manga} />
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <p className="text-xs text-muted-foreground">
-                        Bắt đầu theo dõi từ{" "}
-                        {formatShortDate(manga.bookmarkedAt)}
-                      </p>
-                      <form action={removeAction}>
-                        <Button
-                          type="submit"
-                          variant="ghost"
-                          size="icon"
-                          className="text-muted-foreground hover:text-destructive"
-                          aria-label={`Xóa ${manga.name} khỏi danh sách theo dõi`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </form>
-                    </div>
+              {bookmarkedManga.map((manga) => (
+                <div key={manga.slug}>
+                  <MangaCardApi comic={manga} />
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      Bắt đầu theo dõi từ{" "}
+                      {formatShortDate(manga.bookmarkedAt)}
+                    </p>
+                    <RemoveBookmarkButton
+                      slug={manga.slug}
+                      mangaName={manga.name}
+                    />
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
 
             <PaginationControls
