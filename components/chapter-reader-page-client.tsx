@@ -18,13 +18,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
 import { recordChapterVisit } from "@/lib/actions/reading-progress.actions";
-import { authClient } from "@/lib/better-auth/auth-client";
 import { startNavigationProgress } from "@/lib/navigation-progress";
-import {
-  HISTORY_CACHE_PREFIX,
-  invalidatePersonalListCache,
-} from "@/lib/personal-list-cache";
-import { reseedHistoryListCache } from "@/lib/seed-personal-lists";
 import { type ChapterImage, type ComicDetailItem } from "@/types/manga-types";
 
 type ChapterReaderPageClientProps = {
@@ -46,8 +40,6 @@ export function ChapterReaderPageClient({
 }: ChapterReaderPageClientProps) {
   const VISIT_DEDUPE_WINDOW_MS = 15_000;
   const router = useRouter();
-  const { data: session } = authClient.useSession();
-  const userId = session?.user?.id;
   const inFlightVisitKeysRef = useRef<Set<string>>(new Set());
   const [showChapterList, setShowChapterList] = useState(false);
   const [readChapterNames, setReadChapterNames] = useState(
@@ -124,8 +116,6 @@ export function ChapterReaderPageClient({
         setReadChapterNames((prev) =>
           prev.includes(chapter) ? prev : [chapter, ...prev],
         );
-        invalidatePersonalListCache(HISTORY_CACHE_PREFIX);
-        if (userId) reseedHistoryListCache(userId);
       }
 
       inFlightVisitKeysRef.current.delete(visitKey);
@@ -136,12 +126,8 @@ export function ChapterReaderPageClient({
     chapter,
     comic._id,
     comic.slug,
-    comic.name,
-    comic.thumb_url,
-    comic.updatedAt,
     currentChapterInfo,
     latestChapter?.chapter_name,
-    userId,
   ]);
 
   useEffect(() => {

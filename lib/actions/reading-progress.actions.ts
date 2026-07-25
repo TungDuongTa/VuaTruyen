@@ -360,26 +360,6 @@ export const getReadingHistoryPageForUser = async (
   }
 };
 
-/** Client-callable: resolves the current user server-side. */
-export const getMyReadingHistoryPage = async (
-  page = 1,
-  pageSize = DEFAULT_READING_HISTORY_PAGE_SIZE,
-): Promise<PaginatedReadingHistoryResult & { requiresSignIn?: boolean }> => {
-  const userId = await getCurrentUserId();
-  if (!userId) {
-    return {
-      items: [],
-      page: 1,
-      pageSize,
-      totalItems: 0,
-      totalPages: 1,
-      requiresSignIn: true,
-    };
-  }
-
-  return getReadingHistoryPageForUser(userId, { page, pageSize });
-};
-
 const markChapterAsReadProgress = async (
   input: MarkChapterAsReadProgressInput,
 ): Promise<MarkChapterAsReadProgressResult> => {
