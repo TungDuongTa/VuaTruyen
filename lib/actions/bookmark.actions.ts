@@ -215,6 +215,26 @@ export const getBookmarksPageForUser = async (
   };
 };
 
+/** Client-callable: resolves the current user server-side. */
+export const getMyBookmarksPage = async (
+  page = 1,
+  pageSize = DEFAULT_BOOKMARKS_PAGE_SIZE,
+): Promise<PaginatedBookmarksResult & { requiresSignIn?: boolean }> => {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return {
+      items: [],
+      page: 1,
+      pageSize,
+      totalItems: 0,
+      totalPages: 1,
+      requiresSignIn: true,
+    };
+  }
+
+  return getBookmarksPageForUser(userId, { page, pageSize });
+};
+
 export const toggleMangaBookmark = async (
   input: ToggleBookmarkInput,
 ): Promise<BookmarkActionResult> => {

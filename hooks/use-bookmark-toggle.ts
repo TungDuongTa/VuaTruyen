@@ -4,6 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { toggleMangaBookmark } from "@/lib/actions/bookmark.actions";
+import {
+  BOOKMARKS_CACHE_PREFIX,
+  invalidatePersonalListCache,
+} from "@/lib/personal-list-cache";
 
 type UseBookmarkToggleInput = {
   initialBookmarked: boolean;
@@ -45,6 +49,7 @@ export const useBookmarkToggle = ({
       }
 
       setIsBookmarked(result.bookmarked);
+      invalidatePersonalListCache(BOOKMARKS_CACHE_PREFIX);
       toast.success(result.message);
     } catch (error) {
       console.error("Failed to bookmark manga:", error);

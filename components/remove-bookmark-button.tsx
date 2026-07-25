@@ -16,15 +16,21 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { removeMangaBookmark } from "@/lib/actions/bookmark.actions";
+import {
+  BOOKMARKS_CACHE_PREFIX,
+  invalidatePersonalListCache,
+} from "@/lib/personal-list-cache";
 
 type RemoveBookmarkButtonProps = {
   slug: string;
   mangaName: string;
+  onRemoved?: () => void;
 };
 
 export function RemoveBookmarkButton({
   slug,
   mangaName,
+  onRemoved,
 }: RemoveBookmarkButtonProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -39,8 +45,10 @@ export function RemoveBookmarkButton({
           return;
         }
 
+        invalidatePersonalListCache(BOOKMARKS_CACHE_PREFIX);
         toast.success(result.message);
         setOpen(false);
+        onRemoved?.();
       } catch (error) {
         console.error("Failed to remove bookmark:", error);
         toast.error("Không thể xóa khỏi danh sách theo dõi. Vui lòng thử lại.");

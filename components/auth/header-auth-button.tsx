@@ -1,15 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/better-auth/auth-client";
+import { seedPersonalListCaches } from "@/lib/seed-personal-lists";
 
 export function HeaderAuthButton() {
   // Session is loaded client-side so the layout stays statically renderable.
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
+
+  useEffect(() => {
+    if (!user?.id) return;
+    seedPersonalListCaches(user.id);
+  }, [user?.id]);
 
   if (isPending) {
     return (
