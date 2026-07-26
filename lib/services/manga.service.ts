@@ -333,6 +333,31 @@ export const getMangaDetail = async (
   );
 };
 
+/** Lightweight card fields for personal lists (bookmarks / history). */
+export type MangaCardFields = {
+  latestChapterName: string;
+  updatedAt: string;
+};
+
+export const getMangaCardFields = async (
+  slug: string,
+): Promise<MangaCardFields | null> => {
+  const normalizedSlug = String(slug || "").trim();
+  if (!normalizedSlug) return null;
+
+  await connectToDatabase();
+  const doc = await MangaModel.findOne({ slug: normalizedSlug })
+    .select("latestChapterName updatedAt")
+    .lean();
+
+  if (!doc) return null;
+
+  return {
+    latestChapterName: String(doc.latestChapterName || "").trim(),
+    updatedAt: new Date(doc.updatedAt as Date | string).toISOString(),
+  };
+};
+
 export const getMangaChapter = async (
   slug: string,
   chapterName: string,

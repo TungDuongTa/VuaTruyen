@@ -1,11 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/database/mongoose";
 import { BookmarkModel } from "@/database/models/bookmark.model";
 import { ReadingProgressModel } from "@/database/models/reading-progress.model";
 import { trackMangaChapterView } from "@/lib/actions/manga-view.actions";
 import { normalizePageAndSize } from "@/lib/pagination";
+import { withCachedMangaCardFields } from "@/lib/server/manga-cache";
 import {
   getUserReadingExpStats,
   incrementUserReadingStatsForNewChapter,
@@ -337,9 +337,11 @@ export const getReadingHistoryPageForUser = async (
       ({ rows } = await runFacet((safePage - 1) * normalized.pageSize));
     }
 
-    const items = rows
-      .map((row) => toReadingHistoryComic(row))
-      .filter((item): item is ReadingHistoryComic => Boolean(item));
+    const items = await withCachedMangaCardFields(
+      rows
+        .map((row) => toReadingHistoryComic(row))
+        .filter((item): item is ReadingHistoryComic => Boolean(item)),
+    );
 
     return {
       items,
@@ -412,12 +414,6 @@ const markChapterAsReadProgress = async (
     } catch (error) {
       console.error("Failed to increment user reading stats:", error);
     }
-  }
-
-  if (didInsertNewRead) {
-    revalidatePath(`/manga/${comicSlug}`);
-    revalidatePath("/bookmarks");
-    revalidatePath("/history");
   }
 
   return { success: true };

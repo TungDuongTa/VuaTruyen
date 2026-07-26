@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/pagination";
 import { buildCanonicalPath, withSiteSuffix } from "@/lib/seo";
 import {
-  getMangaRankings,
-} from "@/lib/actions/manga-view.actions";
+  getCachedMangaRankings,
+} from "@/lib/server/manga-cache";
 import type { MangaRankingPeriod } from "@/lib/server/manga-rankings";
 import { getVisiblePages } from "@/lib/pagination";
 import { formatViewCount } from "@/lib/format";
@@ -104,7 +104,7 @@ export default async function RankingPage({ searchParams }: RankingPageProps) {
     params.tab && isRankingPeriod(params.tab) ? params.tab : "daily";
 
   const requestedPage = toSafePageNumber(params.page);
-  const rankings = await getMangaRankings(MAX_ITEMS_PER_TAB);
+  const rankings = await getCachedMangaRankings(MAX_ITEMS_PER_TAB);
   const rankedComics = rankings[activeTab].slice(0, MAX_ITEMS_PER_TAB);
 
   const totalPages = Math.max(

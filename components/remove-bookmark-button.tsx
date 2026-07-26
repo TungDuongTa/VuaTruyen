@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export function RemoveBookmarkButton({
   slug,
   mangaName,
 }: RemoveBookmarkButtonProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -41,6 +43,7 @@ export function RemoveBookmarkButton({
 
         toast.success(result.message);
         setOpen(false);
+        router.refresh();
       } catch (error) {
         console.error("Failed to remove bookmark:", error);
         toast.error("Không thể xóa khỏi danh sách theo dõi. Vui lòng thử lại.");

@@ -1,18 +1,16 @@
 "use server";
 
 import {
-  getMangaByCategory,
   getMangaChapter,
-  getMangaList,
-  searchManga,
   type MangaListType,
 } from "@/lib/services/manga.service";
 import {
-  getCachedAdultListPage1,
-  getCachedBrowseListPage1,
   getCachedCategories,
   getCachedHomeData,
+  getCachedMangaByCategory,
   getCachedMangaDetail,
+  getCachedMangaList,
+  getCachedSearchManga,
 } from "@/lib/server/manga-cache";
 import type {
   Category,
@@ -29,6 +27,8 @@ const VALID_LIST_TYPES = new Set<MangaListType>([
   "sap-ra-mat",
 ]);
 
+const DEFAULT_PAGE_SIZE = 24;
+
 const toListType = (type: string): MangaListType =>
   VALID_LIST_TYPES.has(type as MangaListType)
     ? (type as MangaListType)
@@ -39,8 +39,6 @@ type ListNavOptions = {
   direction?: "next" | "prev";
 };
 
-// These actions are also invoked from client components, so never let a DB
-// error propagate to the browser - degrade to null instead.
 async function safeQuery<T>(
   label: string,
   query: () => Promise<T | null>,
@@ -64,21 +62,18 @@ export async function getListByType(
   options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
   const listType = toListType(type);
-  const cursor = options.cursor || null;
+  const cursor = options.cursor || "";
+  const direction = options.direction === "prev" ? "prev" : "next";
 
-  if (page === 1 && !cursor) {
-    return safeQuery(`cached list ${listType}`, () =>
-      getCachedBrowseListPage1(listType),
-    );
-  }
-
-  return safeQuery(`list ${listType}`, () =>
-    getMangaList({
-      type: listType,
+  return safeQuery(`cached list ${listType}`, () =>
+    getCachedMangaList(
+      listType,
       page,
+      DEFAULT_PAGE_SIZE,
+      "",
       cursor,
-      direction: options.direction,
-    }),
+      direction,
+    ),
   );
 }
 
@@ -88,21 +83,18 @@ export async function getListByTag(
   pageSize: number = 24,
   options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  const cursor = options.cursor || null;
+  const cursor = options.cursor || "";
+  const direction = options.direction === "prev" ? "prev" : "next";
 
-  if (tag === "18+" && page === 1 && !cursor && pageSize === 24) {
-    return safeQuery("cached list tag 18+", () => getCachedAdultListPage1());
-  }
-
-  return safeQuery(`list tag ${tag}`, () =>
-    getMangaList({
-      type: "truyen-moi",
-      tag,
+  return safeQuery(`cached list tag ${tag}`, () =>
+    getCachedMangaList(
+      "truyen-moi",
       page,
       pageSize,
+      tag,
       cursor,
-      direction: options.direction,
-    }),
+      direction,
+    ),
   );
 }
 
@@ -116,8 +108,17 @@ export async function getByCategory(
   page: number = 1,
   options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  return safeQuery(`category ${slug}`, () =>
-    getMangaByCategory(slug, page, 24, options.cursor, options.direction),
+  const cursor = options.cursor || "";
+  const direction = options.direction === "prev" ? "prev" : "next";
+
+  return safeQuery(`cached category ${slug}`, () =>
+    getCachedMangaByCategory(
+      slug,
+      page,
+      DEFAULT_PAGE_SIZE,
+      cursor,
+      direction,
+    ),
   );
 }
 
@@ -142,8 +143,17 @@ export async function searchComics(
   page: number = 1,
   options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  return safeQuery(`search ${keyword}`, () =>
-    searchManga(keyword, page, 24, options.cursor, options.direction),
+  const cursor = options.cursor || "";
+  const direction = options.direction === "prev" ? "prev" : "next";
+
+  return safeQuery(`cached search ${keyword}`, () =>
+    getCachedSearchManga(
+      keyword,
+      page,
+      DEFAULT_PAGE_SIZE,
+      cursor,
+      direction,
+    ),
   );
 }
 
@@ -152,8 +162,8 @@ export async function searchComicsQuick(
 ): Promise<OTruyenComic[]> {
   if (!keyword || keyword.trim().length < 2) return [];
 
-  const data = await safeQuery(`quick search ${keyword}`, () =>
-    searchManga(keyword, 1, 8),
+  const data = await safeQuery(`cached quick search ${keyword}`, () =>
+    getCachedSearchManga(keyword.trim(), 1, 8, "", "next"),
   );
 
   return (data?.items || []).slice(0, 8);

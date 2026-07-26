@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { BookmarkModel } from "@/database/models/bookmark.model";
 import { connectToDatabase } from "@/database/mongoose";
 import { normalizePageAndSize } from "@/lib/pagination";
+import { withCachedMangaCardFields } from "@/lib/server/manga-cache";
 import { getCurrentUserId } from "@/lib/server/session";
 import type { OTruyenComic } from "@/types/manga-types";
 
@@ -198,13 +198,15 @@ export const getBookmarksPageForUser = async (
     ({ rows } = await runFacet((safePage - 1) * normalized.pageSize));
   }
 
-  const items = rows.map((row) => {
-    const slug = String(row.slug || "").trim();
-    return toBookmarkedComic(mangaFromAgg(slug, row.manga), {
-      slug,
-      createdAt: row.createdAt,
-    });
-  });
+  const items = await withCachedMangaCardFields(
+    rows.map((row) => {
+      const slug = String(row.slug || "").trim();
+      return toBookmarkedComic(mangaFromAgg(slug, row.manga), {
+        slug,
+        createdAt: row.createdAt,
+      });
+    }),
+  );
 
   return {
     items,
@@ -246,9 +248,6 @@ export const toggleMangaBookmark = async (
 
   if (existing) {
     await BookmarkModel.deleteOne({ _id: existing._id });
-    revalidatePath("/bookmarks");
-    revalidatePath(`/manga/${slug}`);
-    revalidatePath(`/18+/${slug}`);
 
     return {
       success: true,
@@ -263,10 +262,6 @@ export const toggleMangaBookmark = async (
       slug,
       comicId: input.comicId || slug,
     });
-
-    revalidatePath("/bookmarks");
-    revalidatePath(`/manga/${slug}`);
-    revalidatePath(`/18+/${slug}`);
 
     return {
       success: true,
@@ -313,9 +308,6 @@ export const removeMangaBookmark = async (
   try {
     await connectToDatabase();
     await BookmarkModel.deleteOne({ userId, slug: normalizedSlug });
-    revalidatePath("/bookmarks");
-    revalidatePath(`/manga/${normalizedSlug}`);
-    revalidatePath(`/18+/${normalizedSlug}`);
 
     return {
       success: true,
