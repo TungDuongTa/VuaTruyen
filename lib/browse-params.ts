@@ -8,8 +8,6 @@ export type BrowseFilters = {
   genre: string;
   status: BrowseStatus;
   page: number;
-  cursor: string;
-  direction: "next" | "prev";
 };
 
 export type BrowseSearchParams = {
@@ -18,8 +16,6 @@ export type BrowseSearchParams = {
   genre?: string | string[];
   status?: string | string[];
   page?: string | string[];
-  cursor?: string | string[];
-  dir?: string | string[];
 };
 
 const firstParam = (value: string | string[] | undefined): string => {
@@ -45,10 +41,8 @@ export const parseBrowseFilters = (
       .filter(Boolean)[0] || "";
   const status = normalizeBrowseStatus(firstParam(searchParams.status));
   const page = toPositiveInt(firstParam(searchParams.page), 1);
-  const cursor = firstParam(searchParams.cursor);
-  const direction = firstParam(searchParams.dir) === "prev" ? "prev" : "next";
 
-  return { query, genre, status, page, cursor, direction };
+  return { query, genre, status, page };
 };
 
 export const buildBrowseHref = (
@@ -57,24 +51,18 @@ export const buildBrowseHref = (
     genre?: string;
     status?: BrowseStatus | string;
     page?: number;
-    cursor?: string;
-    direction?: "next" | "prev";
   },
 ): string => {
   const query = (filters.query || "").trim();
   const genre = (filters.genre || "").trim();
   const status = normalizeBrowseStatus(String(filters.status || "all"));
   const page = toPositiveInt(filters.page, 1);
-  const cursor = (filters.cursor || "").trim();
-  const direction = filters.direction === "prev" ? "prev" : "next";
 
   return buildCanonicalPath("/browse", {
     q: query || undefined,
     genres: genre || undefined,
     status: status !== "all" ? status : undefined,
     page: page > 1 ? page : undefined,
-    cursor: cursor || undefined,
-    dir: cursor && direction === "prev" ? "prev" : undefined,
   });
 };
 

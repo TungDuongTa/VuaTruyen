@@ -16,7 +16,7 @@ import {
 import { Search, Filter, Grid, List, X, Loader2 } from "lucide-react";
 import { PaginationControls } from "@/components/pagination-controls";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { getVisiblePages } from "@/lib/pagination";
+import { MAX_OFFSET_PAGE, getVisiblePages } from "@/lib/pagination";
 import {
   buildBrowseHref,
   type BrowseFilters,
@@ -56,8 +56,6 @@ export function BrowsePageClient({
       genre: next.genre !== undefined ? next.genre : filters.genre,
       status: next.status !== undefined ? next.status : filters.status,
       page: next.page !== undefined ? next.page : filters.page,
-      cursor: next.cursor !== undefined ? next.cursor : "",
-      direction: next.direction !== undefined ? next.direction : "next",
     });
 
     startTransition(() => {
@@ -72,8 +70,6 @@ export function BrowsePageClient({
     navigate({
       query: nextQuery,
       page: 1,
-      cursor: "",
-      direction: "next",
     });
     // Intentionally depend on debounced query only; navigate uses latest filters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,8 +80,6 @@ export function BrowsePageClient({
     navigate({
       query: searchQuery.trim(),
       page: 1,
-      cursor: "",
-      direction: "next",
     });
   };
 
@@ -96,47 +90,28 @@ export function BrowsePageClient({
       genre: "",
       status: "all",
       page: 1,
-      cursor: "",
-      direction: "next",
     });
   };
 
   const handleGenreToggle = (slug: string) => {
     const nextGenre = filters.genre === slug ? "" : slug;
-    navigate({ genre: nextGenre, page: 1, cursor: "", direction: "next" });
+    navigate({ genre: nextGenre, page: 1 });
   };
 
   const handleStatusChange = (status: string) => {
     navigate({
       status: status as BrowseStatus,
       page: 1,
-      cursor: "",
-      direction: "next",
     });
   };
 
-  const handlePageChange = (page: number) => {
-    if (page === filters.page) return;
-
-    if (page === filters.page + 1 && pagination?.nextCursor) {
-      navigate({
-        page,
-        cursor: pagination.nextCursor,
-        direction: "next",
-      });
-    } else if (page === filters.page - 1 && pagination?.prevCursor) {
-      navigate({
-        page,
-        cursor: pagination.prevCursor,
-        direction: "prev",
-      });
-    } else {
-      // Jump within early offset window (no cursor).
-      navigate({ page, cursor: "", direction: "next" });
-    }
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const getPageHref = (page: number) =>
+    buildBrowseHref({
+      query: filters.query,
+      genre: filters.genre,
+      status: filters.status,
+      page,
+    });
 
   const hasActiveFilters =
     Boolean(filters.genre) ||
@@ -146,10 +121,11 @@ export function BrowsePageClient({
   const totalPages = pagination
     ? Math.ceil(pagination.totalItems / pagination.totalItemsPerPage)
     : 1;
-  const visiblePages = getVisiblePages(currentPage, totalPages);
+  const cappedTotalPages = Math.min(totalPages, MAX_OFFSET_PAGE);
+  const visiblePages = getVisiblePages(currentPage, cappedTotalPages);
   const canGoPrev = Boolean(pagination?.hasPrevPage ?? currentPage > 1);
   const canGoNext = Boolean(
-    pagination?.hasNextPage ?? currentPage < totalPages,
+    pagination?.hasNextPage ?? currentPage < cappedTotalPages,
   );
   const selectedGenreName =
     categories.find((category) => category.slug === filters.genre)?.name ||
@@ -291,7 +267,7 @@ export function BrowsePageClient({
               className="gap-1 cursor-pointer hover:bg-destructive/20"
               onClick={() => {
                 setSearchQuery("");
-                navigate({ query: "", page: 1, cursor: "", direction: "next" });
+                navigate({ query: "", page: 1 });
               }}
             >
               Tìm kiếm: {filters.query}
@@ -302,14 +278,7 @@ export function BrowsePageClient({
             <Badge
               variant="secondary"
               className="gap-1 cursor-pointer hover:bg-destructive/20"
-              onClick={() =>
-                navigate({
-                  status: "all",
-                  page: 1,
-                  cursor: "",
-                  direction: "next",
-                })
-              }
+              onClick={() => navigate({ status: "all", page: 1 })}
             >
               {filters.status}
               <X className="h-3 w-3" />
@@ -319,9 +288,7 @@ export function BrowsePageClient({
             <Badge
               variant="secondary"
               className="gap-1 cursor-pointer hover:bg-destructive/20"
-              onClick={() =>
-                navigate({ genre: "", page: 1, cursor: "", direction: "next" })
-              }
+              onClick={() => navigate({ genre: "", page: 1 })}
             >
               {selectedGenreName}
               <X className="h-3 w-3" />
@@ -367,11 +334,11 @@ export function BrowsePageClient({
 
           <PaginationControls
             currentPage={currentPage}
-            totalPages={totalPages}
+            totalPages={cappedTotalPages}
             visiblePages={visiblePages}
             hasPrevPage={canGoPrev}
             hasNextPage={canGoNext}
-            onPageChange={handlePageChange}
+            getPageHref={getPageHref}
             disabled={isPending}
           />
         </>

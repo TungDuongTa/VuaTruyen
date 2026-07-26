@@ -34,11 +34,6 @@ const toListType = (type: string): MangaListType =>
     ? (type as MangaListType)
     : "truyen-moi";
 
-type ListNavOptions = {
-  cursor?: string | null;
-  direction?: "next" | "prev";
-};
-
 async function safeQuery<T>(
   label: string,
   query: () => Promise<T | null>,
@@ -59,21 +54,11 @@ export async function getHomeData(): Promise<OTruyenComic[]> {
 export async function getListByType(
   type: string,
   page: number = 1,
-  options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
   const listType = toListType(type);
-  const cursor = options.cursor || "";
-  const direction = options.direction === "prev" ? "prev" : "next";
 
   return safeQuery(`cached list ${listType}`, () =>
-    getCachedMangaList(
-      listType,
-      page,
-      DEFAULT_PAGE_SIZE,
-      "",
-      cursor,
-      direction,
-    ),
+    getCachedMangaList(listType, page, DEFAULT_PAGE_SIZE, ""),
   );
 }
 
@@ -81,20 +66,9 @@ export async function getListByTag(
   tag: string,
   page: number = 1,
   pageSize: number = 24,
-  options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  const cursor = options.cursor || "";
-  const direction = options.direction === "prev" ? "prev" : "next";
-
   return safeQuery(`cached list tag ${tag}`, () =>
-    getCachedMangaList(
-      "truyen-moi",
-      page,
-      pageSize,
-      tag,
-      cursor,
-      direction,
-    ),
+    getCachedMangaList("truyen-moi", page, pageSize, tag),
   );
 }
 
@@ -106,19 +80,9 @@ export async function getCategories(): Promise<Category[]> {
 export async function getByCategory(
   slug: string,
   page: number = 1,
-  options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  const cursor = options.cursor || "";
-  const direction = options.direction === "prev" ? "prev" : "next";
-
   return safeQuery(`cached category ${slug}`, () =>
-    getCachedMangaByCategory(
-      slug,
-      page,
-      DEFAULT_PAGE_SIZE,
-      cursor,
-      direction,
-    ),
+    getCachedMangaByCategory(slug, page, DEFAULT_PAGE_SIZE),
   );
 }
 
@@ -141,19 +105,9 @@ export async function getChapterData(
 export async function searchComics(
   keyword: string,
   page: number = 1,
-  options: ListNavOptions = {},
 ): Promise<MangaListResult | null> {
-  const cursor = options.cursor || "";
-  const direction = options.direction === "prev" ? "prev" : "next";
-
   return safeQuery(`cached search ${keyword}`, () =>
-    getCachedSearchManga(
-      keyword,
-      page,
-      DEFAULT_PAGE_SIZE,
-      cursor,
-      direction,
-    ),
+    getCachedSearchManga(keyword, page, DEFAULT_PAGE_SIZE),
   );
 }
 
@@ -163,7 +117,7 @@ export async function searchComicsQuick(
   if (!keyword || keyword.trim().length < 2) return [];
 
   const data = await safeQuery(`cached quick search ${keyword}`, () =>
-    getCachedSearchManga(keyword.trim(), 1, 8, "", "next"),
+    getCachedSearchManga(keyword.trim(), 1, 8),
   );
 
   return (data?.items || []).slice(0, 8);

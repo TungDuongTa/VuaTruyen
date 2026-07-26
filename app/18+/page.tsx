@@ -13,22 +13,12 @@ import { buildCanonicalPath, withSiteSuffix } from "@/lib/seo";
 interface PageProps {
   searchParams: Promise<{
     page?: string;
-    cursor?: string;
-    dir?: string;
   }>;
 }
 
-const buildHref = (
-  page: number,
-  cursor?: string | null,
-  direction: "next" | "prev" = "next",
-) => {
+const buildHref = (page: number) => {
   const params = new URLSearchParams();
   if (page > 1) params.set("page", String(page));
-  if (cursor) {
-    params.set("cursor", cursor);
-    if (direction === "prev") params.set("dir", "prev");
-  }
   const query = params.toString();
   return query ? `/18+?${query}` : "/18+";
 };
@@ -67,20 +57,13 @@ export async function generateMetadata({
 export default async function Manga18Page({ searchParams }: PageProps) {
   const params = await searchParams;
   const requestedPage = toPositiveInt(params.page, 1);
-  const cursor = String(params.cursor || "").trim();
-  const direction = params.dir === "prev" ? "prev" : "next";
 
-  const data = await getListByTag("18+", requestedPage, 24, {
-    cursor: cursor || null,
-    direction,
-  });
+  const data = await getListByTag("18+", requestedPage, 24);
   const comics = data?.items || [];
   const pagination = data?.pagination || {
     totalItems: 0,
     totalItemsPerPage: 24,
     currentPage: 1,
-    nextCursor: null,
-    prevCursor: null,
     hasNextPage: false,
     hasPrevPage: false,
   };
@@ -88,24 +71,14 @@ export default async function Manga18Page({ searchParams }: PageProps) {
     1,
     Math.ceil(pagination.totalItems / pagination.totalItemsPerPage),
   );
+  const cappedTotalPages = Math.min(totalPages, MAX_OFFSET_PAGE);
   const safeCurrentPage = Math.min(
     Math.max(1, pagination.currentPage || requestedPage),
-    totalPages,
+    cappedTotalPages,
   );
-  const visiblePages = getVisiblePages(
-    safeCurrentPage,
-    Math.min(totalPages, Math.max(safeCurrentPage, MAX_OFFSET_PAGE)),
-  );
+  const visiblePages = getVisiblePages(safeCurrentPage, cappedTotalPages);
   const canGoPrev = Boolean(pagination.hasPrevPage);
   const canGoNext = Boolean(pagination.hasNextPage);
-
-  // Adjacent pages get a keyset cursor for efficient deep pagination.
-  const getPageHref = (pageNum: number) =>
-    pageNum === safeCurrentPage + 1 && pagination.nextCursor
-      ? buildHref(pageNum, pagination.nextCursor, "next")
-      : pageNum === safeCurrentPage - 1 && pagination.prevCursor
-        ? buildHref(pageNum, pagination.prevCursor, "prev")
-        : buildHref(pageNum);
 
   return (
     <div className="min-h-screen">
@@ -141,11 +114,11 @@ export default async function Manga18Page({ searchParams }: PageProps) {
 
         <PaginationControls
           currentPage={safeCurrentPage}
-          totalPages={totalPages}
+          totalPages={cappedTotalPages}
           visiblePages={visiblePages}
           hasPrevPage={canGoPrev}
           hasNextPage={canGoNext}
-          getPageHref={getPageHref}
+          getPageHref={buildHref}
         />
       </main>
     </div>

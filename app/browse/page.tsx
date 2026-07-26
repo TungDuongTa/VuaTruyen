@@ -22,12 +22,7 @@ export async function generateMetadata({
   searchParams,
 }: BrowsePageProps): Promise<Metadata> {
   const filters = parseBrowseFilters(await searchParams);
-  const canonicalPath = buildBrowseHref({
-    ...filters,
-    // Keep canonicals stable (no cursor noise) for SEO.
-    cursor: "",
-    direction: "next",
-  });
+  const canonicalPath = buildBrowseHref(filters);
 
   const titleParts = ["Khám phá"];
   if (filters.query) titleParts.push(`"${filters.query}"`);
@@ -59,18 +54,14 @@ export async function generateMetadata({
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const filters = parseBrowseFilters(await searchParams);
-  const nav = {
-    cursor: filters.cursor || null,
-    direction: filters.direction,
-  };
 
   const [categories, listResult] = await Promise.all([
     getCategories(),
     filters.query
-      ? searchComics(filters.query, filters.page, nav)
+      ? searchComics(filters.query, filters.page)
       : filters.genre
-        ? getByCategory(filters.genre, filters.page, nav)
-        : getListByType(getBrowseListType(filters.status), filters.page, nav),
+        ? getByCategory(filters.genre, filters.page)
+        : getListByType(getBrowseListType(filters.status), filters.page),
   ]);
 
   const comics = listResult?.items || [];

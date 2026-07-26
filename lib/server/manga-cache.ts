@@ -170,8 +170,6 @@ async function getCachedMangaListAt(
   page: number,
   pageSize: number,
   tag: string,
-  cursor: string,
-  direction: "next" | "prev",
   gen: number,
 ): Promise<MangaListResult> {
   "use cache: remote";
@@ -183,8 +181,6 @@ async function getCachedMangaListAt(
     page,
     pageSize,
     tag: tag || undefined,
-    cursor: cursor || null,
-    direction,
   });
   await warmCatalogEntries(result.items, gen);
   return {
@@ -198,16 +194,12 @@ export async function getCachedMangaList(
   page: number,
   pageSize: number,
   tag: string,
-  cursor: string,
-  direction: "next" | "prev",
 ): Promise<MangaListResult> {
   return getCachedMangaListAt(
     type,
     page,
     pageSize,
     tag,
-    cursor,
-    direction,
     await getCatalogGeneration(),
   );
 }
@@ -216,21 +208,13 @@ async function getCachedMangaByCategoryAt(
   slug: string,
   page: number,
   pageSize: number,
-  cursor: string,
-  direction: "next" | "prev",
   gen: number,
 ): Promise<MangaListResult | null> {
   "use cache: remote";
   cacheLife(MANGA_LISTS_LIFE);
   cacheTag(CACHE_TAGS.mangaLists);
   cacheTag(`catalog-gen:${gen}`);
-  const result = await getMangaByCategory(
-    slug,
-    page,
-    pageSize,
-    cursor || null,
-    direction,
-  );
+  const result = await getMangaByCategory(slug, page, pageSize);
   if (result?.items?.length) {
     await warmCatalogEntries(result.items, gen);
     return {
@@ -245,15 +229,11 @@ export async function getCachedMangaByCategory(
   slug: string,
   page: number,
   pageSize: number,
-  cursor: string,
-  direction: "next" | "prev",
 ): Promise<MangaListResult | null> {
   return getCachedMangaByCategoryAt(
     slug,
     page,
     pageSize,
-    cursor,
-    direction,
     await getCatalogGeneration(),
   );
 }
@@ -262,21 +242,13 @@ async function getCachedSearchMangaAt(
   keyword: string,
   page: number,
   pageSize: number,
-  cursor: string,
-  direction: "next" | "prev",
   gen: number,
 ): Promise<MangaListResult> {
   "use cache: remote";
   cacheLife(MANGA_LISTS_LIFE);
   cacheTag(CACHE_TAGS.mangaLists);
   cacheTag(`catalog-gen:${gen}`);
-  const result = await searchManga(
-    keyword,
-    page,
-    pageSize,
-    cursor || null,
-    direction,
-  );
+  const result = await searchManga(keyword, page, pageSize);
   await warmCatalogEntries(result.items, gen);
   return {
     ...result,
@@ -288,15 +260,11 @@ export async function getCachedSearchManga(
   keyword: string,
   page: number,
   pageSize: number,
-  cursor: string,
-  direction: "next" | "prev",
 ): Promise<MangaListResult> {
   return getCachedSearchMangaAt(
     keyword,
     page,
     pageSize,
-    cursor,
-    direction,
     await getCatalogGeneration(),
   );
 }

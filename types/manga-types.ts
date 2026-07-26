@@ -4,8 +4,6 @@ export interface Pagination {
   totalItems: number;
   totalItemsPerPage: number;
   currentPage: number;
-  nextCursor?: string | null;
-  prevCursor?: string | null;
   hasNextPage?: boolean;
   hasPrevPage?: boolean;
 }

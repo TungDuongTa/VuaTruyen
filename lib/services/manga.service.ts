@@ -3,11 +3,6 @@ import { CategoryModel } from "@/database/models/category.model";
 import { ChapterModel } from "@/database/models/chapter.model";
 import { MangaModel } from "@/database/models/manga.model";
 import { MAX_OFFSET_PAGE, normalizePageAndSize } from "@/lib/pagination";
-import {
-  buildKeysetFilter,
-  decodeKeysetCursor,
-  encodeKeysetCursor,
-} from "@/lib/server/keyset";
 import { buildMangaSearchFilter } from "@/lib/search-utils";
 import type {
   Category,
@@ -39,8 +34,6 @@ export type MangaListQuery = {
   pageSize?: number;
   tag?: string;
   excludeTag?: string;
-  cursor?: string | null;
-  direction?: "next" | "prev";
 };
 
 const STATUS_BY_LIST_TYPE: Partial<Record<MangaListType, string>> = {
@@ -109,12 +102,6 @@ const toMangaCard = (doc: Record<string, unknown>): OTruyenComic => {
   };
 };
 
-const cursorFromDoc = (doc: Record<string, unknown>): string =>
-  encodeKeysetCursor(
-    doc.updatedAt as Date | string,
-    String(doc._id),
-  );
-
 const toChapterData = (doc: Record<string, unknown>): ChapterData => ({
   filename: "",
   chapter_name: String(doc.chapterName),
@@ -152,8 +139,6 @@ const queryMangaList = async (
   filter: Record<string, unknown>,
   page: unknown,
   pageSize: unknown,
-  cursorRaw?: string | null,
-  direction: "next" | "prev" = "next",
 ): Promise<MangaListResult> => {
   const normalized = normalizePageAndSize(
     page,
@@ -161,89 +146,28 @@ const queryMangaList = async (
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
   );
-  const decodedCursor = decodeKeysetCursor(cursorRaw);
 
-  const totalItemsPromise = MangaModel.countDocuments(filter);
-
-  if (decodedCursor) {
-    const keysetFilter = {
-      $and: [filter, buildKeysetFilter(decodedCursor, direction)],
-    };
-
-    const sort =
-      direction === "next"
-        ? ({ updatedAt: -1, _id: -1 } as const)
-        : ({ updatedAt: 1, _id: 1 } as const);
-
-    const [totalItems, rawDocs] = await Promise.all([
-      totalItemsPromise,
-      MangaModel.find(keysetFilter)
-        .select(MANGA_CARD_FIELDS)
-        .sort(sort)
-        .limit(normalized.pageSize + 1)
-        .lean(),
-    ]);
-
-    const hasExtra = rawDocs.length > normalized.pageSize;
-    const pageDocs = hasExtra ? rawDocs.slice(0, normalized.pageSize) : rawDocs;
-    const orderedDocs =
-      direction === "prev" ? [...pageDocs].reverse() : pageDocs;
-
-    const totalPages = Math.max(1, Math.ceil(totalItems / normalized.pageSize));
-    const safePage = Math.min(Math.max(1, normalized.page), totalPages);
-    const first = orderedDocs[0] as Record<string, unknown> | undefined;
-    const last = orderedDocs[orderedDocs.length - 1] as
-      | Record<string, unknown>
-      | undefined;
-
-    const hasNextPage = direction === "next" ? hasExtra : safePage < totalPages;
-    const hasPrevPage =
-      direction === "prev" ? hasExtra || safePage > 1 : safePage > 1;
-
-    return {
-      items: orderedDocs.map((doc) =>
-        toMangaCard(doc as Record<string, unknown>),
-      ),
-      pagination: toPagination(totalItems, safePage, normalized.pageSize, {
-        nextCursor:
-          last && (direction === "next" ? hasExtra : safePage < totalPages)
-            ? cursorFromDoc(last)
-            : null,
-        prevCursor: first && hasPrevPage ? cursorFromDoc(first) : null,
-        hasNextPage,
-        hasPrevPage,
-      }),
-    };
-  }
-
-  // Offset path for early pages. Clamp deep pages without a cursor to keep skip cheap.
+  // Clamp deep pages so skip stays cheap with a simple offset pager UI.
   const requestedPage = Math.min(normalized.page, MAX_OFFSET_PAGE);
-  const [totalItems, docs] = await Promise.all([
-    totalItemsPromise,
-    MangaModel.find(filter)
-      .select(MANGA_CARD_FIELDS)
-      .sort({ updatedAt: -1, _id: -1 })
-      .skip((requestedPage - 1) * normalized.pageSize)
-      .limit(normalized.pageSize + 1)
-      .lean(),
-  ]);
-
+  const totalItems = await MangaModel.countDocuments(filter);
   const totalPages = Math.max(1, Math.ceil(totalItems / normalized.pageSize));
-  const safePage = Math.min(requestedPage, totalPages);
+  const maxPage = Math.min(totalPages, MAX_OFFSET_PAGE);
+  const safePage = Math.min(requestedPage, maxPage);
+
+  const docs = await MangaModel.find(filter)
+    .select(MANGA_CARD_FIELDS)
+    .sort({ updatedAt: -1, _id: -1 })
+    .skip((safePage - 1) * normalized.pageSize)
+    .limit(normalized.pageSize + 1)
+    .lean();
+
   const hasExtra = docs.length > normalized.pageSize;
   const pageDocs = hasExtra ? docs.slice(0, normalized.pageSize) : docs;
-  const first = pageDocs[0] as Record<string, unknown> | undefined;
-  const last = pageDocs[pageDocs.length - 1] as
-    | Record<string, unknown>
-    | undefined;
-  const hasNextPage = hasExtra || safePage < totalPages;
 
   return {
     items: pageDocs.map((doc) => toMangaCard(doc as Record<string, unknown>)),
     pagination: toPagination(totalItems, safePage, normalized.pageSize, {
-      nextCursor: last && hasNextPage ? cursorFromDoc(last) : null,
-      prevCursor: first && safePage > 1 ? cursorFromDoc(first) : null,
-      hasNextPage,
+      hasNextPage: hasExtra || safePage < maxPage,
       hasPrevPage: safePage > 1,
     }),
   };
@@ -274,13 +198,7 @@ export const getMangaList = async (
   query: MangaListQuery = {},
 ): Promise<MangaListResult> => {
   await connectToDatabase();
-  return queryMangaList(
-    buildListFilter(query),
-    query.page,
-    query.pageSize,
-    query.cursor,
-    query.direction || "next",
-  );
+  return queryMangaList(buildListFilter(query), query.page, query.pageSize);
 };
 
 export const getMangaCategories = async (): Promise<Category[]> => {
@@ -297,21 +215,13 @@ export const getMangaByCategory = async (
   slug: string,
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,
-  cursor?: string | null,
-  direction: "next" | "prev" = "next",
 ): Promise<MangaListResult | null> => {
   await connectToDatabase();
 
   const category = await CategoryModel.findOne({ slug }).lean();
   if (!category) return null;
 
-  return queryMangaList(
-    { "categories.slug": slug },
-    page,
-    pageSize,
-    cursor,
-    direction,
-  );
+  return queryMangaList({ "categories.slug": slug }, page, pageSize);
 };
 
 export const getMangaDetail = async (
@@ -391,17 +301,14 @@ export const searchManga = async (
   keyword: string,
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,
-  cursor?: string | null,
-  direction: "next" | "prev" = "next",
 ): Promise<MangaListResult> => {
   await connectToDatabase();
-  return queryMangaList(
-    buildMangaSearchFilter(keyword.trim()),
-    page,
-    pageSize,
-    cursor,
-    direction,
-  );
+  return queryMangaList(buildMangaSearchFilter(keyword.trim()), page, pageSize);
+};
+
+export const getAdultMangaCount = async (): Promise<number> => {
+  await connectToDatabase();
+  return MangaModel.countDocuments({ tags: "18+" });
 };
 
 export type MangaSitemapEntry = {
@@ -420,9 +327,8 @@ export const getMangaSitemapEntries = async (): Promise<
 
   return docs
     .map((doc) => {
-      const slug = String(doc.slug);
+      const slug = String(doc.slug || "").trim();
       if (!slug) return null;
-
       return {
         slug,
         latestChapterName: String(doc.latestChapterName || ""),
@@ -430,9 +336,4 @@ export const getMangaSitemapEntries = async (): Promise<
       };
     })
     .filter((entry): entry is MangaSitemapEntry => entry !== null);
-};
-
-export const getAdultMangaCount = async (): Promise<number> => {
-  await connectToDatabase();
-  return MangaModel.countDocuments({ tags: "18+" });
 };
