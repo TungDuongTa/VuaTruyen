@@ -90,7 +90,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-2xl p-0 overflow-hidden bg-card border-border"
+        className="top-19 left-1/2 max-w-2xl -translate-x-1/2 translate-y-0 gap-0 p-0 overflow-hidden bg-card border-border sm:max-w-2xl"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">Tìm kiếm truyện </DialogTitle>
@@ -128,64 +128,66 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
           )}
         </div>
 
-        {/* Search Results */}
-        <div className="max-h-[400px] overflow-y-auto">
-          {!hasSearched && query.length < 2 ? (
-            <div className="py-12 text-center text-muted-foreground">
-              Nhập ít nhất 2 ký tự để bắt đầu tìm kiếm.....
-            </div>
-          ) : results.length === 0 && hasSearched && !isPending ? (
-            <div className="py-12 text-center text-muted-foreground">
-              Không tìm thấy kết quả cho &quot;{query}&quot;
-            </div>
-          ) : (
-            <div className="p-2">
-              {results.map((comic, index) => (
-                <Link
-                  key={comic._id || index}
-                  href={`/manga/${comic.slug}`}
-                  onClick={handleSelect}
-                  className="flex items-start gap-4 p-3 rounded-lg hover:bg-secondary transition-colors group"
-                >
-                  {/* Cover Image */}
-                  <div className="relative w-14 h-20 shrink-0 overflow-hidden rounded-md bg-muted">
-                    <Image
-                      src={comic.thumb_url}
-                      alt={comic.name}
-                      fill
-                      sizes="56px"
-                      className="object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                      {comic.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      {comic.chaptersLatest?.[0]?.chapter_name
-                        ? `Chapter ${comic.chaptersLatest[0].chapter_name}`
-                        : formatRelativeTime(comic.updatedAt)}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                      {comic.category.slice(0, 3).map((cat, index) => (
-                        <Badge
-                          key={`${comic._id}-${cat.id}-${index}`}
-                          variant="secondary"
-                          className="text-xs px-2 py-0.5 bg-secondary/80"
-                        >
-                          {cat.name}
-                        </Badge>
-                      ))}
+        {/* Hint / results — grows downward from input */}
+        {!hasSearched && query.length < 2 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            Nhập ít nhất 2 ký tự để bắt đầu tìm kiếm.....
+          </div>
+        ) : (
+          <div className="max-h-[min(400px,calc(100vh-10rem))] overflow-y-auto">
+            {results.length === 0 && hasSearched && !isPending ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Không tìm thấy kết quả cho &quot;{query}&quot;
+              </div>
+            ) : (
+              <div className="p-2">
+                {results.map((comic, index) => (
+                  <Link
+                    key={comic._id || index}
+                    href={`/manga/${comic.slug}`}
+                    onClick={handleSelect}
+                    className="flex items-start gap-4 p-3 rounded-lg hover:bg-secondary transition-colors group"
+                  >
+                    {/* Cover Image */}
+                    <div className="relative w-14 h-20 shrink-0 overflow-hidden rounded-md bg-muted">
+                      <Image
+                        src={comic.thumb_url}
+                        alt={comic.name}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                        loading="lazy"
+                      />
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                        {comic.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {comic.chaptersLatest?.[0]?.chapter_name
+                          ? `Chapter ${comic.chaptersLatest[0].chapter_name}`
+                          : formatRelativeTime(comic.updatedAt)}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        {comic.category.slice(0, 3).map((cat, index) => (
+                          <Badge
+                            key={`${comic._id}-${cat.id}-${index}`}
+                            variant="secondary"
+                            className="text-xs px-2 py-0.5 bg-secondary/80"
+                          >
+                            {cat.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* View All Results Button */}
         <div className="border-t border-border p-3">
