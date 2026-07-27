@@ -1,13 +1,34 @@
 import type { MetadataRoute } from "next";
-import { getHomeData, getListByType } from "@/lib/actions/manga-actions";
-import { getMangaRankings } from "@/lib/actions/manga-view.actions";
+import { cacheLife } from "next/cache";
+import {
+  getCachedHomeData,
+  getCachedMangaList,
+  getCachedMangaRankings,
+} from "@/lib/server/manga-cache";
 import {
   getAdultMangaCount,
   getMangaSitemapEntries,
 } from "@/lib/services/manga.service";
 import { toAbsoluteUrl } from "@/lib/seo";
 
+const DEFAULT_PAGE_SIZE = 24;
+
+const SITEMAP_CACHE_LIFE = {
+  stale: 3600,
+  revalidate: 3600,
+  expire: 86_400,
+} as const;
+
 const normalizeSlug = (value: unknown): string => String(value || "").trim();
+
+const getSafeAdultMangaCount = async (): Promise<number> => {
+  try {
+    return await getAdultMangaCount();
+  } catch (error) {
+    console.error("Failed to load adult manga count for sitemap:", error);
+    return 0;
+  }
+};
 
 const getPublicMangaEntries = async () => {
   const entryMap = new Map<
@@ -24,11 +45,11 @@ const getPublicMangaEntries = async () => {
       rankingData,
       allEntries,
     ] = await Promise.all([
-      getHomeData(),
-      getListByType("truyen-moi", 1),
-      getListByType("hoan-thanh", 1),
-      getListByType("dang-phat-hanh", 1),
-      getMangaRankings(120),
+      getCachedHomeData(),
+      getCachedMangaList("truyen-moi", 1, DEFAULT_PAGE_SIZE, ""),
+      getCachedMangaList("hoan-thanh", 1, DEFAULT_PAGE_SIZE, ""),
+      getCachedMangaList("dang-phat-hanh", 1, DEFAULT_PAGE_SIZE, ""),
+      getCachedMangaRankings(120),
       getMangaSitemapEntries(),
     ]);
 
@@ -66,13 +87,13 @@ const getPublicMangaEntries = async () => {
     };
 
     addItems(homeData);
-    addItems(latestData?.items || []);
-    addItems(completedData?.items || []);
-    addItems(ongoingData?.items || []);
-    addItems(rankingData.daily || []);
-    addItems(rankingData.weekly || []);
-    addItems(rankingData.monthly || []);
-    addItems(rankingData.allTime || []);
+    addItems(latestData.items);
+    addItems(completedData.items);
+    addItems(ongoingData.items);
+    addItems(rankingData.daily);
+    addItems(rankingData.weekly);
+    addItems(rankingData.monthly);
+    addItems(rankingData.allTime);
 
     for (const entry of allEntries) {
       upsert(entry.slug, entry.latestChapterName, entry.updatedAt);
@@ -85,16 +106,19 @@ const getPublicMangaEntries = async () => {
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  "use cache: remote";
+  cacheLife(SITEMAP_CACHE_LIFE);
+
   const now = new Date();
   const [publicMangaEntries, adultCount] = await Promise.all([
     getPublicMangaEntries(),
-    getAdultMangaCount(),
+    getSafeAdultMangaCount(),
   ]);
 
   // Cap sitemap pagination depth so the XML stays lean.
   const total18Pages = Math.min(
     20,
-    Math.max(1, Math.ceil(adultCount / 24)),
+    Math.max(1, Math.ceil(adultCount / DEFAULT_PAGE_SIZE)),
   );
 
   const staticRoutes: MetadataRoute.Sitemap = [
