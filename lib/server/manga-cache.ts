@@ -49,8 +49,8 @@ const MANGA_CATEGORIES_LIFE = {
 } as const;
 
 const HOME_SIDEBAR_LIFE = {
-  stale: 60,
-  revalidate: 300,
+  stale: 900,
+  revalidate: 900,
   expire: 3600,
 } as const;
 
@@ -131,9 +131,7 @@ async function warmCatalogEntries(
 ): Promise<void> {
   const slugs = Array.from(
     new Set(
-      items
-        .map((item) => String(item.slug || "").trim())
-        .filter(Boolean),
+      items.map((item) => String(item.slug || "").trim()).filter(Boolean),
     ),
   );
   if (slugs.length === 0) return;
