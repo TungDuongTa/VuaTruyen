@@ -12,6 +12,7 @@ import {
   getCachedMangaList,
   getCachedSearchManga,
 } from "@/lib/server/manga-cache";
+import { getSessionUser } from "@/lib/server/session";
 import type {
   Category,
   ChapterItem,
@@ -96,6 +97,11 @@ export async function getChapterData(
   mangaSlug: string,
   chapterName: string,
 ): Promise<ChapterItem | null> {
+  const sessionUser = await getSessionUser();
+  if (!sessionUser) {
+    return null;
+  }
+
   // Chapter images stay live so newly crawled pages are readable immediately.
   return safeQuery(`chapter ${mangaSlug}/${chapterName}`, () =>
     getMangaChapter(mangaSlug, chapterName),

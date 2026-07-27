@@ -1,10 +1,13 @@
 import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChapterReaderPageClient } from "@/components/chapter-reader-page-client";
+import { LoginWall } from "@/components/login-wall";
 import { getComicDetail, getChapterData } from "@/lib/actions/manga-actions";
 import { getMangaPersonalState } from "@/lib/actions/reading-progress.actions";
+import { getSessionUser } from "@/lib/server/session";
 import { toAbsoluteUrl, withSiteSuffix } from "@/lib/seo";
 
 type ChapterReaderPageProps = {
@@ -46,6 +49,10 @@ export async function generateMetadata({
     description,
     alternates: {
       canonical: canonicalPath,
+    },
+    robots: {
+      index: false,
+      follow: true,
     },
     openGraph: {
       title: withSiteSuffix(title),
@@ -107,6 +114,19 @@ export default async function ChapterReaderPage({
   }
 
   const mangaSlug = comic.slug || id;
+  const chapterPath = `/manga/${mangaSlug}/chapter/${chapter}`;
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    return (
+      <LoginWall
+        icon={BookOpen}
+        description="Vui lòng đăng nhập để đọc chapter"
+        callbackUrl={chapterPath}
+      />
+    );
+  }
+
   const [chapterContent, personalState] = await Promise.all([
     getChapterData(mangaSlug, chapter),
     getMangaPersonalState(mangaSlug),
