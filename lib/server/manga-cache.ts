@@ -15,6 +15,10 @@ import {
   type MangaRankings,
 } from "@/lib/server/manga-rankings";
 import {
+  fetchUserRankings,
+  type UserRankingItem,
+} from "@/lib/server/user-rankings";
+import {
   getRecentTopLevelComments,
   type HomeRecentCommentItem,
 } from "@/lib/actions/comment.actions";
@@ -288,6 +292,15 @@ export async function getCachedMangaRankings(
   cacheLife(HOME_SIDEBAR_LIFE);
   cacheTag(CACHE_TAGS.mangaRankings);
   return fetchMangaRankings(limit);
+}
+
+export async function getCachedUserRankings(
+  limit = 10,
+): Promise<UserRankingItem[]> {
+  "use cache: remote";
+  cacheLife(HOME_SIDEBAR_LIFE);
+  cacheTag(CACHE_TAGS.userRankings);
+  return fetchUserRankings(limit);
 }
 
 export async function getCachedRecentHomeComments(

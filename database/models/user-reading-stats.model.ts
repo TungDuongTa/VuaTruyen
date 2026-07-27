@@ -10,5 +10,7 @@ const userReadingStatsSchema = new Schema(
   },
 );
 
+userReadingStatsSchema.index({ chaptersRead: -1, updatedAt: 1 });
+
 export const UserReadingStatsModel =
   models.UserReadingStats || model("UserReadingStats", userReadingStatsSchema);

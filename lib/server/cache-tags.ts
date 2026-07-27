@@ -6,6 +6,8 @@ export const CACHE_TAGS = {
   mangaLists: "manga-lists",
   /** Home / ranking sidebar period + all-time views. */
   mangaRankings: "manga-rankings",
+  /** Home “top readers” sidebar. */
+  userRankings: "user-rankings",
   /** Home “recent comments” sidebar. */
   homeComments: "home-comments",
 } as const;
