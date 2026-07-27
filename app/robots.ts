@@ -14,6 +14,8 @@ export default function robots(): MetadataRoute.Robots {
           "/profile",
           "/sign-in",
           "/sign-up",
+          // Chapter reader requires login — keep crawl budget on public manga pages.
+          "/manga/*/chapter/",
         ],
       },
     ],

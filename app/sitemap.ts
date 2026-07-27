@@ -31,10 +31,7 @@ const getSafeAdultMangaCount = async (): Promise<number> => {
 };
 
 const getPublicMangaEntries = async () => {
-  const entryMap = new Map<
-    string,
-    { slug: string; latestChapterName: string; updatedAt: Date }
-  >();
+  const entryMap = new Map<string, { slug: string; updatedAt: Date }>();
 
   try {
     const [
@@ -53,19 +50,14 @@ const getPublicMangaEntries = async () => {
       getMangaSitemapEntries(),
     ]);
 
-    const upsert = (
-      slugRaw: unknown,
-      latestChapterName = "",
-      updatedAt: Date = new Date(),
-    ) => {
+    const upsert = (slugRaw: unknown, updatedAt: Date = new Date()) => {
       const slug = normalizeSlug(slugRaw);
       if (!slug) return;
 
       const existing = entryMap.get(slug);
       entryMap.set(slug, {
         slug,
-        latestChapterName:
-          latestChapterName || existing?.latestChapterName || "",
+        // Prefer the earliest known update timestamp so we don't keep resetting.
         updatedAt: existing?.updatedAt || updatedAt,
       });
     };
@@ -73,14 +65,12 @@ const getPublicMangaEntries = async () => {
     const addItems = (
       items: Array<{
         slug?: string;
-        chaptersLatest?: Array<{ chapter_name?: string }>;
         updatedAt?: string;
       }> = [],
     ) => {
       for (const item of items) {
         upsert(
           item.slug,
-          item.chaptersLatest?.[0]?.chapter_name || "",
           item.updatedAt ? new Date(item.updatedAt) : new Date(),
         );
       }
@@ -96,7 +86,7 @@ const getPublicMangaEntries = async () => {
     addItems(rankingData.allTime);
 
     for (const entry of allEntries) {
-      upsert(entry.slug, entry.latestChapterName, entry.updatedAt);
+      upsert(entry.slug, entry.updatedAt);
     }
   } catch (error) {
     console.error("Failed to build public manga sitemap entries:", error);
@@ -162,6 +152,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   );
 
+  // Manga detail pages only — chapter reader URLs require login and are noindex.
   const mangaRoutes: MetadataRoute.Sitemap = publicMangaEntries.map(
     (entry) => ({
       url: toAbsoluteUrl(`/manga/${entry.slug}`),
@@ -171,21 +162,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  const latestChapterRoutes: MetadataRoute.Sitemap = publicMangaEntries
-    .filter((entry) => entry.latestChapterName)
-    .map((entry) => ({
-      url: toAbsoluteUrl(
-        `/manga/${entry.slug}/chapter/${entry.latestChapterName}`,
-      ),
-      lastModified: entry.updatedAt,
-      changeFrequency: "daily" as const,
-      priority: 0.6,
-    }));
-
-  return [
-    ...staticRoutes,
-    ...paginated18Routes,
-    ...mangaRoutes,
-    ...latestChapterRoutes,
-  ];
+  return [...staticRoutes, ...paginated18Routes, ...mangaRoutes];
 }

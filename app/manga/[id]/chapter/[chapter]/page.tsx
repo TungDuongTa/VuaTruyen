@@ -41,7 +41,7 @@ export async function generateMetadata({
   }
 
   const title = `${comic.name} Chapter ${chapter}`;
-  const description = `Đọc truyện tranh ${comic.name} chapter ${chapter} mới nhất được cập nhật tại VuaTruyen`;
+  const description = `${comic.name} chapter ${chapter} trên VuaTruyen. Đăng nhập để đọc chapter này.`;
   const coverImage = comic.thumb_url?.trim() ? comic.thumb_url : "";
 
   return {
