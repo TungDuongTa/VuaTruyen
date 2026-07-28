@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CONTACT_EMAIL } from "@/lib/site-config";
 
 export function Footer() {
   // Static under Cache Components prerender (no request-time Date).
@@ -19,16 +20,18 @@ export function Footer() {
       { label: "Comedy", href: "/browse?genre=comedy" },
     ],
     community: [
-      { label: "Discord", href: "#" },
-      { label: "Reddit", href: "#" },
-      { label: "Twitter", href: "#" },
-      { label: "Liên hệ", href: "#" },
+      { label: "Giới thiệu", href: "/about" },
+      { label: "Liên hệ", href: "/contact" },
+      {
+        label: CONTACT_EMAIL,
+        href: `mailto:${CONTACT_EMAIL}`,
+      },
     ],
     legal: [
-      { label: "Điều khoản sử dụng", href: "#" },
-      { label: "Chính sách bảo mật", href: "#" },
-      { label: "DMCA", href: "#" },
-      { label: "Chính sách Cookie", href: "#" },
+      { label: "Điều khoản sử dụng", href: "/terms" },
+      { label: "Chính sách bảo mật", href: "/privacy" },
+      { label: "DMCA", href: "/dmca" },
+      { label: "Chính sách Cookie", href: "/cookies" },
     ],
   };
 
