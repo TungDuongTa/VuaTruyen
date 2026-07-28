@@ -26,6 +26,24 @@ const nextConfig = {
         destination: "/browse",
         permanent: true,
       },
+      {
+        source: "/18\\+",
+        has: [{ type: "query", key: "page", value: "1" }],
+        destination: "/18%2B",
+        permanent: true,
+      },
+      {
+        source: "/18\\+",
+        has: [
+          {
+            type: "query",
+            key: "page",
+            value: "(?<page>[2-9]|[1-9][0-9]+)",
+          },
+        ],
+        destination: "/18%2B/page/:page",
+        permanent: true,
+      },
     ];
   },
 };

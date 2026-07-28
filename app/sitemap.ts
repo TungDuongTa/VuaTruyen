@@ -180,7 +180,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     (_, index) => {
       const pageNumber = index + 2;
       return {
-        url: toAbsoluteUrl(`/18+?page=${pageNumber}`),
+        url: toAbsoluteUrl(`/18+/page/${pageNumber}`),
         lastModified: now,
         changeFrequency: "daily" as const,
         priority: 0.6,
