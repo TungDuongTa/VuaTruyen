@@ -17,6 +17,8 @@ const inter = Inter({
   variable: "--font-inter",
 });
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || "G-Z65549N1TX";
+const ADSENSE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-2421130711942755";
 
 const DEFAULT_TITLE =
   "VuaTruyen - Vua Truyện đọc manga, manhwa và manhua online";
@@ -127,6 +129,14 @@ export default function RootLayout({
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />
+        {ADSENSE_CLIENT_ID ? (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        ) : null}
         {GA_MEASUREMENT_ID ? (
           <>
             <Script
