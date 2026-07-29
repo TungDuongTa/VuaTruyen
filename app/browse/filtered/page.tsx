@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { BrowseCatalogPage } from "@/components/browse-catalog-page";
 import {
   BROWSE_DESCRIPTION,
   browseTitleFromFilters,
   buildBrowseHref,
+  hasActiveBrowseFilters,
   parseBrowseFilters,
   type BrowseSearchParams,
 } from "@/lib/browse-params";
@@ -42,5 +44,10 @@ export default async function BrowseFilteredPage({
   searchParams,
 }: PageProps) {
   const filters = parseBrowseFilters(await searchParams);
+
+  if (!hasActiveBrowseFilters(filters)) {
+    redirect(buildBrowseHref(filters));
+  }
+
   return <BrowseCatalogPage filters={filters} />;
 }

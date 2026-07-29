@@ -5,6 +5,7 @@ import {
   BROWSE_DESCRIPTION,
   browseTitleFromFilters,
   buildBrowseHref,
+  hasActiveBrowseFilters,
   parseBrowseFilters,
   type BrowseSearchParams,
 } from "@/lib/browse-params";
@@ -67,6 +68,10 @@ export default async function BrowseFilteredPagedPage({
 
   const resolvedSearchParams = await searchParams;
   const filters = parseBrowseFilters(resolvedSearchParams, page);
+
+  if (!hasActiveBrowseFilters(filters)) {
+    redirect(buildBrowseHref(filters));
+  }
 
   if (page <= 1) {
     redirect(buildBrowseHref({ ...filters, page: 1 }));

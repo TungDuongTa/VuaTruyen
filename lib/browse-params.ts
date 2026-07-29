@@ -3,6 +3,7 @@ import { pageSlugStaticParams, parsePageSlug, toPageSlug } from "@/lib/page-slug
 import { buildCanonicalPath } from "@/lib/seo";
 
 export const BROWSE_BASE = "/browse";
+export const BROWSE_FILTERED_BASE = "/browse/filtered";
 export const BROWSE_DESCRIPTION =
   "Tìm kiếm những bộ truyện tranh manga, manhwa và manhua mới nhất tại VuaTruyen";
 
@@ -93,8 +94,9 @@ export const buildBrowseHref = (
   const hasFilters =
     Boolean(query) || Boolean(genre) || status !== "all";
 
+  const catalogBase = hasFilters ? BROWSE_FILTERED_BASE : BROWSE_BASE;
   const pathname =
-    page > 1 ? `${BROWSE_BASE}/${toPageSlug(page)}` : BROWSE_BASE;
+    page > 1 ? `${catalogBase}/${toPageSlug(page)}` : catalogBase;
 
   if (!hasFilters) {
     return pathname;

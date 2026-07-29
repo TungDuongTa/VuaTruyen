@@ -110,6 +110,67 @@ const nextConfig = {
         destination: "/ranking/:tab/page-:page",
         permanent: true,
       },
+      // Legacy /browse?q= (middleware rewrite) → real /browse/filtered routes
+      {
+        source: "/browse",
+        has: [{ type: "query", key: "q" }],
+        destination: "/browse/filtered",
+        permanent: true,
+      },
+      {
+        source: "/browse",
+        has: [{ type: "query", key: "genres" }],
+        destination: "/browse/filtered",
+        permanent: true,
+      },
+      {
+        source: "/browse",
+        has: [{ type: "query", key: "genre" }],
+        destination: "/browse/filtered",
+        permanent: true,
+      },
+      {
+        source: "/browse",
+        has: [{ type: "query", key: "status" }],
+        destination: "/browse/filtered",
+        permanent: true,
+      },
+      {
+        source: "/browse/page-:page",
+        has: [{ type: "query", key: "q" }],
+        destination: "/browse/filtered/page-:page",
+        permanent: true,
+      },
+      {
+        source: "/browse/page-:page",
+        has: [{ type: "query", key: "genres" }],
+        destination: "/browse/filtered/page-:page",
+        permanent: true,
+      },
+      {
+        source: "/browse/page-:page",
+        has: [{ type: "query", key: "genre" }],
+        destination: "/browse/filtered/page-:page",
+        permanent: true,
+      },
+      {
+        source: "/browse/page-:page",
+        has: [{ type: "query", key: "status" }],
+        destination: "/browse/filtered/page-:page",
+        permanent: true,
+      },
+      {
+        source: "/browse",
+        has: [
+          {
+            type: "query",
+            key: "page",
+            value: "(?<page>[2-9]|[1-9][0-9]+)",
+          },
+        ],
+        destination: "/browse/page-:page",
+        permanent: true,
+      },
     ];
   },
 };
