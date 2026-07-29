@@ -1,12 +1,9 @@
 import { Users } from "lucide-react";
 import type { UserRankingItem } from "@/lib/server/user-rankings";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  getLevelBadgeTier,
-  getLevelUsernameEffect,
-} from "@/lib/level-badge-tiers";
+import { CosmeticAvatar } from "@/components/cosmetics/cosmetic-avatar";
+import { UserDisplayName } from "@/components/cosmetics/user-display-name";
 
 interface UserRankingSidebarProps {
   users: UserRankingItem[];
@@ -39,61 +36,51 @@ export function UserRankingSidebar({ users }: UserRankingSidebarProps) {
         </div>
       ) : (
         <div className="space-y-2">
-          {users.map((user, index) => {
-            const usernameEffect = getLevelUsernameEffect(user.level);
-            const levelBadgeTier = getLevelBadgeTier(user.level);
-
-            return (
+          {users.map((user, index) => (
+            <div
+              key={user.userId}
+              className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-secondary/70"
+            >
               <div
-                key={user.userId}
-                className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-secondary/70"
+                className={cn(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                  getMedalClassName(index),
+                )}
               >
-                <div
-                  className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                    getMedalClassName(index),
-                  )}
-                >
-                  {user.rank}
-                </div>
-
-                <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage src={user.image} alt={user.name} />
-                  <AvatarFallback className="text-xs">
-                    {getUserInitial(user.name)}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span
-                      className={cn(
-                        "truncate text-sm font-semibold tracking-wide",
-                        usernameEffect.className,
-                      )}
-                      title={`${usernameEffect.name} username effect`}
-                    >
-                      {user.name}
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "h-5 max-w-30 shrink-0 rounded-full px-2 text-[10px] font-semibold",
-                        levelBadgeTier.className,
-                      )}
-                      title={levelBadgeTier.title}
-                    >
-                      <span className="truncate">{levelBadgeTier.title}</span>
-                    </Badge>
-                  </div>
-
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Lv.{user.level}
-                  </p>
-                </div>
+                {user.rank}
               </div>
-            );
-          })}
+
+              <CosmeticAvatar
+                src={user.image}
+                alt={user.name}
+                fallback={getUserInitial(user.name)}
+                frameSrc={user.cosmetics.avatarFrameSrc}
+                frameScale={user.cosmetics.avatarFrameScale}
+                avatarClassName="h-9 w-9"
+                fallbackClassName="text-xs"
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-center gap-2">
+                  <UserDisplayName
+                    name={user.name}
+                    cosmetics={user.cosmetics}
+                    nameClassName="text-sm"
+                  />
+                  <Badge
+                    variant="secondary"
+                    className="h-5 shrink-0 px-1.5 text-[10px] font-medium"
+                  >
+                    Lv.{user.level}
+                  </Badge>
+                </div>
+
+                <p className="mt-1 truncate text-xs text-muted-foreground">
+                  {user.description || "—"}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

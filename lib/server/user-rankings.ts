@@ -2,16 +2,21 @@ import "server-only";
 import { connectToDatabase } from "@/database/mongoose";
 import { UserReadingStatsModel } from "@/database/models/user-reading-stats.model";
 import { getAuthUserProfileMap } from "@/lib/server/auth-user-profiles";
+import { getUserCosmeticsMap } from "@/lib/server/user-cosmetics";
+import { EMPTY_COSMETICS_PUBLIC } from "@/lib/cosmetics/types";
+import type { UserCosmeticsPublic } from "@/lib/cosmetics/types";
 import { toReadingExpStats } from "@/lib/user-level";
 
 export type UserRankingItem = {
   userId: string;
   name: string;
   image: string;
+  description: string;
   chaptersRead: number;
   level: number;
   totalExp: number;
   rank: number;
+  cosmetics: UserCosmeticsPublic;
 };
 
 export const fetchUserRankings = async (
@@ -35,6 +40,7 @@ export const fetchUserRankings = async (
       .filter(Boolean);
 
     const profileMap = await getAuthUserProfileMap(userIds);
+    const cosmeticsMap = await getUserCosmeticsMap(userIds);
 
     return statsRows
       .map((row, index) => {
@@ -49,10 +55,12 @@ export const fetchUserRankings = async (
           userId,
           name: profile?.name || "User",
           image: profile?.image || "",
+          description: profile?.description || "",
           chaptersRead,
           level: exp.level,
           totalExp: exp.totalExp,
           rank: index + 1,
+          cosmetics: cosmeticsMap.get(userId) ?? EMPTY_COSMETICS_PUBLIC,
         } satisfies UserRankingItem;
       })
       .filter((item): item is UserRankingItem => item !== null);

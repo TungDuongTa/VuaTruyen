@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   useMemo,
   useRef,
@@ -12,6 +13,7 @@ import {
   Camera,
   Loader2,
   LogOut,
+  ShoppingBag,
   Sparkles,
   Trophy,
   Upload,
@@ -19,27 +21,31 @@ import {
 } from "lucide-react";
 import { updateUserProfile } from "@/lib/actions/profile.actions";
 import { authClient } from "@/lib/better-auth/auth-client";
-import {
-  getLevelBadgeTier,
-  getLevelUsernameEffect,
-} from "@/lib/level-badge-tiers";
+import type {
+  UserCosmeticsPublic,
+  UserWalletSummary,
+} from "@/lib/cosmetics/types";
 import type { ReadingExpStats } from "@/lib/user-level";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { CosmeticAvatar } from "@/components/cosmetics/cosmetic-avatar";
+import { UserDisplayName } from "@/components/cosmetics/user-display-name";
 
 type ProfilePageClientProps = {
   initialProfile: {
     name: string;
     email: string;
     image: string;
+    description: string;
   };
   readingExp: ReadingExpStats;
+  wallet: UserWalletSummary | null;
+  cosmetics: UserCosmeticsPublic;
 };
 
 type NoticeState = {
@@ -48,6 +54,7 @@ type NoticeState = {
 } | null;
 
 const MAX_AVATAR_SIZE_BYTES = 1024 * 1024;
+const MAX_DESCRIPTION_LENGTH = 25;
 const ALLOWED_AVATAR_MIME = new Set([
   "image/jpeg",
   "image/png",
@@ -58,10 +65,13 @@ const ALLOWED_AVATAR_MIME = new Set([
 export function ProfilePageClient({
   initialProfile,
   readingExp,
+  wallet,
+  cosmetics,
 }: ProfilePageClientProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [displayName, setDisplayName] = useState(initialProfile.name);
+  const [description, setDescription] = useState(initialProfile.description);
   const [avatarUrl, setAvatarUrl] = useState(initialProfile.image || "");
   const [avatarPreview, setAvatarPreview] = useState(
     initialProfile.image || "",
@@ -82,9 +92,7 @@ export function ProfilePageClient({
 
   const isMaxLevel = readingExp.level >= readingExp.maxLevel;
   const nextLevel = Math.min(readingExp.level + 1, readingExp.maxLevel);
-  const levelBadgeTier = getLevelBadgeTier(readingExp.level);
-  const usernameEffect = getLevelUsernameEffect(readingExp.level);
-  const LevelBadgeIcon = levelBadgeTier.icon;
+  const availableCredits = wallet?.availableCredits ?? readingExp.totalExp;
 
   const handleAvatarFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -139,9 +147,21 @@ export function ProfilePageClient({
       return;
     }
 
+    const normalizedDescription = description
+      .trim()
+      .slice(0, MAX_DESCRIPTION_LENGTH);
+    if (normalizedDescription.length > MAX_DESCRIPTION_LENGTH) {
+      setNotice({
+        type: "error",
+        message: `Mô tả tối đa ${MAX_DESCRIPTION_LENGTH} ký tự`,
+      });
+      return;
+    }
+
     startSaving(async () => {
       const formData = new FormData();
       formData.set("displayName", normalizedName);
+      formData.set("description", normalizedDescription);
       if (clearAvatar) {
         formData.set("clearAvatar", "1");
       } else if (pendingFile) {
@@ -161,6 +181,7 @@ export function ProfilePageClient({
         if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
         return savedImage || "";
       });
+      setDescription(result.description ?? normalizedDescription);
       setPendingFile(null);
       setClearAvatar(false);
       if (fileInputRef.current) {
@@ -193,41 +214,51 @@ export function ProfilePageClient({
   return (
     <div className="space-y-6">
       <section className="overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-lg backdrop-blur">
-        <div className="h-28 bg-gradient-to-r from-primary/80 via-accent/75 to-primary/50" />
+        <div
+          className={cn(
+            "h-28 bg-gradient-to-r from-primary/80 via-accent/75 to-primary/50",
+            cosmetics.profileBannerClassName,
+          )}
+        />
         <div className="-mt-12 flex flex-col gap-4 px-6 pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-4">
-            <Avatar className="h-24 w-24 border-4 border-background shadow-md">
-              <AvatarImage src={avatarPreview} alt={displayName} />
-              <AvatarFallback className="text-2xl">
-                {userInitial}
-              </AvatarFallback>
-            </Avatar>
+            <CosmeticAvatar
+              src={avatarPreview}
+              alt={displayName}
+              fallback={userInitial}
+              frameSrc={cosmetics.avatarFrameSrc}
+              frameScale={cosmetics.avatarFrameScale}
+              className="shadow-md"
+              avatarClassName="h-24 w-24"
+              fallbackClassName="text-2xl"
+            />
             <div>
-              <h1
-                className={cn(
-                  "text-2xl font-semibold tracking-wide",
-                  usernameEffect.className,
-                )}
-                title={`${usernameEffect.name} username effect`}
-              >
-                {displayName}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {initialProfile.email}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <UserDisplayName
+                  name={displayName}
+                  cosmetics={cosmetics}
+                  nameClassName="text-2xl font-semibold"
+                />
+                <Badge
+                  variant="secondary"
+                  className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                >
+                  Lv.{readingExp.level}
+                </Badge>
+              </div>
+              {description ? (
+                <p className="text-sm text-muted-foreground/90">
+                  {description}
+                </p>
+              ) : null}
             </div>
           </div>
-          <Badge
-            className={cn(
-              "w-fit gap-1.5 rounded-full px-3 py-1.5 text-sm ",
-              levelBadgeTier.className,
-            )}
-          >
-            <LevelBadgeIcon className="h-4 w-4" />
-            <span className="max-w-44 truncate text-xs font-semibold uppercase tracking-wide">
-              {levelBadgeTier.title}
-            </span>
-          </Badge>
+          <Link href="/shop">
+            <Button type="button" variant="outline" className="gap-2">
+              <ShoppingBag className="h-4 w-4" />
+              Cửa Hàng
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -248,6 +279,26 @@ export function ProfilePageClient({
                 onChange={(event) => setDisplayName(event.target.value)}
                 maxLength={40}
                 placeholder="Nhập tên hiển thị"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="profile-description">Mô tả</Label>
+                <span className="text-xs text-muted-foreground">
+                  {description.length}/{MAX_DESCRIPTION_LENGTH}
+                </span>
+              </div>
+              <Input
+                id="profile-description"
+                value={description}
+                onChange={(event) =>
+                  setDescription(
+                    event.target.value.slice(0, MAX_DESCRIPTION_LENGTH),
+                  )
+                }
+                maxLength={MAX_DESCRIPTION_LENGTH}
+                placeholder="VD: Đọc manga mỗi ngày"
               />
             </div>
 
@@ -362,6 +413,12 @@ export function ProfilePageClient({
                 </p>
               </div>
               <div className="rounded-lg border border-border/70 bg-background/60 p-3">
+                <p className="text-muted-foreground">Linh Thạch</p>
+                <p className="text-lg font-semibold text-primary">
+                  {availableCredits.toLocaleString()}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border/70 bg-background/60 p-3 col-span-2">
                 <p className="text-muted-foreground">Số chapters đã đọc</p>
                 <p className="text-lg font-semibold text-foreground">
                   {readingExp.chaptersRead.toLocaleString()}

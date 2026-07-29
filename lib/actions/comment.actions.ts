@@ -13,7 +13,10 @@ import {
   COMMENT_MAX_DEPTH,
   COMMENT_MAX_LENGTH,
 } from "@/lib/comments/limits";
+import { EMPTY_COSMETICS_PUBLIC } from "@/lib/cosmetics/types";
+import type { UserCosmeticsPublic } from "@/lib/cosmetics/types";
 import { normalizePageAndSize } from "@/lib/pagination";
+import { getUserCosmeticsMap } from "@/lib/server/user-cosmetics";
 import { getUserLevelMap } from "@/lib/server/user-level";
 import { getSessionUser } from "@/lib/server/session";
 
@@ -22,6 +25,7 @@ export type CommentViewer = {
   name: string;
   image: string;
   level: number;
+  cosmetics: UserCosmeticsPublic;
 } | null;
 
 export type CommentFeedItem = {
@@ -35,6 +39,7 @@ export type CommentFeedItem = {
   chapterName: string | null;
   parentCommentId: string | null;
   userLevel: number;
+  cosmetics: UserCosmeticsPublic;
   likeCount: number;
   likedByViewer: boolean;
   createdAt: string;
@@ -60,6 +65,7 @@ export type HomeRecentCommentItem = {
   userName: string;
   userImage: string;
   userLevel: number;
+  cosmetics: UserCosmeticsPublic;
   content: string;
   comicSlug: string;
   comicName: string;
@@ -272,6 +278,7 @@ const toFeedItem = (
   likedCommentIds?: Set<string>,
   levelMap?: Map<string, number>,
   authorProfileMap?: Map<string, CommentAuthorProfile>,
+  cosmeticsMap?: Map<string, UserCosmeticsPublic>,
 ): CommentFeedItem => {
   const userId = String(doc.userId || "").trim();
   const authorProfile = authorProfileMap?.get(userId);
@@ -287,6 +294,7 @@ const toFeedItem = (
     chapterName: doc.chapterName || null,
     parentCommentId: doc.parentCommentId ? String(doc.parentCommentId) : null,
     userLevel: levelMap?.get(userId) ?? 1,
+    cosmetics: cosmeticsMap?.get(userId) ?? EMPTY_COSMETICS_PUBLIC,
     likeCount: Number.isFinite(doc.likeCount) ? doc.likeCount : 0,
     likedByViewer:
       Boolean(viewerId) && Boolean(likedCommentIds?.has(String(doc._id))),
@@ -390,16 +398,25 @@ const buildCommentFeed = async (
         .filter(Boolean),
     ),
   );
-  const [likedCommentIds, levelMap, authorProfileMap] = await Promise.all([
-    getViewerLikedCommentIdSet(user?.id, commentIds),
-    getUserLevelMap(userIds),
-    getCommentAuthorProfileMap(userIds),
-  ]);
+  const [likedCommentIds, levelMap, authorProfileMap, cosmeticsMap] =
+    await Promise.all([
+      getViewerLikedCommentIdSet(user?.id, commentIds),
+      getUserLevelMap(userIds),
+      getCommentAuthorProfileMap(userIds),
+      getUserCosmeticsMap(userIds),
+    ]);
 
   return {
-    viewer: toCommentViewer(user, levelMap),
+    viewer: toCommentViewer(user, levelMap, cosmeticsMap),
     comments: docs.map((doc: any) =>
-      toFeedItem(doc, user?.id, likedCommentIds, levelMap, authorProfileMap),
+      toFeedItem(
+        doc,
+        user?.id,
+        likedCommentIds,
+        levelMap,
+        authorProfileMap,
+        cosmeticsMap,
+      ),
     ),
     pagination,
   };
@@ -408,6 +425,7 @@ const buildCommentFeed = async (
 const toCommentViewer = (
   user: Awaited<ReturnType<typeof getSessionUser>>,
   levelMap: Map<string, number>,
+  cosmeticsMap: Map<string, UserCosmeticsPublic>,
 ): CommentViewer => {
   if (!user) return null;
 
@@ -416,6 +434,7 @@ const toCommentViewer = (
     name: user.name || user.email || "User",
     image: user.image ?? "",
     level: levelMap.get(user.id) ?? 1,
+    cosmetics: cosmeticsMap.get(user.id) ?? EMPTY_COSMETICS_PUBLIC,
   };
 };
 
@@ -508,9 +527,10 @@ export const getRecentTopLevelComments = async (
       .lean();
 
     const userIds = docs.map((doc: any) => String(doc.userId || ""));
-    const [levelMap, authorProfileMap] = await Promise.all([
+    const [levelMap, authorProfileMap, cosmeticsMap] = await Promise.all([
       getUserLevelMap(userIds),
       getCommentAuthorProfileMap(userIds),
+      getUserCosmeticsMap(userIds),
     ]);
 
     return docs.map((doc: any) => {
@@ -525,6 +545,7 @@ export const getRecentTopLevelComments = async (
         userName: authorProfile?.name || DEFAULT_COMMENT_AUTHOR_NAME,
         userImage: authorProfile?.image || "",
         userLevel: levelMap.get(userId) ?? 1,
+        cosmetics: cosmeticsMap.get(userId) ?? EMPTY_COSMETICS_PUBLIC,
         content: String(doc.content),
         comicSlug,
         comicName,
@@ -646,7 +667,10 @@ export const createComment = async (
     content,
     likeCount: 0,
   });
-  const levelMap = await getUserLevelMap([user.id]);
+  const [levelMap, cosmeticsMap] = await Promise.all([
+    getUserLevelMap([user.id]),
+    getUserCosmeticsMap([user.id]),
+  ]);
   // Homepage recent-comments strip is ISR'd; refresh it. Manga/chapter pages
   // load comments client-side, so busting their caches here is unnecessary.
   revalidatePath("/");
@@ -670,6 +694,7 @@ export const createComment = async (
           },
         ],
       ]),
+      cosmeticsMap,
     ),
   };
 };

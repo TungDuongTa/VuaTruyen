@@ -10,6 +10,7 @@ import {
   Bookmark,
   Clock,
   Home,
+  Gem,
   Library,
   ShieldAlert,
   Trophy,
@@ -60,6 +61,7 @@ export function Header() {
     { href: "/bookmarks", label: "Theo dõi", icon: Bookmark },
     { href: "/history", label: "Lịch sử", icon: Clock },
     { href: "/ranking", label: "BXH", icon: Trophy },
+    { href: "/shop", label: "Cửa Hàng", icon: Gem },
   ];
 
   const isActiveLink = (href: string) => {
@@ -92,7 +94,7 @@ export function Header() {
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-2 rounded-xl border border-border/70 bg-card/50 px-2 py-1">
+            <div className="flex items-center gap-2 overflow-visible rounded-xl border border-border/70 bg-card/50 px-2 py-1">
               <Button
                 variant="ghost"
                 size="icon"

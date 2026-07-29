@@ -9,6 +9,7 @@ import {
 } from "@/lib/server/r2-avatar";
 
 const MAX_AVATAR_SIZE_BYTES = 1024 * 1024;
+const MAX_DESCRIPTION_LENGTH = 15;
 const ALLOWED_AVATAR_MIME = new Set([
   "image/jpeg",
   "image/png",
@@ -20,6 +21,7 @@ type UpdateUserProfileResult = {
   success: boolean;
   message: string;
   image?: string | null;
+  description?: string;
 };
 
 export const updateUserProfile = async (
@@ -43,6 +45,16 @@ export const updateUserProfile = async (
       return {
         success: false,
         message: "Tên hiển thị phải có từ 2 đến 40 ký tự",
+      };
+    }
+
+    const description = String(formData.get("description") || "")
+      .trim()
+      .slice(0, MAX_DESCRIPTION_LENGTH);
+    if (description.length > MAX_DESCRIPTION_LENGTH) {
+      return {
+        success: false,
+        message: `Mô tả tối đa ${MAX_DESCRIPTION_LENGTH} ký tự`,
       };
     }
 
@@ -79,6 +91,7 @@ export const updateUserProfile = async (
       headers: requestHeaders,
       body: {
         name,
+        description,
         ...(nextImage !== undefined ? { image: nextImage } : {}),
       },
     });
@@ -98,6 +111,7 @@ export const updateUserProfile = async (
       success: true,
       message: "Profile updated successfully.",
       image: nextImage === undefined ? previousImage : nextImage,
+      description,
     };
   } catch (error) {
     console.error("Update profile error:", error);

@@ -1,14 +1,10 @@
 import Link from "next/link";
 import { MessageCircle, ThumbsUp } from "lucide-react";
 import type { HomeRecentCommentItem } from "@/lib/actions/comment.actions";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { RelativeTime } from "@/components/relative-time";
-import { cn } from "@/lib/utils";
-import {
-  getLevelBadgeTier,
-  getLevelUsernameEffect,
-} from "@/lib/level-badge-tiers";
+import { CosmeticAvatar } from "@/components/cosmetics/cosmetic-avatar";
+import { UserDisplayName } from "@/components/cosmetics/user-display-name";
 
 interface CommentsSectionProps {
   comments: HomeRecentCommentItem[];
@@ -45,8 +41,6 @@ export function CommentsSection({ comments }: CommentsSectionProps) {
         <div className="max-h-[34rem] space-y-3 overflow-y-auto pr-1">
           {comments.map((comment) => {
             const chapterLabel = formatChapterLabel(comment.chapterName);
-            const usernameEffect = getLevelUsernameEffect(comment.userLevel);
-            const levelBadgeTier = getLevelBadgeTier(comment.userLevel);
 
             return (
               <article
@@ -54,39 +48,29 @@ export function CommentsSection({ comments }: CommentsSectionProps) {
                 className="rounded-lg border border-border/60 bg-secondary/40 p-3"
               >
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage
-                      src={comment.userImage}
-                      alt={comment.userName}
-                    />
-                    <AvatarFallback className="text-xs">
-                      {getUserInitial(comment.userName)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <CosmeticAvatar
+                    src={comment.userImage}
+                    alt={comment.userName}
+                    fallback={getUserInitial(comment.userName)}
+                    frameSrc={comment.cosmetics.avatarFrameSrc}
+                    frameScale={comment.cosmetics.avatarFrameScale}
+                    avatarClassName="h-9 w-9"
+                    fallbackClassName="text-xs"
+                  />
 
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <div className="flex min-w-0 items-center gap-2">
-                        <span
-                          className={cn(
-                            "truncate text-sm font-semibold tracking-wide",
-                            usernameEffect.className,
-                          )}
-                          title={`${usernameEffect.name} username effect`}
-                        >
-                          {comment.userName}
-                        </span>
+                        <UserDisplayName
+                          name={comment.userName}
+                          cosmetics={comment.cosmetics}
+                          nameClassName="text-sm"
+                        />
                         <Badge
-                          variant="outline"
-                          className={cn(
-                            "h-5 max-w-[8rem] shrink-0 rounded-full px-2 text-[10px] font-semibold",
-                            levelBadgeTier.className,
-                          )}
-                          title={levelBadgeTier.title}
+                          variant="secondary"
+                          className="h-5 shrink-0 px-1.5 text-[10px] font-medium"
                         >
-                          <span className="truncate">
-                            {levelBadgeTier.title}
-                          </span>
+                          Lv.{comment.userLevel}
                         </Badge>
                       </div>
                     </div>

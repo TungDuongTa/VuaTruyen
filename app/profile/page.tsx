@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { UserRound } from "lucide-react";
 import { auth } from "@/lib/better-auth/auth";
 import { getCurrentUserReadingExpStats } from "@/lib/actions/reading-progress.actions";
+import { getUserCosmeticsMap, getUserWalletSummary } from "@/lib/server/user-cosmetics";
+import { EMPTY_COSMETICS_PUBLIC } from "@/lib/cosmetics/types";
 import { Button } from "@/components/ui/button";
 import { ProfilePageClient } from "@/components/profile/profile-page-client";
 import { withSiteSuffix } from "@/lib/seo";
@@ -51,7 +53,19 @@ export default async function ProfilePage() {
     );
   }
 
-  const readingExp = await getCurrentUserReadingExpStats();
+  const [readingExp, wallet, cosmeticsMap] = await Promise.all([
+    getCurrentUserReadingExpStats(),
+    getUserWalletSummary(session.user.id),
+    getUserCosmeticsMap([session.user.id]),
+  ]);
+
+  const userDescription =
+    typeof (session.user as { description?: unknown }).description === "string"
+      ? String((session.user as { description?: string }).description || "").slice(
+          0,
+          15,
+        )
+      : "";
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,oklch(0.24_0.08_250/.45),transparent_55%),radial-gradient(circle_at_bottom_right,oklch(0.22_0.08_180/.3),transparent_55%)]">
@@ -61,8 +75,11 @@ export default async function ProfilePage() {
             name: session.user.name,
             email: session.user.email,
             image: session.user.image ?? "",
+            description: userDescription,
           }}
           readingExp={readingExp}
+          wallet={wallet}
+          cosmetics={cosmeticsMap.get(session.user.id) ?? EMPTY_COSMETICS_PUBLIC}
         />
       </main>
     </div>

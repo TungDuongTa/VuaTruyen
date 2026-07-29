@@ -11,12 +11,18 @@ let cachedAuthUserCollection: string | null | undefined;
 export type AuthUserProfile = {
   name: string;
   image: string;
+  description: string;
 };
 
 const findAuthUsersByIds = async (
   userIds: Array<ObjectId | string>,
 ): Promise<
-  Array<{ _id?: ObjectId | string; name?: string; image?: string }>
+  Array<{
+    _id?: ObjectId | string;
+    name?: string;
+    image?: string;
+    description?: string;
+  }>
 > => {
   if (userIds.length === 0) return [];
 
@@ -42,7 +48,7 @@ const findAuthUsersByIds = async (
     .collection(cachedAuthUserCollection)
     .find(
       { _id: { $in: userIds as any[] } },
-      { projection: { _id: 1, name: 1, image: 1 } },
+      { projection: { _id: 1, name: 1, image: 1, description: 1 } },
     )
     .toArray();
 };
@@ -72,6 +78,7 @@ export const getAuthUserProfileMap = async (
     profileMap.set(id, {
       name: String(row.name || "").trim() || DEFAULT_USER_NAME,
       image: String(row.image || "").trim(),
+      description: String(row.description || "").trim().slice(0, 15),
     });
   }
 

@@ -4,16 +4,12 @@ import Link from "next/link";
 import { Loader2, LogIn, Send } from "lucide-react";
 import type { CommentViewer } from "@/lib/actions/comment.actions";
 import { COMMENT_MAX_LENGTH } from "@/lib/comments/limits";
-import {
-  getLevelBadgeTier,
-  getLevelUsernameEffect,
-} from "@/lib/level-badge-tiers";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getViewerInitial } from "@/components/comments/comment-utils";
+import { CosmeticAvatar } from "@/components/cosmetics/cosmetic-avatar";
+import { UserDisplayName } from "@/components/cosmetics/user-display-name";
 
 type CommentComposerProps = {
   viewer: CommentViewer;
@@ -48,36 +44,26 @@ export function CommentComposer({
     );
   }
 
-  const viewerUsernameEffect = getLevelUsernameEffect(viewer.level);
-  const viewerLevelBadgeTier = getLevelBadgeTier(viewer.level);
-
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <Avatar className="h-9 w-9 border border-border">
-          <AvatarImage src={viewer.image} alt={viewer.name} />
-          <AvatarFallback>{getViewerInitial(viewer)}</AvatarFallback>
-        </Avatar>
+        <CosmeticAvatar
+          src={viewer.image}
+          alt={viewer.name}
+          fallback={getViewerInitial(viewer)}
+          frameSrc={viewer.cosmetics.avatarFrameSrc}
+          frameScale={viewer.cosmetics.avatarFrameScale}
+          avatarClassName="h-9 w-9"
+        />
         <div>
           <div className="flex items-center gap-2">
-            <p
-              className={cn(
-                "text-sm font-semibold tracking-wide",
-                viewerUsernameEffect.className,
-              )}
-              title={`${viewerUsernameEffect.name} username effect`}
-            >
-              {viewer.name}
-            </p>
-            <Badge
-              variant="outline"
-              className={cn(
-                "h-5 max-w-[8rem] rounded-full px-2 text-[10px] font-semibold",
-                viewerLevelBadgeTier.className,
-              )}
-              title={viewerLevelBadgeTier.title}
-            >
-              <span className="truncate">{viewerLevelBadgeTier.title}</span>
+            <UserDisplayName
+              name={viewer.name}
+              cosmetics={viewer.cosmetics}
+              nameClassName="text-sm"
+            />
+            <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-medium">
+              Lv.{viewer.level}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">

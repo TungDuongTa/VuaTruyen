@@ -3,14 +3,11 @@
 import { CornerDownRight, ThumbsUp } from "lucide-react";
 import type { CommentFeedItem } from "@/lib/actions/comment.actions";
 import { formatRelativeTime } from "@/lib/date-time";
-import {
-  getLevelBadgeTier,
-  getLevelUsernameEffect,
-} from "@/lib/level-badge-tiers";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CosmeticAvatar } from "@/components/cosmetics/cosmetic-avatar";
+import { UserDisplayName } from "@/components/cosmetics/user-display-name";
 
 type CommentRowProps = {
   comment: CommentFeedItem;
@@ -29,9 +26,6 @@ export function CommentRow({
   onLike,
   onReply,
 }: CommentRowProps) {
-  const usernameEffect = getLevelUsernameEffect(comment.userLevel);
-  const levelBadgeTier = getLevelBadgeTier(comment.userLevel);
-
   return (
     <div
       className={cn(
@@ -39,38 +33,25 @@ export function CommentRow({
         nested && "rounded-lg border border-border/55 bg-background/30 p-3",
       )}
     >
-      <Avatar
-        className={cn(
-          "mt-0.5 border border-border",
-          nested ? "h-8 w-8" : "h-9 w-9",
-        )}
-      >
-        <AvatarImage src={comment.userImage} alt={comment.userName} />
-        <AvatarFallback>
-          {comment.userName.charAt(0).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
+      <CosmeticAvatar
+        src={comment.userImage}
+        alt={comment.userName}
+        fallback={comment.userName.charAt(0).toUpperCase()}
+        frameSrc={comment.cosmetics.avatarFrameSrc}
+        frameScale={comment.cosmetics.avatarFrameScale}
+        avatarClassName={nested ? "h-8 w-8" : "h-9 w-9"}
+        fallbackClassName={nested ? "text-xs" : undefined}
+      />
 
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex flex-wrap items-center gap-2">
-          <span
-            className={cn(
-              "text-sm font-semibold tracking-wide",
-              usernameEffect.className,
-            )}
-            title={`${usernameEffect.name} username effect`}
-          >
-            {comment.userName}
-          </span>
-          <Badge
-            variant="outline"
-            className={cn(
-              "h-5 max-w-[8rem] rounded-full px-2 text-[10px] font-semibold",
-              levelBadgeTier.className,
-            )}
-            title={levelBadgeTier.title}
-          >
-            <span className="truncate">{levelBadgeTier.title}</span>
+          <UserDisplayName
+            name={comment.userName}
+            cosmetics={comment.cosmetics}
+            nameClassName="text-sm"
+          />
+          <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-medium">
+            Lv.{comment.userLevel}
           </Badge>
           {comment.chapterName && (
             <Badge

@@ -224,6 +224,8 @@
   --username-glow-rgb: 148 163 184;
   --username-speed: 6s;
   --username-pulse: 3.6s;
+  display: inline-block;
+  max-width: 100%;
   color: var(--username-mid);
   text-shadow:
     0 0 10px rgb(var(--username-glow-rgb) / 0.5),
@@ -251,7 +253,7 @@
   }
 }
 
-.username-mask--pham-nhan {
+.username-mask--slate {
   --username-start: #94a3b8;
   --username-mid: #e2e8f0;
   --username-end: #64748b;
@@ -259,7 +261,7 @@
   --username-speed: 6.3s;
 }
 
-.username-mask--khai-mach {
+.username-mask--stone {
   --username-start: #a8a29e;
   --username-mid: #f5f5f4;
   --username-end: #78716c;
@@ -267,7 +269,7 @@
   --username-speed: 6.1s;
 }
 
-.username-mask--tu-khi {
+.username-mask--amber {
   --username-start: #f59e0b;
   --username-mid: #fde68a;
   --username-end: #f97316;
@@ -275,7 +277,7 @@
   --username-speed: 5.9s;
 }
 
-.username-mask--luyen-cot {
+.username-mask--rose {
   --username-start: #f43f5e;
   --username-mid: #ffe4e6;
   --username-end: #f97316;
@@ -283,7 +285,7 @@
   --username-speed: 5.7s;
 }
 
-.username-mask--hoa-kinh {
+.username-mask--fuchsia {
   --username-start: #f5d0fe;
   --username-mid: #fdf4ff;
   --username-end: #d946ef;
@@ -291,7 +293,7 @@
   --username-speed: 5.6s;
 }
 
-.username-mask--dia-sat {
+.username-mask--blue {
   --username-start: #93c5fd;
   --username-mid: #eff6ff;
   --username-end: #2563eb;
@@ -299,7 +301,7 @@
   --username-speed: 5.5s;
 }
 
-.username-mask--thien-cuong {
+.username-mask--gold {
   --username-start: #facc15;
   --username-mid: #fef9c3;
   --username-end: #fb923c;
@@ -307,7 +309,7 @@
   --username-speed: 5.3s;
 }
 
-.username-mask--huyen-anh {
+.username-mask--indigo {
   --username-start: #6366f1;
   --username-mid: #e0e7ff;
   --username-end: #8b5cf6;
@@ -315,7 +317,7 @@
   --username-speed: 5.2s;
 }
 
-.username-mask--linh-hai {
+.username-mask--cyan {
   --username-start: #22d3ee;
   --username-mid: #cffafe;
   --username-end: #3b82f6;
@@ -323,7 +325,7 @@
   --username-speed: 5.1s;
 }
 
-.username-mask--chan-nguyen {
+.username-mask--emerald {
   --username-start: #10b981;
   --username-mid: #d1fae5;
   --username-end: #22d3ee;
@@ -331,7 +333,7 @@
   --username-speed: 4.9s;
 }
 
-.username-mask--vo-tong {
+.username-mask--sky {
   --username-start: #60a5fa;
   --username-mid: #dbeafe;
   --username-end: #4f46e5;
@@ -339,7 +341,7 @@
   --username-speed: 4.8s;
 }
 
-.username-mask--vo-vuong {
+.username-mask--violet-pink {
   --username-start: #4f46e5;
   --username-mid: #f5d0fe;
   --username-end: #ec4899;
@@ -347,7 +349,7 @@
   --username-speed: 4.7s;
 }
 
-.username-mask--vo-hoang {
+.username-mask--lavender {
   --username-start: #a78bfa;
   --username-mid: #ede9fe;
   --username-end: #c026d3;
@@ -355,7 +357,7 @@
   --username-speed: 4.6s;
 }
 
-.username-mask--vo-ton {
+.username-mask--violet-cyan {
   --username-start: #8b5cf6;
   --username-mid: #e0f2fe;
   --username-end: #22d3ee;
@@ -363,7 +365,7 @@
   --username-speed: 4.5s;
 }
 
-.username-mask--vo-thanh {
+.username-mask--peach {
   --username-start: #fb7185;
   --username-mid: #ffe4e6;
   --username-end: #f97316;
@@ -371,7 +373,7 @@
   --username-speed: 4.4s;
 }
 
-.username-mask--thien-thanh {
+.username-mask--amber-bright {
   --username-start: #f59e0b;
   --username-mid: #fef3c7;
   --username-end: #fb923c;
@@ -379,7 +381,7 @@
   --username-speed: 4.3s;
 }
 
-.username-mask--than-vo {
+.username-mask--mint {
   --username-start: #34d399;
   --username-mid: #d1fae5;
   --username-end: #22d3ee;
@@ -387,7 +389,7 @@
   --username-speed: 4.2s;
 }
 
-.username-mask--thien-de {
+.username-mask--lime {
   --username-start: #84cc16;
   --username-mid: #ecfccb;
   --username-end: #facc15;
@@ -395,7 +397,7 @@
   --username-speed: 4.1s;
 }
 
-.username-mask--chi-ton {
+.username-mask--magenta-gold {
   --username-start: #d946ef;
   --username-mid: #fae8ff;
   --username-end: #facc15;
@@ -404,13 +406,36 @@
   --username-pulse: 2.8s;
 }
 
-.username-mask--than-chu {
+.username-mask--rainbow {
   --username-start: #f472b6;
   --username-mid: #fef08a;
   --username-end: #67e8f9;
   --username-glow-rgb: 250 204 21;
   --username-speed: 3.9s;
   --username-pulse: 2.5s;
+}
+
+.profile-banner {
+  background-size: cover;
+  background-position: center;
+}
+
+.profile-banner--sunset {
+  background-image: linear-gradient(
+    120deg,
+    #fb923c 0%,
+    #c026d3 45%,
+    #312e81 100%
+  );
+}
+
+.profile-banner--galaxy {
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgb(56 189 248 / 0.35), transparent 35%),
+    radial-gradient(circle at 80% 30%, rgb(167 139 250 / 0.35), transparent 30%),
+    radial-gradient(circle at 50% 80%, rgb(244 114 182 / 0.25), transparent 40%),
+    linear-gradient(135deg, #0f172a, #1e1b4b 55%, #312e81);
 }
 
 /* Custom scrollbar for manga theme */

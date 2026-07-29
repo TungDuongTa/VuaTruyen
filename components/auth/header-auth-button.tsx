@@ -1,15 +1,52 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { User } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { CosmeticAvatar } from "@/components/cosmetics/cosmetic-avatar";
+import { getCurrentUserCosmeticsPublic } from "@/lib/actions/cosmetics.actions";
+import { COSMETICS_UPDATED_EVENT } from "@/lib/cosmetics/events";
+import {
+  EMPTY_COSMETICS_PUBLIC,
+  type UserCosmeticsPublic,
+} from "@/lib/cosmetics/types";
 import { authClient } from "@/lib/better-auth/auth-client";
 
 export function HeaderAuthButton() {
-  // Session is loaded client-side so the layout stays statically renderable.
+  const pathname = usePathname();
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
+  const [cosmetics, setCosmetics] = useState<UserCosmeticsPublic>(
+    EMPTY_COSMETICS_PUBLIC,
+  );
+
+  useEffect(() => {
+    if (!user?.id) {
+      setCosmetics(EMPTY_COSMETICS_PUBLIC);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadCosmetics = async () => {
+      const next = await getCurrentUserCosmeticsPublic();
+      if (!cancelled) setCosmetics(next);
+    };
+
+    void loadCosmetics();
+
+    const onCosmeticsUpdated = () => {
+      void loadCosmetics();
+    };
+
+    window.addEventListener(COSMETICS_UPDATED_EVENT, onCosmeticsUpdated);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(COSMETICS_UPDATED_EVENT, onCosmeticsUpdated);
+    };
+  }, [user?.id, pathname]);
 
   if (isPending) {
     return (
@@ -27,11 +64,20 @@ export function HeaderAuthButton() {
       "U";
 
     return (
-      <Link href="/profile" aria-label="View profile">
-        <Avatar className="h-9 w-9 border border-border">
-          <AvatarImage src={user.image ?? ""} alt={user.name} />
-          <AvatarFallback>{userInitial}</AvatarFallback>
-        </Avatar>
+      <Link
+        href="/profile"
+        aria-label="View profile"
+        className="relative z-10 inline-flex overflow-visible"
+      >
+        <CosmeticAvatar
+          src={user.image || undefined}
+          alt={user.name || "User"}
+          fallback={userInitial}
+          frameSrc={cosmetics.avatarFrameSrc}
+          frameScale={cosmetics.avatarFrameScale}
+          avatarClassName="h-9 w-9"
+          fallbackClassName="text-sm"
+        />
       </Link>
     );
   }

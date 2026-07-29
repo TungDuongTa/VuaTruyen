@@ -27,6 +27,16 @@ export const getAuth = async () => {
       maxPasswordLength: 128,
       autoSignIn: true,
     },
+    user: {
+      additionalFields: {
+        description: {
+          type: "string",
+          required: false,
+          defaultValue: "",
+          input: true,
+        },
+      },
+    },
     socialProviders: {
       google: {
         prompt: "select_account",
