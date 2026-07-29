@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { searchComicsQuick } from "@/lib/actions/manga-actions";
+import { buildBrowseHref } from "@/lib/browse-params";
 import { formatRelativeTime } from "@/lib/date-time";
 import { OTruyenComic } from "@/types/manga-types";
 
@@ -78,9 +79,10 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 
   const navigateToBrowse = useCallback(() => {
     const trimmedQuery = query.trim();
-    const href = trimmedQuery
-      ? `/browse?q=${encodeURIComponent(trimmedQuery)}`
-      : "/browse";
+    const href = buildBrowseHref({
+      query: trimmedQuery,
+      page: 1,
+    });
 
     onOpenChange(false);
     setQuery("");
