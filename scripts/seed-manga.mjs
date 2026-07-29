@@ -23,7 +23,6 @@ const MANGA_SEED = [
     authors: ["Chugong"],
     categories: ["action", "fantasy"],
     tags: [],
-    isFeatured: true,
     chapterCount: 5,
   },
   {
@@ -36,7 +35,6 @@ const MANGA_SEED = [
     authors: ["Eiichiro Oda"],
     categories: ["action", "comedy", "fantasy"],
     tags: [],
-    isFeatured: true,
     chapterCount: 5,
   },
   {
@@ -49,7 +47,6 @@ const MANGA_SEED = [
     authors: ["SIU"],
     categories: ["action", "fantasy", "drama"],
     tags: [],
-    isFeatured: true,
     chapterCount: 4,
   },
   {
@@ -62,7 +59,6 @@ const MANGA_SEED = [
     authors: ["232"],
     categories: ["romance", "comedy", "slice-of-life"],
     tags: [],
-    isFeatured: false,
     chapterCount: 3,
   },
   {
@@ -75,7 +71,6 @@ const MANGA_SEED = [
     authors: ["sing N song"],
     categories: ["action", "fantasy", "drama"],
     tags: [],
-    isFeatured: true,
     chapterCount: 4,
   },
   {
@@ -87,7 +82,6 @@ const MANGA_SEED = [
     authors: ["Unknown"],
     categories: ["horror", "drama"],
     tags: [],
-    isFeatured: false,
     chapterCount: 3,
   },
   {
@@ -100,7 +94,6 @@ const MANGA_SEED = [
     authors: ["Lee MC"],
     categories: ["isekai", "action", "fantasy"],
     tags: [],
-    isFeatured: false,
     chapterCount: 4,
   },
   {
@@ -112,7 +105,6 @@ const MANGA_SEED = [
     authors: ["Anonymous"],
     categories: ["romance", "drama"],
     tags: ["18+"],
-    isFeatured: false,
     chapterCount: 3,
   },
   {
@@ -124,7 +116,6 @@ const MANGA_SEED = [
     authors: ["Night Owl"],
     categories: ["romance", "comedy"],
     tags: ["18+"],
-    isFeatured: false,
     chapterCount: 3,
   },
   {
@@ -136,7 +127,6 @@ const MANGA_SEED = [
     authors: ["Velvet Studio"],
     categories: ["romance", "drama"],
     tags: ["18+"],
-    isFeatured: false,
     chapterCount: 3,
   },
   {
@@ -148,7 +138,6 @@ const MANGA_SEED = [
     authors: ["Memory Lane"],
     categories: ["slice-of-life", "romance", "comedy"],
     tags: [],
-    isFeatured: false,
     chapterCount: 3,
   },
   {
@@ -160,7 +149,6 @@ const MANGA_SEED = [
     authors: ["Fan Studio"],
     categories: ["action", "fantasy"],
     tags: [],
-    isFeatured: false,
     chapterCount: 0,
   },
 ];
@@ -222,7 +210,6 @@ async function main() {
       authors: seed.authors,
       categories,
       tags,
-      isFeatured: seed.isFeatured,
       latestChapterName,
       chapterCount: seed.chapterCount,
       createdAt: updatedAt,

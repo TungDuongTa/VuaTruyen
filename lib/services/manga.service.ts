@@ -173,25 +173,26 @@ const queryMangaList = async (
   };
 };
 
-export const getHomeMangaData = async (): Promise<OTruyenComic[]> => {
+export const getMangaBySlugs = async (
+  slugs: string[],
+): Promise<OTruyenComic[]> => {
   await connectToDatabase();
 
-  const featured = await MangaModel.find({ isFeatured: true })
+  const normalized = slugs.map((slug) => slug.trim()).filter(Boolean);
+  if (normalized.length === 0) return [];
+
+  const docs = await MangaModel.find({ slug: { $in: normalized } })
     .select(MANGA_CARD_FIELDS)
-    .sort({ updatedAt: -1, _id: -1 })
-    .limit(12)
     .lean();
 
-  const fallback =
-    featured.length > 0
-      ? featured
-      : await MangaModel.find({})
-          .select(MANGA_CARD_FIELDS)
-          .sort({ updatedAt: -1, _id: -1 })
-          .limit(12)
-          .lean();
+  const bySlug = new Map(
+    docs.map((doc) => [String(doc.slug), doc as Record<string, unknown>]),
+  );
 
-  return fallback.map((doc) => toMangaCard(doc as Record<string, unknown>));
+  return normalized
+    .map((slug) => bySlug.get(slug))
+    .filter((doc): doc is Record<string, unknown> => Boolean(doc))
+    .map((doc) => toMangaCard(doc));
 };
 
 export const getMangaList = async (

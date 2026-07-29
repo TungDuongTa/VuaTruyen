@@ -25,7 +25,6 @@ const mangaSchema = new Schema(
     authors: { type: [String], default: [] },
     categories: { type: [mangaCategorySchema], default: [] },
     tags: { type: [String], default: [], index: true },
-    isFeatured: { type: Boolean, default: false, index: true },
     latestChapterName: { type: String, default: "" },
     chapterCount: { type: Number, default: 0 },
   },

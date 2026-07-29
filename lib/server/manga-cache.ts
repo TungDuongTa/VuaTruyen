@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import {
-  getHomeMangaData,
   getMangaByCategory,
+  getMangaBySlugs,
   getMangaCardFields,
   getMangaCategories,
   getMangaDetail,
@@ -10,6 +10,7 @@ import {
   type MangaCardFields,
   type MangaListType,
 } from "@/lib/services/manga.service";
+import { HERO_MANGA_SLUGS } from "@/lib/home-config";
 import {
   fetchMangaRankings,
   type MangaRankings,
@@ -153,18 +154,18 @@ export async function getCachedCategories(): Promise<Category[]> {
   return getMangaCategories();
 }
 
-async function getCachedHomeDataAt(gen: number): Promise<OTruyenComic[]> {
+async function getCachedHeroMangaAt(gen: number): Promise<OTruyenComic[]> {
   "use cache: remote";
   cacheLife(MANGA_LISTS_LIFE);
   cacheTag(CACHE_TAGS.mangaLists);
   cacheTag(`catalog-gen:${gen}`);
-  const items = await getHomeMangaData();
+  const items = await getMangaBySlugs([...HERO_MANGA_SLUGS]);
   await warmCatalogEntries(items, gen);
   return alignListItemsWithCardCache(items, gen);
 }
 
-export async function getCachedHomeData(): Promise<OTruyenComic[]> {
-  return getCachedHomeDataAt(await getCatalogGeneration());
+export async function getCachedHeroManga(): Promise<OTruyenComic[]> {
+  return getCachedHeroMangaAt(await getCatalogGeneration());
 }
 
 async function getCachedMangaListAt(

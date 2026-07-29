@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { cacheLife } from "next/cache";
 import {
-  getCachedHomeData,
+  getCachedHeroManga,
   getCachedMangaList,
   getCachedMangaRankings,
 } from "@/lib/server/manga-cache";
@@ -36,14 +36,14 @@ const getPublicMangaEntries = async () => {
 
   try {
     const [
-      homeData,
+      heroData,
       latestData,
       completedData,
       ongoingData,
       rankingData,
       allEntries,
     ] = await Promise.all([
-      getCachedHomeData(),
+      getCachedHeroManga(),
       getCachedMangaList("truyen-moi", 1, DEFAULT_PAGE_SIZE, ""),
       getCachedMangaList("hoan-thanh", 1, DEFAULT_PAGE_SIZE, ""),
       getCachedMangaList("dang-phat-hanh", 1, DEFAULT_PAGE_SIZE, ""),
@@ -77,7 +77,7 @@ const getPublicMangaEntries = async () => {
       }
     };
 
-    addItems(homeData);
+    addItems(heroData);
     addItems(latestData.items);
     addItems(completedData.items);
     addItems(ongoingData.items);

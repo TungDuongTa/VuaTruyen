@@ -6,7 +6,7 @@ import {
 } from "@/lib/services/manga.service";
 import {
   getCachedCategories,
-  getCachedHomeData,
+  getCachedHeroManga,
   getCachedMangaByCategory,
   getCachedMangaDetail,
   getCachedMangaList,
@@ -47,8 +47,8 @@ async function safeQuery<T>(
   }
 }
 
-export async function getHomeData(): Promise<OTruyenComic[]> {
-  const items = await safeQuery("home data", () => getCachedHomeData());
+export async function getHeroManga(): Promise<OTruyenComic[]> {
+  const items = await safeQuery("hero manga", () => getCachedHeroManga());
   return items || [];
 }
 
