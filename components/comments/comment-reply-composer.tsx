@@ -2,14 +2,12 @@
 
 import { Loader2, Send } from "lucide-react";
 import { COMMENT_MAX_LENGTH } from "@/lib/comments/limits";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 type CommentReplyComposerProps = {
   userName: string;
   value: string;
-  nested?: boolean;
   isSubmitting: boolean;
   onChange: (value: string) => void;
   onCancel: () => void;
@@ -19,19 +17,13 @@ type CommentReplyComposerProps = {
 export function CommentReplyComposer({
   userName,
   value,
-  nested = false,
   isSubmitting,
   onChange,
   onCancel,
   onSubmit,
 }: CommentReplyComposerProps) {
   return (
-    <div
-      className={cn(
-        "mt-2 rounded-lg border border-border/70 bg-background/45 p-3",
-        nested ? "ml-10" : "ml-11",
-      )}
-    >
+    <div className="ml-11 mt-2 rounded-lg border border-border/70 bg-background/45 p-3">
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}

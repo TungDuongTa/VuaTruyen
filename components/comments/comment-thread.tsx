@@ -2,26 +2,20 @@
 
 import { CornerDownRight } from "lucide-react";
 import type { CommentFeedItem } from "@/lib/actions/comment.actions";
-import { COMMENT_MAX_DEPTH } from "@/lib/comments/limits";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CommentReplyComposer } from "@/components/comments/comment-reply-composer";
 import { CommentRow } from "@/components/comments/comment-row";
-import { getCommentDepth } from "@/components/comments/comment-utils";
+import { canReceiveReply } from "@/components/comments/comment-utils";
 
 type CommentThreadProps = {
   root: CommentFeedItem;
-  commentsById: Map<string, CommentFeedItem>;
-  childrenByParentId: Map<string, CommentFeedItem[]>;
-  descendantCountById: Map<string, number>;
+  replies: CommentFeedItem[];
   isExpanded: boolean;
-  collapsedReplyThreads: Set<string>;
   activeReplyId: string | null;
   replyDrafts: Record<string, string>;
   submittingReplyTo: string | null;
   likingCommentIds: Set<string>;
   onToggleExpanded: (expanded: boolean) => void;
-  onToggleChildExpanded: (commentId: string, expanded: boolean) => void;
   onStartReply: (comment: CommentFeedItem) => void;
   onCancelReply: () => void;
   onReplyDraftChange: (commentId: string, value: string) => void;
@@ -31,114 +25,41 @@ type CommentThreadProps = {
 
 export function CommentThread({
   root,
-  commentsById,
-  childrenByParentId,
-  descendantCountById,
+  replies,
   isExpanded,
-  collapsedReplyThreads,
   activeReplyId,
   replyDrafts,
   submittingReplyTo,
   likingCommentIds,
   onToggleExpanded,
-  onToggleChildExpanded,
   onStartReply,
   onCancelReply,
   onReplyDraftChange,
   onReplySubmit,
   onLike,
 }: CommentThreadProps) {
-  const totalReplies = descendantCountById.get(root.id) || 0;
-  const rootDepth = getCommentDepth(root, commentsById);
-
-  const renderReplyComposer = (comment: CommentFeedItem, nested: boolean) => {
-    if (activeReplyId !== comment.id) return null;
-
-    return (
-      <CommentReplyComposer
-        userName={comment.userName}
-        value={replyDrafts[comment.id] || ""}
-        nested={nested}
-        isSubmitting={submittingReplyTo === comment.id}
-        onChange={(value) => onReplyDraftChange(comment.id, value)}
-        onCancel={onCancelReply}
-        onSubmit={() => onReplySubmit(comment)}
-      />
-    );
-  };
-
-  const renderChildren = (parentId: string, depth: number) => {
-    const children = childrenByParentId.get(parentId) || [];
-    if (children.length === 0) return null;
-
-    return (
-      <div className={cn("space-y-2", depth > 1 && "ml-6")}>
-        {children.map((child) => {
-          const childDepth = getCommentDepth(child, commentsById);
-          const canReply = childDepth < COMMENT_MAX_DEPTH;
-          const hasGrandchildren =
-            (childrenByParentId.get(child.id) || []).length > 0;
-          const grandChildCount = hasGrandchildren
-            ? descendantCountById.get(child.id) ||
-              (childrenByParentId.get(child.id) || []).length
-            : 0;
-          const isChildExpanded = !collapsedReplyThreads.has(child.id);
-
-          return (
-            <div key={child.id} className="relative">
-              <span className="absolute -left-4 top-4 h-px w-4 bg-border/60" />
-              <CommentRow
-                comment={child}
-                nested
-                canReply={canReply}
-                isLiking={likingCommentIds.has(child.id)}
-                onLike={() => onLike(child)}
-                onReply={() => onStartReply(child)}
-              />
-              {renderReplyComposer(child, true)}
-
-              {hasGrandchildren && (
-                <div className="ml-10 mt-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs text-primary hover:text-primary"
-                    onClick={() =>
-                      onToggleChildExpanded(child.id, !isChildExpanded)
-                    }
-                  >
-                    <CornerDownRight className="mr-1 h-3.5 w-3.5" />
-                    {isChildExpanded
-                      ? "Ẩn bớt bình luận"
-                      : `Xem thêm ${grandChildCount} bình luận `}
-                  </Button>
-                </div>
-              )}
-
-              {hasGrandchildren && isChildExpanded && (
-                <div className="relative ml-4 mt-2 pl-4">
-                  <span className="absolute bottom-0 left-0 top-0 w-px bg-border/60" />
-                  {renderChildren(child.id, depth + 1)}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+  const totalReplies = replies.length;
 
   return (
     <article className="rounded-xl border border-border/70 bg-secondary/35 p-4">
       <CommentRow
         comment={root}
-        canReply={rootDepth < COMMENT_MAX_DEPTH}
+        canReply={canReceiveReply(root)}
         isLiking={likingCommentIds.has(root.id)}
         onLike={() => onLike(root)}
         onReply={() => onStartReply(root)}
       />
-      {renderReplyComposer(root, false)}
+
+      {activeReplyId === root.id && (
+        <CommentReplyComposer
+          userName={root.userName}
+          value={replyDrafts[root.id] || ""}
+          isSubmitting={submittingReplyTo === root.id}
+          onChange={(value) => onReplyDraftChange(root.id, value)}
+          onCancel={onCancelReply}
+          onSubmit={() => onReplySubmit(root)}
+        />
+      )}
 
       {totalReplies > 0 && (
         <div className="ml-11 mt-1">
@@ -158,9 +79,21 @@ export function CommentThread({
       )}
 
       {isExpanded && totalReplies > 0 && (
-        <div className="relative ml-11 mt-2 pl-4">
+        <div className="relative ml-11 mt-2 space-y-2 pl-4">
           <span className="absolute bottom-0 left-0 top-0 w-px bg-border/60" />
-          {renderChildren(root.id, 1)}
+          {replies.map((reply) => (
+            <div key={reply.id} className="relative">
+              <span className="absolute -left-4 top-4 h-px w-4 bg-border/60" />
+              <CommentRow
+                comment={reply}
+                nested
+                canReply={false}
+                isLiking={likingCommentIds.has(reply.id)}
+                onLike={() => onLike(reply)}
+                onReply={() => onStartReply(reply)}
+              />
+            </div>
+          ))}
         </div>
       )}
     </article>

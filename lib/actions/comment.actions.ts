@@ -158,37 +158,6 @@ const getLikeRateLimitMessage = async (userId: string) => {
   return null;
 };
 
-/** Depth 0 = top-level. Walks parents; caps early once past max. */
-const getCommentDepthById = async (
-  commentId: Types.ObjectId,
-): Promise<number> => {
-  let depth = 0;
-  let nextId: string | null = String(commentId);
-  const visited = new Set<string>();
-
-  for (let i = 0; i <= COMMENT_MAX_DEPTH + 1; i += 1) {
-    if (!nextId || visited.has(nextId) || !Types.ObjectId.isValid(nextId)) {
-      break;
-    }
-    visited.add(nextId);
-
-    const rows: Array<{ parentCommentId?: Types.ObjectId | null }> =
-      await CommentModel.find({ _id: nextId })
-        .select("parentCommentId")
-        .limit(1)
-        .lean();
-
-    const parentId = rows[0]?.parentCommentId;
-    if (!parentId) return depth;
-
-    depth += 1;
-    if (depth > COMMENT_MAX_DEPTH) return depth;
-    nextId = String(parentId);
-  }
-
-  return depth;
-};
-
 const buildCommentPagination = (
   page: number,
   pageSize: number,
@@ -325,46 +294,25 @@ const toFeedItem = (
   };
 };
 
-const fetchDescendantsForParents = async (
+/** At max depth 1, only direct replies to top-level comments are loaded. */
+const fetchDirectRepliesForParents = async (
   scopeQuery: Record<string, unknown>,
   parentIds: string[],
 ) => {
-  const normalizedParentIds = Array.from(
+  const parentObjectIds = Array.from(
     new Set(parentIds.map((id) => String(id || "").trim()).filter(Boolean)),
-  );
+  )
+    .filter((id) => Types.ObjectId.isValid(id))
+    .map((id) => new Types.ObjectId(id));
 
-  if (!normalizedParentIds.length) {
-    return [] as any[];
-  }
+  if (parentObjectIds.length === 0) return [] as any[];
 
-  const descendants: any[] = [];
-  const visitedParentIds = new Set<string>();
-  let currentParentIds = normalizedParentIds;
-
-  while (currentParentIds.length > 0) {
-    const batchIds = currentParentIds.filter((id) => !visitedParentIds.has(id));
-    if (!batchIds.length) break;
-    const parentObjectIds = batchIds
-      .filter((id) => Types.ObjectId.isValid(id))
-      .map((id) => new Types.ObjectId(id));
-    if (!parentObjectIds.length) break;
-
-    batchIds.forEach((id) => visitedParentIds.add(id));
-
-    const rows = await CommentModel.find({
-      ...scopeQuery,
-      parentCommentId: { $in: parentObjectIds },
-    })
-      .select(COMMENT_PROJECTION)
-      .lean();
-
-    if (!rows.length) break;
-
-    descendants.push(...rows);
-    currentParentIds = rows.map((row: any) => String(row._id));
-  }
-
-  return descendants;
+  return CommentModel.find({
+    ...scopeQuery,
+    parentCommentId: { $in: parentObjectIds },
+  })
+    .select(COMMENT_PROJECTION)
+    .lean();
 };
 
 const getPaginatedCommentDocs = async (
@@ -409,7 +357,7 @@ const getPaginatedCommentDocs = async (
       .lean();
   }
 
-  const descendants = await fetchDescendantsForParents(
+  const descendants = await fetchDirectRepliesForParents(
     scopeQuery,
     topLevelDocs.map((doc: any) => String(doc._id)),
   );
@@ -653,8 +601,14 @@ export const createComment = async (
       return { success: false, message: "Parent comment not found." };
     }
 
-    const parentDepth = await getCommentDepthById(parentObjectId);
-    if (parentDepth >= COMMENT_MAX_DEPTH) {
+    if (COMMENT_MAX_DEPTH <= 0) {
+      return {
+        success: false,
+        message: `Chỉ được trả lời tối đa ${COMMENT_MAX_DEPTH} cấp.`,
+      };
+    }
+
+    if (parent.parentCommentId) {
       return {
         success: false,
         message: `Chỉ được trả lời tối đa ${COMMENT_MAX_DEPTH} cấp.`,

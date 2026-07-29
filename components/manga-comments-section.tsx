@@ -22,9 +22,8 @@ import { CommentComposer } from "@/components/comments/comment-composer";
 import { CommentThread } from "@/components/comments/comment-thread";
 import {
   COMMENTS_PAGE_SIZE,
-  getCommentDepth,
+  canReceiveReply,
   normalizeComment,
-  resolveThreadRootId,
   sortNewestFirst,
   sortOldestFirst,
 } from "@/components/comments/comment-utils";
@@ -65,9 +64,6 @@ export function MangaCommentsSection({
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(
     new Set(),
   );
-  const [collapsedReplyThreads, setCollapsedReplyThreads] = useState<
-    Set<string>
-  >(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittingReplyTo, setSubmittingReplyTo] = useState<string | null>(
@@ -106,11 +102,6 @@ export function MangaCommentsSection({
     [chapterName, isChapterScope],
   );
 
-  const commentsById = useMemo(
-    () => new Map(comments.map((comment) => [comment.id, comment])),
-    [comments],
-  );
-
   const childrenByParentId = useMemo(() => {
     const map = new Map<string, CommentFeedItem[]>();
     for (const comment of comments) {
@@ -134,30 +125,6 @@ export function MangaCommentsSection({
         .sort(sortNewestFirst),
     [comments],
   );
-
-  const descendantCountById = useMemo(() => {
-    const memo = new Map<string, number>();
-
-    const countChildren = (parentId: string): number => {
-      if (memo.has(parentId)) return memo.get(parentId) || 0;
-
-      const children = childrenByParentId.get(parentId) || [];
-      let total = children.length;
-
-      for (const child of children) {
-        total += countChildren(child.id);
-      }
-
-      memo.set(parentId, total);
-      return total;
-    };
-
-    const result = new Map<string, number>();
-    for (const comment of comments) {
-      result.set(comment.id, countChildren(comment.id));
-    }
-    return result;
-  }, [childrenByParentId, comments]);
 
   const visiblePages = useMemo(
     () => getVisiblePages(currentPage, pagination.totalPages, 5),
@@ -209,7 +176,6 @@ export function MangaCommentsSection({
   useEffect(() => {
     setCurrentPage(1);
     setExpandedThreads(new Set());
-    setCollapsedReplyThreads(new Set());
     setActiveReplyId(null);
     setReplyDrafts({});
   }, [chapterName, comicSlug, isChapterScope]);
@@ -227,18 +193,6 @@ export function MangaCommentsSection({
     });
   };
 
-  const setChildThreadExpanded = (commentId: string, expanded: boolean) => {
-    setCollapsedReplyThreads((prev) => {
-      const next = new Set(prev);
-      if (expanded) next.delete(commentId);
-      else next.add(commentId);
-      return next;
-    });
-  };
-
-  const getRootIdForComment = (comment: CommentFeedItem) =>
-    resolveThreadRootId(comment, commentsById);
-
   const handleStartReply = (comment: CommentFeedItem) => {
     if (!viewer) {
       toast.error("Vui lòng đăng nhập để trả lời bình luận.");
@@ -246,14 +200,13 @@ export function MangaCommentsSection({
       return;
     }
 
-    if (getCommentDepth(comment, commentsById) >= COMMENT_MAX_DEPTH) {
+    if (!canReceiveReply(comment)) {
       toast.error(`Chỉ được trả lời tối đa ${COMMENT_MAX_DEPTH} cấp.`);
       return;
     }
 
-    const rootId = getRootIdForComment(comment);
     setActiveReplyId(comment.id);
-    setThreadExpanded(rootId, true);
+    setThreadExpanded(comment.id, true);
   };
 
   const handleSubmitRootComment = async () => {
@@ -306,7 +259,7 @@ export function MangaCommentsSection({
       return;
     }
 
-    if (getCommentDepth(targetComment, commentsById) >= COMMENT_MAX_DEPTH) {
+    if (!canReceiveReply(targetComment)) {
       toast.error(`Chỉ được trả lời tối đa ${COMMENT_MAX_DEPTH} cấp.`);
       return;
     }
@@ -317,7 +270,6 @@ export function MangaCommentsSection({
       return;
     }
 
-    const rootId = getRootIdForComment(targetComment);
     setSubmittingReplyTo(targetComment.id);
     try {
       const result = await createComment({
@@ -335,7 +287,7 @@ export function MangaCommentsSection({
 
       setReplyDrafts((prev) => ({ ...prev, [targetComment.id]: "" }));
       setActiveReplyId(null);
-      setThreadExpanded(rootId, true);
+      setThreadExpanded(targetComment.id, true);
 
       if (result.comment) {
         const normalizedReply = normalizeComment(
@@ -448,7 +400,6 @@ export function MangaCommentsSection({
     if (nextPage < 1 || nextPage > pagination.totalPages) return;
     if (nextPage === currentPage) return;
     setExpandedThreads(new Set());
-    setCollapsedReplyThreads(new Set());
     setActiveReplyId(null);
     setReplyDrafts({});
     setCurrentPage(nextPage);
@@ -502,11 +453,8 @@ export function MangaCommentsSection({
               <CommentThread
                 key={parent.id}
                 root={parent}
-                commentsById={commentsById}
-                childrenByParentId={childrenByParentId}
-                descendantCountById={descendantCountById}
+                replies={childrenByParentId.get(parent.id) || []}
                 isExpanded={expandedThreads.has(parent.id)}
-                collapsedReplyThreads={collapsedReplyThreads}
                 activeReplyId={activeReplyId}
                 replyDrafts={replyDrafts}
                 submittingReplyTo={submittingReplyTo}
@@ -514,7 +462,6 @@ export function MangaCommentsSection({
                 onToggleExpanded={(expanded) =>
                   setThreadExpanded(parent.id, expanded)
                 }
-                onToggleChildExpanded={setChildThreadExpanded}
                 onStartReply={handleStartReply}
                 onCancelReply={() => setActiveReplyId(null)}
                 onReplyDraftChange={(commentId, value) =>
