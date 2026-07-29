@@ -136,6 +136,24 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/browse",
+        has: [{ type: "query", key: "type", value: "manga" }],
+        destination: "/browse/filtered?genres=manga",
+        permanent: true,
+      },
+      {
+        source: "/browse",
+        has: [{ type: "query", key: "type", value: "manhwa" }],
+        destination: "/browse/filtered?genres=manhwa",
+        permanent: true,
+      },
+      {
+        source: "/browse",
+        has: [{ type: "query", key: "type", value: "manhua" }],
+        destination: "/browse/filtered?genres=manhua",
+        permanent: true,
+      },
+      {
         source: "/browse/page-:page",
         has: [{ type: "query", key: "q" }],
         destination: "/browse/filtered/page-:page",

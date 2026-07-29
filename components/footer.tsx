@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buildBrowseHref } from "@/lib/browse-params";
 import { CONTACT_EMAIL } from "@/lib/site-config";
 
 export function Footer() {
@@ -7,17 +8,17 @@ export function Footer() {
 
   const footerLinks = {
     browse: [
-      { label: "Manga", href: "/browse?type=manga" },
-      { label: "Manhwa", href: "/browse?type=manhwa" },
-      { label: "Manhua", href: "/browse?type=manhua" },
+      { label: "Manga", href: buildBrowseHref({ genre: "manga" }) },
+      { label: "Manhwa", href: buildBrowseHref({ genre: "manhwa" }) },
+      { label: "Manhua", href: buildBrowseHref({ genre: "manhua" }) },
       { label: "18+ ", href: "/18+" },
       { label: "Khám phá", href: "/browse" },
     ],
     genres: [
-      { label: "Action", href: "/browse?genre=action" },
-      { label: "Romance", href: "/browse?genre=romance" },
-      { label: "Fantasy", href: "/browse?genre=fantasy" },
-      { label: "Comedy", href: "/browse?genre=comedy" },
+      { label: "Action", href: buildBrowseHref({ genre: "action" }) },
+      { label: "Romance", href: buildBrowseHref({ genre: "romance" }) },
+      { label: "Fantasy", href: buildBrowseHref({ genre: "fantasy" }) },
+      { label: "Comedy", href: buildBrowseHref({ genre: "comedy" }) },
     ],
     community: [
       { label: "Giới thiệu", href: "/about" },

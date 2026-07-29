@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookmarkToggle } from "@/hooks/use-bookmark-toggle";
+import { buildBrowseHref } from "@/lib/browse-params";
 import { formatRelativeTime } from "@/lib/date-time";
 import { formatViewCount } from "@/lib/format";
 import { toast } from "sonner";
@@ -183,7 +184,10 @@ export function MangaDetailPageClient({
 
               <div className="mb-6 flex flex-wrap gap-2">
                 {comic.category.map((cat) => (
-                  <Link key={cat.id} href={`/browse?genres=${cat.slug}`}>
+                  <Link
+                    key={cat.id}
+                    href={buildBrowseHref({ genre: cat.slug })}
+                  >
                     <Badge
                       variant="secondary"
                       className="cursor-pointer hover:bg-secondary/80"

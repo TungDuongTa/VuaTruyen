@@ -7,6 +7,7 @@ import {
 } from "@/components/home-sidebar";
 import { MangaCardApi } from "@/components/manga-card-api";
 import { getHomeData, getListByType } from "@/lib/actions/manga-actions";
+import { buildBrowseHref } from "@/lib/browse-params";
 import {
   SITE_ALTERNATE_NAME,
   SITE_DESCRIPTION,
@@ -125,7 +126,7 @@ export default async function HomePage() {
               Truyện đã hoàn thành
             </h2>
             <Link
-              href="/browse?status=completed"
+              href={buildBrowseHref({ status: "completed" })}
               className="flex items-center gap-1 text-sm text-primary hover:underline"
             >
               Xem tất cả
