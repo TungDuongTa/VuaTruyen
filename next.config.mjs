@@ -18,6 +18,18 @@ const nextConfig = {
     return [
       {
         source: "/latest",
+        has: [
+          {
+            type: "query",
+            key: "page",
+            value: "(?<page>[2-9]|[1-9][0-9]+)",
+          },
+        ],
+        destination: "/browse/page-:page",
+        permanent: true,
+      },
+      {
+        source: "/latest",
         destination: "/browse",
         permanent: true,
       },
@@ -110,7 +122,46 @@ const nextConfig = {
         destination: "/ranking/:tab/page-:page",
         permanent: true,
       },
-      // Legacy /browse?q= (middleware rewrite) → real /browse/filtered routes
+      // Old combined bookmarks page → split /bookmarks and /history routes
+      {
+        source: "/bookmarks",
+        has: [
+          { type: "query", key: "tab", value: "history" },
+          {
+            type: "query",
+            key: "historyPage",
+            value: "(?<page>[2-9]|[1-9][0-9]+)",
+          },
+        ],
+        destination: "/history?page=:page",
+        permanent: true,
+      },
+      {
+        source: "/bookmarks",
+        has: [{ type: "query", key: "tab", value: "history" }],
+        destination: "/history",
+        permanent: true,
+      },
+      {
+        source: "/bookmarks",
+        has: [
+          {
+            type: "query",
+            key: "bookmarkPage",
+            value: "(?<page>[2-9]|[1-9][0-9]+)",
+          },
+        ],
+        destination: "/bookmarks?page=:page",
+        permanent: true,
+      },
+
+      // Legacy /browse?q= → real /browse/filtered routes
+      {
+        source: "/browse",
+        has: [{ type: "query", key: "sort", value: "popular" }],
+        destination: "/ranking/weekly",
+        permanent: true,
+      },
       {
         source: "/browse",
         has: [{ type: "query", key: "q" }],
@@ -185,6 +236,12 @@ const nextConfig = {
             key: "page",
             value: "(?<page>[2-9]|[1-9][0-9]+)",
           },
+        ],
+        missing: [
+          { type: "query", key: "q" },
+          { type: "query", key: "genres" },
+          { type: "query", key: "genre" },
+          { type: "query", key: "status" },
         ],
         destination: "/browse/page-:page",
         permanent: true,
