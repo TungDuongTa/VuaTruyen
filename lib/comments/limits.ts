@@ -1,5 +1,5 @@
 export const COMMENT_MAX_LENGTH = 1000;
-export const COMMENT_MAX_DEPTH = 3;
+export const COMMENT_MAX_DEPTH = 1;
 
 /** Max new comments (roots + replies) per user in a short window. */
 export const COMMENT_CREATE_RATE = {
