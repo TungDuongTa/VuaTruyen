@@ -7,14 +7,14 @@ import {
   adultCatalogPageTitle,
   adultCatalogStaticPageParams,
   buildAdultCatalogCanonical,
-  parseAdultCatalogPageParam,
+  parseAdultCatalogPageSlug,
 } from "@/lib/adult-catalog-params";
 import { MAX_OFFSET_PAGE } from "@/lib/pagination";
 import { withSiteSuffix } from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{
-    page: string;
+    pageSlug: string;
   }>;
 };
 
@@ -22,9 +22,18 @@ export function generateStaticParams() {
   return adultCatalogStaticPageParams();
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { page } = await params;
-  const currentPage = parseAdultCatalogPageParam(page);
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { pageSlug } = await params;
+  const currentPage = parseAdultCatalogPageSlug(pageSlug);
+  if (currentPage === null) {
+    return {
+      title: "Thư viện truyện tranh 18+",
+      description: ADULT_CATALOG_DESCRIPTION,
+    };
+  }
+
   const canonicalPath = buildAdultCatalogCanonical(currentPage);
   const title = adultCatalogPageTitle(currentPage);
 
@@ -47,8 +56,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function Manga18PagedPage({ params }: PageProps) {
-  const { page } = await params;
-  const requestedPage = parseAdultCatalogPageParam(page);
+  const { pageSlug } = await params;
+  const requestedPage = parseAdultCatalogPageSlug(pageSlug);
+
+  if (requestedPage === null) {
+    notFound();
+  }
 
   if (requestedPage <= 1) {
     redirect(ADULT_CATALOG_BASE);

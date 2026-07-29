@@ -13,9 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Grid, List, X, Loader2 } from "lucide-react";
+import { Search, Filter, X, Loader2 } from "lucide-react";
 import { PaginationControls } from "@/components/pagination-controls";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { MAX_OFFSET_PAGE, getVisiblePages } from "@/lib/pagination";
 import {
   buildBrowseHref,
@@ -43,12 +42,12 @@ export function BrowsePageClient({
   const [showFilters, setShowFilters] = useState(
     Boolean(filters.genre) || filters.status !== "all",
   );
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const debouncedQuery = useDebouncedValue(searchQuery, 300);
-
   useEffect(() => {
     setSearchQuery(filters.query);
   }, [filters.query]);
+
+  const trimmedSearchQuery = searchQuery.trim();
+  const searchUnchanged = trimmedSearchQuery === filters.query.trim();
 
   const navigate = (next: Partial<BrowseFilters>) => {
     const href = buildBrowseHref({
@@ -63,22 +62,12 @@ export function BrowsePageClient({
     });
   };
 
-  useEffect(() => {
-    const nextQuery = debouncedQuery.trim();
-    if (nextQuery === filters.query) return;
-
-    navigate({
-      query: nextQuery,
-      page: 1,
-    });
-    // Intentionally depend on debounced query only; navigate uses latest filters.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
-
   const handleSearchSubmit = (event: FormEvent) => {
     event.preventDefault();
+    if (trimmedSearchQuery === filters.query.trim()) return;
+
     navigate({
-      query: searchQuery.trim(),
+      query: trimmedSearchQuery,
       page: 1,
     });
   };
@@ -149,7 +138,9 @@ export function BrowsePageClient({
         </div>
 
         <div className="flex gap-2">
-          <Button type="submit">Tìm kiếm</Button>
+          <Button type="submit" disabled={isPending || searchUnchanged}>
+            Tìm kiếm
+          </Button>
 
           <Button
             type="button"
@@ -165,27 +156,6 @@ export function BrowsePageClient({
               </span>
             ) : null}
           </Button>
-
-          <div className="flex border border-border rounded-md overflow-hidden">
-            <Button
-              type="button"
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setViewMode("grid")}
-              className="rounded-none"
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setViewMode("list")}
-              className="rounded-none"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </form>
 
@@ -314,23 +284,11 @@ export function BrowsePageClient({
 
       {comics.length > 0 ? (
         <>
-          {viewMode === "grid" ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 max-w-screen">
-              {comics.map((comic, index) => (
-                <MangaCardApi key={comic._id || index} comic={comic} />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-3 max-w-screen">
-              {comics.map((comic) => (
-                <MangaCardApi
-                  key={comic._id}
-                  comic={comic}
-                  variant="horizontal"
-                />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 max-w-screen">
+            {comics.map((comic, index) => (
+              <MangaCardApi key={comic._id || index} comic={comic} />
+            ))}
+          </div>
 
           <PaginationControls
             currentPage={currentPage}

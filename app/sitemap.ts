@@ -10,6 +10,7 @@ import {
   getMangaSitemapEntries,
 } from "@/lib/services/manga.service";
 import { toAbsoluteUrl } from "@/lib/seo";
+import { MAX_OFFSET_PAGE } from "@/lib/pagination";
 
 const DEFAULT_PAGE_SIZE = 24;
 
@@ -131,6 +132,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: toAbsoluteUrl("/ranking/weekly"),
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.7,
+    },
+    {
+      url: toAbsoluteUrl("/ranking/monthly"),
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.7,
+    },
+    {
+      url: toAbsoluteUrl("/ranking/allTime"),
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.7,
+    },
+    {
       url: toAbsoluteUrl("/18+"),
       lastModified: now,
       changeFrequency: "daily",
@@ -174,13 +193,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Page 1 is already in staticRoutes — only emit ?page=2+.
+  // Page 1 is already in staticRoutes — only emit page-2+.
+  const paginatedBrowseRoutes: MetadataRoute.Sitemap = Array.from(
+    { length: Math.max(0, MAX_OFFSET_PAGE - 1) },
+    (_, index) => {
+      const pageNumber = index + 2;
+      return {
+        url: toAbsoluteUrl(`/browse/page-${pageNumber}`),
+        lastModified: now,
+        changeFrequency: "daily" as const,
+        priority: 0.75,
+      };
+    },
+  );
+
   const paginated18Routes: MetadataRoute.Sitemap = Array.from(
     { length: Math.max(0, total18Pages - 1) },
     (_, index) => {
       const pageNumber = index + 2;
       return {
-        url: toAbsoluteUrl(`/18+/page/${pageNumber}`),
+        url: toAbsoluteUrl(`/18+/page-${pageNumber}`),
         lastModified: now,
         changeFrequency: "daily" as const,
         priority: 0.6,
@@ -198,5 +230,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  return [...staticRoutes, ...paginated18Routes, ...mangaRoutes];
+  return [...staticRoutes, ...paginatedBrowseRoutes, ...paginated18Routes, ...mangaRoutes];
 }

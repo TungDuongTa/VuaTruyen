@@ -1,5 +1,10 @@
 import { MAX_OFFSET_PAGE, toPositiveInt } from "@/lib/pagination";
+import { pageSlugStaticParams, parsePageSlug, toPageSlug } from "@/lib/page-slug";
 import { buildCanonicalPath } from "@/lib/seo";
+
+export const BROWSE_BASE = "/browse";
+export const BROWSE_DESCRIPTION =
+  "Tìm kiếm những bộ truyện tranh manga, manhwa và manhua mới nhất tại VuaTruyen";
 
 export type BrowseStatus = "all" | "ongoing" | "completed";
 
@@ -28,8 +33,33 @@ const normalizeBrowseStatus = (value: string): BrowseStatus => {
   return "all";
 };
 
+export const hasBrowseFilterQuery = (
+  searchParams: BrowseSearchParams | URLSearchParams,
+): boolean => {
+  const get = (key: string) => {
+    if (searchParams instanceof URLSearchParams) {
+      return searchParams.get(key)?.trim() || "";
+    }
+    const raw =
+      searchParams[key as keyof BrowseSearchParams] ??
+      (key === "genres" ? searchParams.genre : undefined);
+    return firstParam(raw as string | string[] | undefined);
+  };
+
+  const query = get("q");
+  const genre = get("genres") || get("genre");
+  const status = normalizeBrowseStatus(get("status"));
+  return Boolean(query) || Boolean(genre) || status !== "all";
+};
+
+export const hasActiveBrowseFilters = (filters: BrowseFilters): boolean =>
+  Boolean(filters.query.trim()) ||
+  Boolean(filters.genre.trim()) ||
+  filters.status !== "all";
+
 export const parseBrowseFilters = (
   searchParams: BrowseSearchParams,
+  pageOverride?: number,
 ): BrowseFilters => {
   const query = firstParam(searchParams.q);
   const genresRaw =
@@ -40,7 +70,10 @@ export const parseBrowseFilters = (
       .map((part) => part.trim())
       .filter(Boolean)[0] || "";
   const status = normalizeBrowseStatus(firstParam(searchParams.status));
-  const page = toPositiveInt(firstParam(searchParams.page), 1);
+  const page =
+    pageOverride !== undefined
+      ? toPositiveInt(pageOverride, 1)
+      : toPositiveInt(firstParam(searchParams.page), 1);
 
   return { query, genre, status, page };
 };
@@ -57,14 +90,34 @@ export const buildBrowseHref = (
   const genre = (filters.genre || "").trim();
   const status = normalizeBrowseStatus(String(filters.status || "all"));
   const page = toPositiveInt(filters.page, 1);
+  const hasFilters =
+    Boolean(query) || Boolean(genre) || status !== "all";
 
-  return buildCanonicalPath("/browse", {
+  const pathname =
+    page > 1 ? `${BROWSE_BASE}/${toPageSlug(page)}` : BROWSE_BASE;
+
+  if (!hasFilters) {
+    return pathname;
+  }
+
+  return buildCanonicalPath(pathname, {
     q: query || undefined,
     genres: genre || undefined,
     status: status !== "all" ? status : undefined,
-    page: page > 1 ? page : undefined,
   });
 };
+
+export const browseTitleFromFilters = (filters: BrowseFilters): string => {
+  const titleParts = ["Khám phá"];
+  if (filters.query) titleParts.push(`"${filters.query}"`);
+  if (filters.genre) titleParts.push(filters.genre);
+  if (filters.status !== "all") titleParts.push(filters.status);
+  if (filters.page > 1) titleParts.push(`Trang ${filters.page}`);
+  return titleParts.join(" - ");
+};
+
+export const browseStaticPageParams = (): Array<{ pageSlug: string }> =>
+  pageSlugStaticParams(2, MAX_OFFSET_PAGE);
 
 export const getBrowseListType = (
   status: BrowseStatus,

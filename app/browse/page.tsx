@@ -1,92 +1,34 @@
 import type { Metadata } from "next";
-import { BrowsePageClient } from "@/components/browse-page-client";
+import { BrowseCatalogPage } from "@/components/browse-catalog-page";
 import {
-  getByCategory,
-  getCategories,
-  getListByType,
-  searchComics,
-} from "@/lib/actions/manga-actions";
-import {
+  BROWSE_BASE,
+  BROWSE_DESCRIPTION,
+  browseTitleFromFilters,
   buildBrowseHref,
-  getBrowseListType,
-  parseBrowseFilters,
-  type BrowseSearchParams,
 } from "@/lib/browse-params";
 import { withSiteSuffix } from "@/lib/seo";
 
-type BrowsePageProps = {
-  searchParams: Promise<BrowseSearchParams>;
+const filters = { query: "", genre: "", status: "all" as const, page: 1 };
+const title = browseTitleFromFilters(filters);
+const canonicalPath = buildBrowseHref(filters);
+
+export const metadata: Metadata = {
+  title,
+  description: BROWSE_DESCRIPTION,
+  alternates: {
+    canonical: canonicalPath,
+  },
+  openGraph: {
+    title: withSiteSuffix(title),
+    description: BROWSE_DESCRIPTION,
+    url: canonicalPath,
+  },
+  twitter: {
+    title: withSiteSuffix(title),
+    description: BROWSE_DESCRIPTION,
+  },
 };
 
-export async function generateMetadata({
-  searchParams,
-}: BrowsePageProps): Promise<Metadata> {
-  const filters = parseBrowseFilters(await searchParams);
-  const canonicalPath = buildBrowseHref(filters);
-
-  const titleParts = ["Khám phá"];
-  if (filters.query) titleParts.push(`"${filters.query}"`);
-  if (filters.genre) titleParts.push(filters.genre);
-  if (filters.status !== "all") titleParts.push(filters.status);
-  if (filters.page > 1) titleParts.push(`Trang ${filters.page}`);
-
-  const title = titleParts.join(" - ");
-  const description =
-    "Tìm kiếm những bộ truyện tranh manga, manhwa và manhua mới nhất tại VuaTruyen";
-
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: canonicalPath,
-    },
-    openGraph: {
-      title: withSiteSuffix(title),
-      description,
-      url: canonicalPath,
-    },
-    twitter: {
-      title: withSiteSuffix(title),
-      description,
-    },
-  };
-}
-
-export default async function BrowsePage({ searchParams }: BrowsePageProps) {
-  const filters = parseBrowseFilters(await searchParams);
-
-  const [categories, listResult] = await Promise.all([
-    getCategories(),
-    filters.query
-      ? searchComics(filters.query, filters.page)
-      : filters.genre
-        ? getByCategory(filters.genre, filters.page)
-        : getListByType(getBrowseListType(filters.status), filters.page),
-  ]);
-
-  const comics = listResult?.items || [];
-  const pagination = listResult?.pagination || null;
-
-  return (
-    <div className="min-h-screen">
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Khám phá thư viện truyện tranh
-          </h1>
-          <p className="text-muted-foreground">
-            Khám phá hàng ngàn bộ truyện tranh hot nhất được cập nhật hàng ngày
-            tại VuaTruyen
-          </p>
-        </div>
-
-        <BrowsePageClient
-          comics={comics}
-          categories={categories}
-          pagination={pagination}
-          filters={filters}
-        />
-      </main>
-    </div>
-  );
+export default function BrowseIndexPage() {
+  return <BrowseCatalogPage filters={filters} />;
 }
