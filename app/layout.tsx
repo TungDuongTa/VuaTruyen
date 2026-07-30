@@ -109,10 +109,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://cdn.vuatruyen.cc" />
-        <link rel="dns-prefetch" href="https://cdn.vuatruyen.cc" />
-      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
