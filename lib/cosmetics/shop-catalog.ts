@@ -1,40 +1,8 @@
 import type { CosmeticCategory, ShopItem } from "@/lib/cosmetics/types";
+import { AVATAR_FRAME_SHOP_ITEMS } from "@/lib/cosmetics/avatar-frames";
 import { USERNAME_EFFECT_SHOP_ITEMS } from "@/lib/cosmetics/username-effects";
 
 const GENERAL_SHOP_ITEMS: ShopItem[] = [
-  {
-    id: "frame-avatar-1",
-    category: "avatar_frame",
-    name: "Tinh Không",
-    description: "Khung vũ trụ với sao và hành tinh bao quanh avatar.",
-    rarity: "epic",
-    cost: 450,
-    imageSrc: "/avatar-frame-1.png",
-    frameScale: 1.5,
-    sortOrder: 5,
-  },
-  {
-    id: "frame-avatar-2",
-    category: "avatar_frame",
-    name: "Tinh Không II",
-    description: "Khung vũ trụ với sao và hành tinh bao quanh avatar.",
-    rarity: "epic",
-    cost: 450,
-    imageSrc: "/avatar-frame-2.png",
-    frameScale: 1.5,
-    sortOrder: 6,
-  },
-  {
-    id: "frame-avatar-3",
-    category: "avatar_frame",
-    name: "Tinh Không III",
-    description: "Khung vũ trụ với sao và hành tinh bao quanh avatar.",
-    rarity: "epic",
-    cost: 450,
-    imageSrc: "/avatar-frame-3.png",
-    frameScale: 1.5,
-    sortOrder: 7,
-  },
   {
     id: "banner-sunset",
     category: "profile_banner",
@@ -59,6 +27,7 @@ const GENERAL_SHOP_ITEMS: ShopItem[] = [
 
 export const SHOP_ITEMS: ShopItem[] = [
   ...USERNAME_EFFECT_SHOP_ITEMS,
+  ...AVATAR_FRAME_SHOP_ITEMS,
   ...GENERAL_SHOP_ITEMS,
 ].sort((a, b) => a.sortOrder - b.sortOrder);
 
