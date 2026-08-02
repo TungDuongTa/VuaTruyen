@@ -131,9 +131,7 @@ const toReadingHistoryComic = (
   const comicSlug = String(doc.comicSlug || "");
   if (!comicSlug) return null;
 
-  const readChapters = uniqueChapterNames(doc.readChapters);
-  const latestReadChapterName =
-    String(doc.lastReadChapter || "").trim() || readChapters[0] || "";
+  const latestReadChapterName = normalizeString(doc.lastReadChapter);
   const latestReadAt = toIsoDateString(
     doc.lastReadAt,
     doc.updatedAt,
@@ -198,6 +196,17 @@ const historyListPipeline = (userId: string, skip: number, limit: number) => [
         { $skip: skip },
         { $limit: limit },
         {
+          // Drop readChapters early — arrays can be huge and aren't needed for the list UI.
+          $project: {
+            comicId: 1,
+            comicSlug: 1,
+            lastReadChapter: 1,
+            lastReadAt: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+        {
           $lookup: {
             from: "mangas",
             localField: "comicSlug",
@@ -209,18 +218,6 @@ const historyListPipeline = (userId: string, skip: number, limit: number) => [
           $unwind: {
             path: "$manga",
             preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $project: {
-            comicId: 1,
-            comicSlug: 1,
-            readChapters: 1,
-            lastReadChapter: 1,
-            lastReadAt: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            manga: 1,
           },
         },
       ],
