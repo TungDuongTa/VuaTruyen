@@ -102,7 +102,6 @@ export function RankingSidebarApi({ initialRankings }: RankingSidebarApiProps) {
                   fill
                   sizes="40px"
                   className="object-cover"
-                  loading="lazy"
                 />
               </div>
 

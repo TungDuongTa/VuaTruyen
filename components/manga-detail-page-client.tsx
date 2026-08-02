@@ -116,7 +116,6 @@ export function MangaDetailPageClient({
             fill
             sizes="100vw"
             className="scale-110 object-cover blur-sm"
-            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
         </div>
@@ -131,7 +130,6 @@ export function MangaDetailPageClient({
                   fill
                   sizes="(max-width: 768px) 192px, 224px"
                   className="object-cover"
-                  loading="lazy"
                 />
               </div>
             </div>

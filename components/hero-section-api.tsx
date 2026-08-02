@@ -65,8 +65,7 @@ export function HeroSectionApi({ featuredComics }: HeroSectionApiProps) {
           fill
           sizes="(max-width: 768px) 100vw, 48vw"
           className="object-cover object-top"
-          priority={currentIndex === 0}
-          fetchPriority={currentIndex === 0 ? "high" : undefined}
+          priority
         />
         {/* Image masks so the cover blends smoothly with the layout */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-transparent via-background/25 to-background/95" />

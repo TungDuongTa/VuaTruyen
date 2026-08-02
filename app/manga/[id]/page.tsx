@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MangaDetailPageClient } from "@/components/manga-detail-page-client";
-import { getMangaViewStats } from "@/lib/actions/manga-view.actions";
 import { getComicDetail } from "@/lib/actions/manga-actions";
 import { getMangaPersonalState } from "@/lib/actions/reading-progress.actions";
 import {
@@ -83,9 +82,8 @@ export default async function MangaDetailPage({
 }: MangaDetailPageProps) {
   const { id } = await params;
 
-  const [detailResult, viewResult, personalResult] = await Promise.allSettled([
+  const [detailResult, personalResult] = await Promise.allSettled([
     getComicDetailCached(id),
-    getMangaViewStats(id),
     getMangaPersonalState(id),
   ]);
 
@@ -106,8 +104,7 @@ export default async function MangaDetailPage({
     );
   }
 
-  const initialTotalViews =
-    viewResult.status === "fulfilled" ? viewResult.value.totalViews : 0;
+  const initialTotalViews = comic.totalViews || 0;
   const personalState =
     personalResult.status === "fulfilled"
       ? personalResult.value

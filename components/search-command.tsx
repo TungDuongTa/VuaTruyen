@@ -158,7 +158,6 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                         fill
                         sizes="56px"
                         className="object-cover"
-                        loading="lazy"
                       />
                     </div>
 

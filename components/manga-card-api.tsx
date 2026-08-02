@@ -36,7 +36,6 @@ export function MangaCardApi({
               fill
               sizes="64px"
               className="object-cover transition-transform group-hover:scale-105"
-              loading="lazy"
             />
           </div>
           <div className="flex-1 min-w-0 flex-col">
@@ -74,7 +73,6 @@ export function MangaCardApi({
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
             className="object-cover transition-transform group-hover:scale-105"
-            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-2">
@@ -96,7 +94,6 @@ export function MangaCardApi({
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
-          loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 

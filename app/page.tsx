@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { HeroSectionApi } from "@/components/hero-section-api";
-import {
-  HomeSidebar,
-  HomeSidebarSkeleton,
-} from "@/components/home-sidebar";
+import { HomeSidebar, HomeSidebarSkeleton } from "@/components/home-sidebar";
 import { MangaCardApi } from "@/components/manga-card-api";
 import { getHeroManga, getListByType } from "@/lib/actions/manga-actions";
 import { buildBrowseHref } from "@/lib/browse-params";
@@ -85,9 +82,11 @@ export default async function HomePage() {
           {/* Left Side - Manga List */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-foreground">Mới cập nhật</h2>
+              <h2 className="text-2xl font-bold text-foreground">
+                Mới cập nhật
+              </h2>
               <Link
-                href={latestBrowseHref}
+                href="/browse"
                 className="flex items-center gap-1 text-sm text-primary hover:underline"
               >
                 Xem tất cả <ChevronRight className="h-4 w-4" />
@@ -101,7 +100,7 @@ export default async function HomePage() {
             <div className="mt-8 flex justify-center">
               <Link href={latestBrowseHref}>
                 <Button variant="outline" className="gap-2">
-                  Xem tất cả
+                  Xem thêm
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </Link>

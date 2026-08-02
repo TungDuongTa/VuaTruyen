@@ -255,7 +255,6 @@ export function ChapterReaderPageClient({
                 width={800}
                 height={1200}
                 className="h-auto w-full"
-                loading="lazy"
               />
             </div>
           ))}

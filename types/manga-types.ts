@@ -45,6 +45,8 @@ export interface ComicDetailItem {
   category: Category[];
   chapters: ChapterGroup[];
   updatedAt: string;
+  /** Cached with detail (~15m); not live on every chapter view. */
+  totalViews?: number;
 }
 
 export interface ChapterGroup {

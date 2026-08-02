@@ -71,7 +71,6 @@ const SignIn = () => {
             width={1415}
             height={485}
             className="w-full h-full object-contain"
-            loading="lazy"
           />
           <p className="text-muted-foreground">
             Hãy đăng nhập để lưu danh sách theo dõi và lịch sử đọc của bạn

@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/database/mongoose";
 import { CategoryModel } from "@/database/models/category.model";
 import { ChapterModel } from "@/database/models/chapter.model";
 import { MangaModel } from "@/database/models/manga.model";
+import { MangaViewStatModel } from "@/database/models/manga-view-stat.model";
 import { MAX_OFFSET_PAGE, normalizePageAndSize } from "@/lib/pagination";
 import { buildMangaSearchFilter } from "@/lib/search-utils";
 import type {
@@ -112,6 +113,7 @@ const toChapterData = (doc: Record<string, unknown>): ChapterData => ({
 const toComicDetail = (
   manga: Record<string, unknown>,
   chapters: Record<string, unknown>[],
+  totalViews = 0,
 ): ComicDetailItem => ({
   _id: String(manga._id),
   name: String(manga.name),
@@ -133,6 +135,7 @@ const toComicDetail = (
     } satisfies ChapterGroup,
   ],
   updatedAt: new Date(manga.updatedAt as Date | string).toISOString(),
+  totalViews,
 });
 
 const queryMangaList = async (
@@ -233,14 +236,20 @@ export const getMangaDetail = async (
   const manga = await MangaModel.findOne({ slug }).lean();
   if (!manga) return null;
 
-  const chapters = await ChapterModel.find({ mangaSlug: slug })
-    .select("chapterName chapterTitle chapterNumber")
-    .sort({ chapterNumber: 1 })
-    .lean();
+  const [chapters, viewStat] = await Promise.all([
+    ChapterModel.find({ mangaSlug: slug })
+      .select("chapterName chapterTitle chapterNumber")
+      .sort({ chapterNumber: 1 })
+      .lean(),
+    MangaViewStatModel.findOne({ comicSlug: slug })
+      .select("totalViews")
+      .lean(),
+  ]);
 
   return toComicDetail(
     manga as Record<string, unknown>,
     chapters as Record<string, unknown>[],
+    Number(viewStat?.totalViews || 0),
   );
 };
 

@@ -13,8 +13,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { getBaseUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo";
 
 const inter = Inter({
-  subsets: ["latin"],
+  subsets: ["latin", "vietnamese"],
   variable: "--font-inter",
+  display: "swap",
 });
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || "G-Z65549N1TX";
 const ADSENSE_CLIENT_ID =
