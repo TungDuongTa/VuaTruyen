@@ -185,7 +185,7 @@
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .brand-pink-mask {
-    background-image: url("/pink.gif");
+    background-image: url("/pink.webp");
     background-repeat: repeat;
     background-size: 220px auto;
     background-position: center;
@@ -433,8 +433,16 @@
   background-color: #0f172a;
   background-image:
     radial-gradient(circle at 20% 20%, rgb(56 189 248 / 0.35), transparent 35%),
-    radial-gradient(circle at 80% 30%, rgb(167 139 250 / 0.35), transparent 30%),
-    radial-gradient(circle at 50% 80%, rgb(244 114 182 / 0.25), transparent 40%),
+    radial-gradient(
+      circle at 80% 30%,
+      rgb(167 139 250 / 0.35),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 50% 80%,
+      rgb(244 114 182 / 0.25),
+      transparent 40%
+    ),
     linear-gradient(135deg, #0f172a, #1e1b4b 55%, #312e81);
 }
 

@@ -110,6 +110,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
+      <head>
+        {/* Warm CDN for cover/chapter images (no crossorigin — plain <img> fetches). */}
+        <link rel="preconnect" href="https://cdn.vuatruyen.cc" />
+        <link rel="dns-prefetch" href="https://cdn.vuatruyen.cc" />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
