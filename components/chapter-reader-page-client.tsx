@@ -247,17 +247,26 @@ export function ChapterReaderPageClient({
         </section>
 
         <div className="mx-auto max-w-4xl md:px-4">
-          {chapterImages.map((img, index) => (
-            <div key={index} className="relative w-full">
-              <Image
-                src={img.image_file}
-                alt={`Page ${index + 1}`}
-                width={800}
-                height={1200}
-                className="h-auto w-full"
-              />
-            </div>
-          ))}
+          {chapterImages.map((img, index) => {
+            // First two pages are typically above the fold — load eagerly.
+            const isPriority = index < 2;
+            return (
+              <div key={index} className="relative w-full">
+                <Image
+                  src={img.image_file}
+                  alt={`Page ${index + 1}`}
+                  width={800}
+                  height={1200}
+                  className="h-auto w-full"
+                  sizes="(max-width: 896px) 100vw, 896px"
+                  preload={isPriority}
+                  loading={isPriority ? "eager" : "lazy"}
+                  decoding={isPriority ? "sync" : "async"}
+                  fetchPriority={isPriority ? "high" : "low"}
+                />
+              </div>
+            );
+          })}
         </div>
 
         <section className="mx-auto max-w-7xl py-6 md:px-4">

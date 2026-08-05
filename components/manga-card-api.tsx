@@ -1,12 +1,12 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  FALLBACK_MANGA_COVER,
+  MangaCoverImage,
+} from "@/components/manga-cover-image";
 import { RelativeTime } from "@/components/relative-time";
 import { OTruyenComic } from "@/types/manga-types";
-
-const FALLBACK_COVER =
-  "https://placehold.co/300x450/111827/9CA3AF?text=No+Cover";
 
 interface MangaCardApiProps {
   comic: OTruyenComic;
@@ -19,7 +19,9 @@ export function MangaCardApi({
   showLatestChapter = true,
   variant = "default",
 }: MangaCardApiProps) {
-  const coverSrc = comic.thumb_url?.trim() ? comic.thumb_url : FALLBACK_COVER;
+  const coverSrc = comic.thumb_url?.trim()
+    ? comic.thumb_url
+    : FALLBACK_MANGA_COVER;
   const latestChapterName = String(
     comic.chaptersLatest?.[0]?.chapter_name || "",
   ).trim();
@@ -30,7 +32,7 @@ export function MangaCardApi({
       <Link href={comicHref} className="group block">
         <div className="flex gap-4 p-3 rounded-lg bg-card hover:bg-secondary transition-colors ">
           <div className="relative w-16 h-22  overflow-hidden rounded-md bg-muted">
-            <Image
+            <MangaCoverImage
               src={coverSrc}
               alt={comic.name}
               fill
@@ -67,7 +69,7 @@ export function MangaCardApi({
     return (
       <Link href={comicHref} className="group block">
         <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-muted">
-          <Image
+          <MangaCoverImage
             src={coverSrc}
             alt={comic.name}
             fill
@@ -88,7 +90,7 @@ export function MangaCardApi({
   return (
     <Link href={comicHref} className="group block">
       <div className="relative aspect-[3/4] overflow-hidden rounded-xl mb-3 bg-muted">
-        <Image
+        <MangaCoverImage
           src={coverSrc}
           alt={comic.name}
           fill

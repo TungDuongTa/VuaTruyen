@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   ArrowUpDown,
   BookOpen,
@@ -17,6 +16,7 @@ import {
   User,
 } from "lucide-react";
 import { MangaCommentsSection } from "@/components/manga-comments-section";
+import { MangaCoverImage } from "@/components/manga-cover-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -110,11 +110,12 @@ export function MangaDetailPageClient({
     <div className="min-h-screen">
       <main>
         <div className="relative h-64 overflow-hidden md:h-80">
-          <Image
+          <MangaCoverImage
             src={comic.thumb_url}
-            alt={comic.name}
+            alt=""
             fill
             sizes="100vw"
+            loading="lazy"
             className="scale-110 object-cover blur-sm"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
@@ -124,12 +125,13 @@ export function MangaDetailPageClient({
           <div className="flex flex-col gap-8 md:flex-row">
             <div className="shrink-0">
               <div className="relative mx-auto aspect-[3/4] w-48 overflow-hidden rounded-xl bg-muted shadow-2xl shadow-primary/20 md:mx-0 md:w-56">
-                <Image
+                <MangaCoverImage
                   src={comic.thumb_url}
                   alt={comic.name}
                   fill
                   sizes="(max-width: 768px) 192px, 224px"
                   className="object-cover"
+                  preload
                 />
               </div>
             </div>

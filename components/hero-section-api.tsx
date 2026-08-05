@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { BookOpen, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MangaCoverImage } from "@/components/manga-cover-image";
 import { OTruyenComic, formatStatus } from "@/types/manga-types";
 
 interface HeroSectionApiProps {
@@ -59,13 +59,13 @@ export function HeroSectionApi({ featuredComics }: HeroSectionApiProps) {
         key={`img-${currentIndex}`}
         className="absolute inset-y-0 right-0 w-full md:w-[48%] hero-slide-right"
       >
-        <Image
+        <MangaCoverImage
           src={currentComic.thumb_url}
           alt={currentComic.name}
           fill
           sizes="(max-width: 768px) 100vw, 48vw"
           className="object-cover object-top"
-          priority
+          preload
         />
         {/* Image masks so the cover blends smoothly with the layout */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-transparent via-background/25 to-background/95" />

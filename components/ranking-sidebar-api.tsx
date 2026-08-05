@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Trophy, TrendingUp, Clock, Flame, Eye } from "lucide-react";
 import type {
   MangaRankingItem,
@@ -10,9 +9,10 @@ import type {
   MangaRankings,
 } from "@/lib/server/manga-rankings";
 import { formatViewCount } from "@/lib/format";
-
-const FALLBACK_COVER =
-  "https://placehold.co/200x300/111827/9CA3AF?text=No+Cover";
+import {
+  FALLBACK_MANGA_COVER,
+  MangaCoverImage,
+} from "@/components/manga-cover-image";
 
 interface RankingSidebarApiProps {
   initialRankings: MangaRankings;
@@ -94,9 +94,11 @@ export function RankingSidebarApi({ initialRankings }: RankingSidebarApiProps) {
               </div>
 
               <div className="relative w-10 h-14 shrink-0 overflow-hidden rounded-md bg-muted">
-                <Image
+                <MangaCoverImage
                   src={
-                    comic.thumb_url?.trim() ? comic.thumb_url : FALLBACK_COVER
+                    comic.thumb_url?.trim()
+                      ? comic.thumb_url
+                      : FALLBACK_MANGA_COVER
                   }
                   alt={comic.name}
                   fill
